@@ -1,14 +1,23 @@
+#include "util.h"
 #include "AST.h"
 
-int main() {
-    auto lhs  = Tiger::NumExp(38);
-    auto rhs  = Tiger::NumExp(12);
-    auto sum  = Tiger::BinExp(&lhs, &rhs);
-    auto prd  = Tiger::BinExp<Tiger::BinOp::Times>(&lhs, &rhs);
-    auto tail = Tiger::LastExpList(&prd);
-    auto head = Tiger::PairExpList(&sum, &tail);
-    auto root = Tiger::PrintStm(&head);
-    Tiger::Stm::Env env;
+struct Eval {
+    int32_t operator()(const IntExp& exp) { return exp.val; }
 
-    root.eval(env);
+    int32_t operator()(const ProdExp& exp) {
+        return std::visit(*this, *exp.lhs)
+            *  std::visit(*this, *exp.rhs);
+    }
+
+    int32_t operator()(const SumExp& exp) {
+        return std::visit(*this, *exp.lhs)
+            +  std::visit(*this, *exp.rhs);
+    }
+};
+
+int main() {
+    Exp x(IntExp{10});
+    Exp r(SumExp{&x, &x});
+    write(std::cout, std::visit(Eval(), x));
+    write(std::cout, std::visit(Eval(), r));
 }
