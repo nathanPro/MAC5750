@@ -1,22 +1,88 @@
+#include "string"
 #include <variant>
 #define UNREACHABLE() (__builtin_unreachable())
 
-struct SumExp;
-struct ProdExp;
-struct IntExp;
+namespace AST {
+enum class BinOp { And, Less, Plus, Minus, Times };
 
-using Exp = std::variant<SumExp, ProdExp, IntExp>;
+template <BinOp op> struct BinExp;
+struct IndexingExp;
+struct LengthExp;
+struct MethodCallExp;
+struct IntegerLiteralExp;
+struct TrueExp;
+struct FalseExp;
+struct IdentifierExp;
+struct ThisExp;
+struct VectorExp;
+struct ConstructorExp;
+struct BangExp;
+struct ParenExp;
 
-struct SumExp {
+// clang-format off
+using Exp = std::variant<
+    IntegerLiteralExp,
+    TrueExp,
+    FalseExp,
+    ThisExp,
+    IdentifierExp,
+    BinExp<BinOp::And>, BinExp<BinOp::Less>, BinExp<BinOp::Plus>,
+    BinExp<BinOp::Minus>, BinExp<BinOp::Times>,
+    IndexingExp,
+    LengthExp,
+    MethodCallExp,
+    VectorExp,
+    ConstructorExp,
+    BangExp,
+    ParenExp
+>;
+// clang-format on
+
+struct TrueExp {};
+struct FalseExp {};
+struct ThisExp {};
+
+struct IdentifierExp {
+    std::string value;
+};
+
+struct IntegerLiteralExp {
+    double value = 0; // hue
+};
+
+struct ConstructorExp {
+    std::string identifier;
+};
+
+template <BinOp op> struct BinExp {
     Exp* lhs = nullptr;
     Exp* rhs = nullptr;
 };
 
-struct ProdExp {
-    Exp* lhs = nullptr;
-    Exp* rhs = nullptr;
+struct IndexingExp {
+    Exp* memory = nullptr;
+    Exp* index  = nullptr;
 };
 
-struct IntExp {
-    int32_t val;
+struct LengthExp {
+    Exp* exp = nullptr;
 };
+
+struct MethodCallExp {
+    Exp* exp = nullptr;
+    std::string identifier;
+    // vector<ExpList*> arguments;
+};
+
+struct VectorExp {
+    Exp* size = nullptr;
+};
+
+struct BangExp {
+    Exp* exp = nullptr;
+};
+
+struct ParenExp {
+    Exp* exp = nullptr;
+};
+} // namespace AST
