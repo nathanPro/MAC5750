@@ -1,3 +1,6 @@
+#ifndef BCC_GRAMMAR
+#define BCC_GRAMMAR
+
 #include <memory>
 #include <utility>
 #include <variant>
@@ -42,3 +45,5 @@ constexpr const Alternative& get(Nonterminal&& nt) {
     return std::get<Alternative>(nt.__content);
 }
 }; // namespace Grammar
+
+#endif
