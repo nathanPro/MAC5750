@@ -3,29 +3,56 @@
 
 #include <cinttypes>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
+// clang-format off
 std::vector<std::string> reserved_words = {
-    "boolean", "class",  "else",   "extends", "false",
-    "if",      "int",    "lenght", "new",     "System.out.println",
-    "public",  "return", "static", "String",  "this",
-    "true",    "void",   "while"};
+    "boolean",
+    "class",
+    "else",
+    "extends",
+    "false",
+    "if",
+    "int",
+    "lenght",
+    "new",
+    "System.out.println",
+    "public",
+    "return",
+    "static",
+    "String",
+    "this",
+    "true",
+    "void",
+    "while",
+    ",",
+    ";",
+    ".",
+    "!",
+    "(",
+    ")",
+    "[",
+    "]",
+    "{",
+    "}",
+    "&&",
+    "<",
+    "+",
+    "-",
+    "*",
+    "=",
+    "//",
+    "/*"
+};
+// clang-format on
 
+// ORDER HERE IS IMPORTANT
 enum class Lexeme {
     identifier,
     integer_literal,
 
-    and_operator,
-    less_operator,
-    plus_operator,
-    minus_operator,
-    times_operator,
-
-    equals_sign,
-
-    // ORDER HERE IS IMPORTANT
     boolean_keyword,
     class_keyword,
     else_keyword,
@@ -44,11 +71,6 @@ enum class Lexeme {
     true_keyword,
     void_keyword,
     while_keyword,
-    // Here it is OK again
-
-    main_function,
-    inline_comment,
-    multiline_comment,
 
     coma,
     semicolon,
@@ -60,7 +82,17 @@ enum class Lexeme {
     open_bracket,
     close_bracket,
     open_brace,
-    close_brace
+    close_brace,
+
+    and_operator,
+    less_operator,
+    plus_operator,
+    minus_operator,
+    times_operator,
+    equals_sign,
+
+    inline_comment,
+    multiline_comment
 };
 
 template <Lexeme lex, typename V> struct SemanticValue { V value; };
