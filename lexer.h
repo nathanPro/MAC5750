@@ -1,27 +1,17 @@
 #ifndef BCC_LEXER
 #define BCC_LEXER
 
+#include <cinttypes>
+#include <limits>
 #include <string>
 #include <vector>
+#include <memory>
 
-std::vector<std::string>> reserved_words = {"class",
-                                            "public",
-                                            "static",
-                                            "void",
-                                            "String",
-                                            "extends",
-                                            "return",
-                                            "int",
-                                            "boolean",
-                                            "if",
-                                            "else",
-                                            "while",
-                                            "System.out.println",
-                                            "lenght",
-                                            "true",
-                                            "false",
-                                            "this",
-                                            "new"};
+std::vector<std::string> reserved_words = {
+    "boolean", "class",  "else",   "extends", "false",
+    "if",      "int",    "lenght", "new",     "System.out.println",
+    "public",  "return", "static", "String",  "this",
+    "true",    "void",   "while"};
 
 enum class Lexeme {
     identifier,
@@ -35,24 +25,26 @@ enum class Lexeme {
 
     equals_sign,
 
-    class_keyword,
-    public_keyword,
-    static_keyword,
-    void_keyword,
-    string_keyword,
-    int_keyword,
+    // ORDER HERE IS IMPORTANT
     boolean_keyword,
-    if_keyword,
+    class_keyword,
     else_keyword,
-    while_keyword,
-    println_keyword,
-    lenght_keyword,
-    true_keyword,
-    false_keyword,
-    this_keyword,
-    new_keyword,
-    return_keyword,
     extends_keyword,
+    false_keyword,
+    if_keyword,
+    int_keyword,
+    lenght_keyword,
+    new_keyword,
+    println_keyword,
+    public_keyword,
+    return_keyword,
+    static_keyword,
+    string_keyword,
+    this_keyword,
+    true_keyword,
+    void_keyword,
+    while_keyword,
+    // Here it is OK again
 
     main_function,
     inline_comment,
@@ -76,7 +68,19 @@ template <Lexeme lex, typename V> struct SemanticValue { V value; };
 using IdentifierToken =
     SemanticValue<Lexeme::identifier, std::string>;
 
-using IntegerLiteral = 
+using IntegerLiteral =
     SemanticValue<Lexeme::integer_literal, int32_t>;
 
+class Trie {
+    template <typename T> using ptr = std::unique_ptr<T>;
+    struct Node {
+        Lexeme label = Lexeme::identifier;
+        ptr<Node> child[1 + std::numeric_limits<char>::max()];
+    };
+    ptr<Node> root;
+
+  public:
+    Trie(std::vector<std::string>& words);
+    Lexeme search(const char*) const;
+};
 #endif
