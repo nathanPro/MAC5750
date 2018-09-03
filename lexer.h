@@ -113,6 +113,6 @@ class Trie {
 
   public:
     Trie(std::vector<std::string>& words);
-    Lexeme search(const char*) const;
+    template <typename It> Lexeme search(It) const;
 };
 #endif
