@@ -58,6 +58,7 @@ template <typename istream> class Lexer {
             }
             while (lo < line.size()) {
                 while (lo < line.size() && isspace(line[lo])) lo++;
+                if (lo == line.size()) break;
 
                 if (ispunct(line[lo])) {
                     std::string word(line, lo, 2);
