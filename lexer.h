@@ -95,14 +95,6 @@ enum class Lexeme {
     multiline_comment
 };
 
-template <Lexeme lex, typename V> struct SemanticValue { V value; };
-
-using IdentifierToken =
-    SemanticValue<Lexeme::identifier, std::string>;
-
-using IntegerLiteral =
-    SemanticValue<Lexeme::integer_literal, int32_t>;
-
 class Trie {
     template <typename T> using ptr = std::unique_ptr<T>;
     struct Node {
@@ -114,5 +106,28 @@ class Trie {
   public:
     Trie(std::vector<std::string>& words);
     template <typename It> Lexeme search(It) const;
+};
+
+template <typename istream> class Lexer {
+    using state = std::pair<Lexeme, std::string>;
+
+    Trie symbols;
+    std::string line;
+    state curr;
+    istream& in;
+    size_t lo;
+    bool fail = false;
+
+    template <typename F> size_t consume(F f);
+    state advance();
+
+  public:
+    Lexer(istream& _in) : symbols(reserved_words), in(_in), lo(0) {
+        curr = advance();
+    }
+
+    bool empty() const;
+    state operator*();
+    Lexer& operator++();
 };
 #endif
