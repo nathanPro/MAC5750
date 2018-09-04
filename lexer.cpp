@@ -30,73 +30,94 @@ template <typename It> Lexeme Trie::search(It q) const {
     return node->child[0]->label;
 }
 
-void found(Lexeme lex) {
-    int i = static_cast<int>(lex);
-    if (i == 0)
-        write(std::cout, "FOUND!", i, "identifier");
-    else if (i == 1)
-        write(std::cout, "FOUND!", i, "integer constant");
-    else
-        write(std::cout, "FOUND!", i, reserved_words[i - 2]);
-}
+template <typename istream> class Lexer {
+    using state = std::pair<Lexeme, std::string>;
 
-template <typename F>
-std::pair<Lexeme, std::string> match(Trie& trie, std::string& line,
-                                     size_t& lo, F f) {
-    std::string word;
-    size_t hi = lo;
-    while (hi < line.size() && f(line[hi]))
-        word.push_back(line[hi++]);
-    lo = hi;
-    return {trie.search(word.c_str()), word};
-}
+    Trie symbols;
+    std::string line;
+    state curr;
+    istream& in;
+    size_t lo;
+    bool fail = false;
+
+    template <typename F> size_t consume(F f) {
+        size_t hi = lo;
+        while (hi < line.size() && f(line[hi])) hi++;
+        return hi;
+    }
+
+    state advance() {
+        while (true) {
+            if (lo == line.size()) {
+                std::getline(in, line);
+                if (!in.good()) {
+                    fail = true;
+                    return {Lexeme::identifier, std::string()};
+                }
+                lo = 0;
+            }
+            while (lo < line.size()) {
+                while (lo < line.size() && isspace(line[lo])) lo++;
+
+                if (ispunct(line[lo])) {
+                    std::string word(line, lo, 2);
+                    auto lex = symbols.search(word.c_str());
+                    if (lex == Lexeme::identifier) {
+                        word = std::string(line, lo, 1);
+                        lex  = symbols.search(word.c_str());
+                    } else if (lex == Lexeme::inline_comment) {
+                        lo = line.size();
+                        continue;
+                    }
+                    lo += word.size();
+                    return {lex, word};
+                }
+
+                if (isdigit(line[lo])) {
+                    size_t hi =
+                        consume([](char c) { return isdigit(c); });
+                    std::string word(line, lo, hi - lo);
+                    lo += word.size();
+                    return {Lexeme::integer_literal, word};
+                }
+
+                if (isalpha(line[lo])) {
+                    std::string word(line, lo, 18);
+                    auto lex = symbols.search(word.c_str());
+                    if (lex == Lexeme::println_keyword) {
+                        lo += 18;
+                        return {lex, word};
+                    }
+
+                    size_t hi = consume([](char c) {
+                        return isalnum(c) || c == '_';
+                    });
+                    word      = std::string(line, lo, hi - lo);
+                    lex       = symbols.search(word.c_str());
+                    lo += word.size();
+                    return {lex, word};
+                }
+                __builtin_unreachable();
+            }
+        }
+    }
+
+  public:
+    Lexer(istream& _in) : symbols(reserved_words), in(_in), lo(0) {
+        curr = advance();
+    }
+
+    bool empty() const { return fail; }
+    state operator*() { return curr; }
+    Lexer& operator++() {
+        curr = advance();
+        return *this;
+    }
+};
 
 int main() {
-    std::string line;
-    Trie reserved(reserved_words);
-    while (std::getline(std::cin, line)) {
-        write(std::cout, "Line:", line);
-        size_t lo = 0;
-        while (lo < line.size()) {
-            while (lo < line.size() && isspace(line[lo])) lo++;
-
-            write(std::cerr, lo, line.size());
-            {
-                Lexeme ans = reserved.search(line.begin() + lo);
-                if (ans == Lexeme::println_keyword) {
-                    lo += 18;
-                    found(ans);
-                    continue;
-                }
-            }
-
-            if (isalpha(line[lo])) {
-                auto ans = match(reserved, line, lo, [](char c) {
-                    return isalpha(c) || isdigit(c) || c == '_';
-                });
-                write(std::cout, int(ans.first), ans.second);
-                continue;
-            }
-
-            if (isdigit(line[lo])) {
-                auto ans  = match(reserved, line, lo,
-                                 [](char c) { return isdigit(c); });
-                ans.first = Lexeme::integer_literal;
-                write(std::cout, int(ans.first), ans.second);
-                continue;
-            }
-
-            // TODO fix punct
-            if (ispunct(line[lo])) {
-                auto ans  = match(reserved, line, lo,
-                                 [](char c) { return ispunct(c); });
-                ans.first = Lexeme::integer_literal;
-                write(std::cout, int(ans.first), ans.second);
-                continue;
-            }
-
-            write(std::cerr, "Error lexing");
-            return 1;
-        }
+    for (auto lex = Lexer(std::cin); !lex.empty(); ++lex) {
+        auto ans = *lex;
+        write(std::cout, int(ans.first), ans.second);
     }
 }
