@@ -54,6 +54,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
             if (lo == line.size()) break;
 
             if (ispunct(line[lo])) {
+                // Still need to fix /* */ comment style
                 std::string word(line, lo, 2);
                 auto lex = symbols.search(word.c_str());
                 if (lex == Lexeme::identifier) {
@@ -61,7 +62,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
                     lex  = symbols.search(word.c_str());
                 } else if (lex == Lexeme::inline_comment) {
                     lo = line.size();
-                    continue;
+                    continue; // NON-OBVIOUS CONTROL FLOW
                 }
                 lo += word.size();
                 return {lex, word};
