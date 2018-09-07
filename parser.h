@@ -4,19 +4,26 @@
 
 namespace Parser {
 
-struct ParserError {
+struct MismatchError {
     Lexeme expected;
     Lexeme found;
 };
 
+struct Unexpected {
+    Lexeme lex;
+};
+
+struct UnexpectedEnd {};
+
 template <typename istream>
 std::string consume(Lexer<istream>& tokens, Lexeme lex) {
+    if (tokens.empty()) throw UnexpectedEnd{};
     if ((*tokens).first == lex) {
         std::string ans = (*tokens).second;
         ++tokens;
         return ans;
     } else
-        throw ParserError{lex, (*tokens).first};
+        throw MismatchError{lex, (*tokens).first};
 }
 
 template <typename istream>
@@ -29,6 +36,8 @@ template <typename istream> AST::ptr<AST::Exp> Exp(Lexer<istream>&);
 template <typename istream>
 AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
                         AST::ptr<AST::Exp>&& lhs) {
+    debug("calling _Exp({", (*tokens).first, ":", (*tokens).second,
+          "})");
     using std::make_unique;
     auto [lex, word] = *tokens;
     switch (lex) {
@@ -93,6 +102,8 @@ AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
 
 template <typename istream>
 AST::ptr<AST::Exp> Exp(Lexer<istream>& tokens) {
+    debug("calling Exp({", (*tokens).first, ":", (*tokens).second,
+          "})");
     using std::make_unique;
     auto [lex, word] = *tokens;
     AST::ptr<AST::Exp> lhs;
@@ -147,7 +158,7 @@ AST::ptr<AST::Exp> Exp(Lexer<istream>& tokens) {
         lhs = make_unique<AST::Exp>(AST::parenExp{std::move(exp)});
     } break;
     default:
-        throw ParserError{};
+        throw Unexpected{lex};
     }
     return _Exp(tokens, std::move(lhs));
 }
