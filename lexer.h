@@ -170,7 +170,7 @@ template <typename istream>
 typename Lexer<istream>::state Lexer<istream>::advance() {
     if (curr.first == Lexeme::eof) return curr;
     while (true) {
-        if (lo >= line.size()) {
+        if (lo == line.size()) {
             std::getline(in, line);
             if (!in.good()) return {Lexeme::eof, std::string()};
             lo = 0;
