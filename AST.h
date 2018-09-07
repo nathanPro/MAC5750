@@ -6,6 +6,7 @@
 #define UNREACHABLE() (__builtin_unreachable())
 
 namespace AST {
+template <typename T> using ptr = std::unique_ptr<T>;
 struct Program;
 struct MainClass;
 struct ClassDecl;
@@ -18,16 +19,16 @@ struct Exp;
 struct ExpList;
 
 namespace __detail {
-using pProgram    = std::unique_ptr<Program>;
-using pClassDecl  = std::unique_ptr<ClassDecl>;
-using pExp        = std::unique_ptr<Exp>;
-using pExpList    = std::unique_ptr<ExpList>;
-using pFormalList = std::unique_ptr<FormalList>;
-using pMainClass  = std::unique_ptr<MainClass>;
-using pMethodDecl = std::unique_ptr<MethodDecl>;
-using pStm        = std::unique_ptr<Stm>;
-using pType       = std::unique_ptr<Type>;
-using pVarDecl    = std::unique_ptr<VarDecl>;
+using pProgram    = ptr<Program>;
+using pClassDecl  = ptr<ClassDecl>;
+using pExp        = ptr<Exp>;
+using pExpList    = ptr<ExpList>;
+using pFormalList = ptr<FormalList>;
+using pMainClass  = ptr<MainClass>;
+using pMethodDecl = ptr<MethodDecl>;
+using pStm        = ptr<Stm>;
+using pType       = ptr<Type>;
+using pVarDecl    = ptr<VarDecl>;
 } // namespace __detail
 
 struct ProgramRule {
