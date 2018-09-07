@@ -106,6 +106,7 @@ ostream& operator<<(ostream& out, Lexeme lex) {
         out << "EOF";
     else
         out << reserved_words[int(lex) - 2];
+    return out;
 }
 
 class Trie {
