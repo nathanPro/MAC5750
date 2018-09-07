@@ -157,7 +157,7 @@ size_t Lexer<istream>::consume(F f) {
 template <typename istream>
 typename Lexer<istream>::state Lexer<istream>::advance() {
     while (true) {
-        if (lo == line.size()) {
+        if (lo >= line.size()) {
             std::getline(in, line);
             if (!in.good()) {
                 fail = true;
