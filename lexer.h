@@ -92,8 +92,21 @@ enum class Lexeme {
     equals_sign,
 
     inline_comment,
-    multiline_comment
+    multiline_comment,
+    eof
 };
+
+template <typename ostream>
+ostream& operator<<(ostream& out, Lexeme lex) {
+    if (lex == Lexeme::identifier)
+        out << "Identifier";
+    else if (lex == Lexeme::integer_literal)
+        out << "Integer literal";
+    else if (lex == Lexeme::eof)
+        out << "EOF";
+    else
+        out << reserved_words[int(lex) - 2];
+}
 
 class Trie {
     template <typename T> using ptr = std::unique_ptr<T>;
@@ -116,7 +129,6 @@ template <typename istream> class Lexer {
     state curr;
     istream& in;
     size_t lo;
-    bool fail = false;
 
     template <typename F> size_t consume(F f);
     state advance();
@@ -131,8 +143,8 @@ template <typename istream> class Lexer {
 template <typename It> Lexeme Trie::search(It q) const {
     Node* node = root.get();
     while (*q) {
-        if (node->child[*q])
-            node = node->child[*q++].get();
+        if (node->child[static_cast<int>(*q)])
+            node = node->child[static_cast<int>(*q++)].get();
         else
             return Lexeme::identifier;
     }
@@ -156,13 +168,11 @@ size_t Lexer<istream>::consume(F f) {
 
 template <typename istream>
 typename Lexer<istream>::state Lexer<istream>::advance() {
+    if (curr.first == Lexeme::eof) return curr;
     while (true) {
         if (lo >= line.size()) {
             std::getline(in, line);
-            if (!in.good()) {
-                fail = true;
-                return {Lexeme::identifier, std::string()};
-            }
+            if (!in.good()) return {Lexeme::eof, std::string()};
             lo = 0;
         }
         while (lo < line.size()) {
@@ -213,7 +223,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
 }
 
 template <typename istream> bool Lexer<istream>::empty() const {
-    return fail;
+    return curr.first == Lexeme::eof;
 }
 
 template <typename istream>
