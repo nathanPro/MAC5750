@@ -127,7 +127,7 @@ template <typename istream> class Lexer {
 
     Trie symbols;
     istream& in;
-    size_t lo, la, pos;
+    size_t lo, la, lc, pos;
     std::string line;
     std::vector<state> LA;
 
@@ -139,6 +139,7 @@ template <typename istream> class Lexer {
     bool empty() const;
     state operator*();
     state operator[](size_t i);
+    size_t line_count() const;
     Lexer& operator++();
 };
 
@@ -156,7 +157,7 @@ template <typename It> Lexeme Trie::search(It q) const {
 
 template <typename istream>
 Lexer<istream>::Lexer(istream& _in, size_t _la)
-    : symbols(reserved_words), in(_in), lo(0), la(_la), pos(0),
+    : symbols(reserved_words), in(_in), lo(0), la(_la), lc(0), pos(0),
       LA(la) {
     for (size_t i = 0; i < la; i++) LA[i] = advance();
 }
@@ -182,6 +183,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
             std::getline(in, line);
             lo = 0;
             if (!in.good()) return {Lexeme::eof, std::string()};
+            lc++;
         }
         while (lo < line.size()) {
             while (lo < line.size() && isspace(line[lo])) lo++;
@@ -232,6 +234,11 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
 
 template <typename istream> bool Lexer<istream>::empty() const {
     return LA[pos].first == Lexeme::eof;
+}
+
+template <typename istream>
+size_t Lexer<istream>::line_count() const {
+    return lc;
 }
 
 template <typename istream>
