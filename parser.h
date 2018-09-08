@@ -33,6 +33,17 @@ template <typename istream> AST::ptr<AST::Stm> Stm(Lexer<istream>&);
 template <typename istream> AST::ptr<AST::Type> Type(Lexer<istream>&);
 template <typename istream>
 AST::ptr<AST::FormalList> FormalList(Lexer<istream>&);
+template <typename istream>
+AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>&);
+
+template <typename istream>
+AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>& tokens) {
+    auto type      = Type(tokens);
+    auto [_, word] = *tokens;
+    consume(tokens, Lexeme::identifier);
+    return std::make_unique<AST::VarDecl>(
+        AST::VarDeclRule{std::move(type), word});
+}
 
 template <typename istream>
 AST::ptr<AST::FormalList> FormalList(Lexer<istream>& tokens) {
@@ -40,6 +51,7 @@ AST::ptr<AST::FormalList> FormalList(Lexer<istream>& tokens) {
     consume(tokens, Lexeme::open_paren);
     std::vector<AST::FormalDecl> list;
     while ((*tokens).first != Lexeme::close_paren) {
+        if (list.size()) consume(tokens, Lexeme::comma);
         auto type      = Type(tokens);
         auto [_, word] = *tokens;
         consume(tokens, Lexeme::identifier);
