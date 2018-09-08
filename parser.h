@@ -22,9 +22,25 @@ std::string consume(Lexer<istream>& tokens, Lexeme lex) {
         std::string ans = (*tokens).second;
         ++tokens;
         return ans;
-    } else
-        throw MismatchError{lex, (*tokens).first};
+    } else {
+        write(std::cerr, "ERROR: Expected", lex, "and found",
+              tokens[0].first);
+        throw MismatchError{lex, tokens[0].first};
+    }
 }
+
+struct ContextGuard {
+    size_t line;
+    std::string label;
+    bool active;
+
+    ContextGuard(size_t _line, std::string _label)
+        : line(_line), label(_label), active(true) {}
+    ~ContextGuard() {
+        if (!active) return;
+        write(std::cerr, "While parsing", label, "from line", line);
+    }
+};
 
 template <typename istream> AST::ptr<AST::Exp> Exp(Lexer<istream>&);
 template <typename istream>
@@ -60,6 +76,7 @@ template <typename istream>
 AST::ptr<AST::MainClass> MainClass(Lexer<istream>& tokens) {
     using std::make_unique;
     using std::move;
+    ContextGuard guard(tokens.line_count(), "main class");
     consume(tokens, Lexeme::class_keyword);
     auto name = consume(tokens, Lexeme::identifier);
     consume(tokens, Lexeme::open_brace);
@@ -79,6 +96,7 @@ AST::ptr<AST::MainClass> MainClass(Lexer<istream>& tokens) {
     auto body = Stm(tokens);
     consume(tokens, Lexeme::close_brace);
     consume(tokens, Lexeme::close_brace);
+    guard.active = false;
     return make_unique<AST::MainClass>(
         AST::MainClassRule{name, arg, move(body)});
 }
@@ -195,7 +213,7 @@ AST::ptr<AST::FormalList> FormalList(Lexer<istream>& tokens) {
 template <typename istream>
 AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
     using std::make_unique;
-    auto [lex, word] = *tokens;
+    auto [lex, word, lc] = tokens[0];
     AST::ptr<AST::Type> ans;
     switch (lex) {
     case Lexeme::boolean_keyword: {
@@ -224,7 +242,7 @@ AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
 template <typename istream>
 AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
     using std::make_unique;
-    auto [lex, word] = *tokens;
+    auto [lex, word, lc] = tokens[0];
     AST::ptr<AST::Stm> ans;
     switch (lex) {
     case Lexeme::open_brace: {
@@ -307,7 +325,7 @@ template <typename istream>
 AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
                         AST::ptr<AST::Exp>&& lhs) {
     using std::make_unique;
-    auto [lex, word] = *tokens;
+    auto [lex, word, lc] = tokens[0];
     switch (lex) {
     case Lexeme::and_operator: {
         consume(tokens, Lexeme::and_operator);
@@ -369,7 +387,7 @@ AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
 template <typename istream>
 AST::ptr<AST::Exp> Exp(Lexer<istream>& tokens) {
     using std::make_unique;
-    auto [lex, word] = *tokens;
+    auto [lex, word, lc] = tokens[0];
     AST::ptr<AST::Exp> lhs;
     switch (lex) {
     case Lexeme::integer_literal: {
