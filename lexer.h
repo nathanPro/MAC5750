@@ -126,18 +126,19 @@ template <typename istream> class Lexer {
     using state = std::pair<Lexeme, std::string>;
 
     Trie symbols;
-    std::string line;
-    state curr;
     istream& in;
-    size_t lo;
+    size_t lo, la, pos;
+    std::string line;
+    std::vector<state> LA;
 
     template <typename F> size_t consume(F f);
     state advance();
 
   public:
-    Lexer(istream& _in);
+    Lexer(istream&, size_t lookahead = 1);
     bool empty() const;
     state operator*();
+    state operator[](size_t i);
     Lexer& operator++();
 };
 
@@ -154,9 +155,15 @@ template <typename It> Lexeme Trie::search(It q) const {
 }
 
 template <typename istream>
-Lexer<istream>::Lexer(istream& _in)
-    : symbols(reserved_words), in(_in), lo(0) {
-    curr = advance();
+Lexer<istream>::Lexer(istream& _in, size_t _la)
+    : symbols(reserved_words), in(_in), lo(0), la(_la), pos(0),
+      LA(la) {
+    for (size_t i = 0; i < la; i++) LA[i] = advance();
+}
+
+template <typename istream>
+typename Lexer<istream>::state Lexer<istream>::operator[](size_t i) {
+    return LA[(pos + i) % la];
 }
 
 template <typename istream>
@@ -169,7 +176,7 @@ size_t Lexer<istream>::consume(F f) {
 
 template <typename istream>
 typename Lexer<istream>::state Lexer<istream>::advance() {
-    if (curr.first == Lexeme::eof) return curr;
+    if (LA[pos].first == Lexeme::eof) return LA[pos];
     while (true) {
         if (lo == line.size()) {
             std::getline(in, line);
@@ -224,17 +231,18 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
 }
 
 template <typename istream> bool Lexer<istream>::empty() const {
-    return curr.first == Lexeme::eof;
+    return LA[pos].first == Lexeme::eof;
 }
 
 template <typename istream>
 typename Lexer<istream>::state Lexer<istream>::operator*() {
-    return curr;
+    return LA[pos];
 }
 
 template <typename istream>
 Lexer<istream>& Lexer<istream>::operator++() {
-    curr = advance();
+    LA[pos] = advance();
+    pos     = (pos + 1) % la;
     return *this;
 }
 #endif
