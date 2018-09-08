@@ -23,8 +23,9 @@ std::string consume(Lexer<istream>& tokens, Lexeme lex) {
         ++tokens;
         return ans;
     } else {
-        write(std::cerr, "ERROR: Expected", lex, "and found",
-              tokens[0].first);
+        write(std::cerr, "ERROR:");
+        std::cerr << "Expected '" << lex << "' and found '"
+                  << tokens[0].first << "'\n";
         throw MismatchError{lex, tokens[0].first};
     }
 }
@@ -38,7 +39,7 @@ struct ContextGuard {
         : line(_line), label(_label), active(true) {}
     ~ContextGuard() {
         if (!active) return;
-        write(std::cerr, "While parsing", label, "from line", line);
+        write(std::cerr, "while parsing", label, "from line", line);
     }
 };
 
@@ -76,7 +77,7 @@ template <typename istream>
 AST::ptr<AST::MainClass> MainClass(Lexer<istream>& tokens) {
     using std::make_unique;
     using std::move;
-    ContextGuard guard(tokens.line_count(), "main class");
+    ContextGuard guard(tokens[0].third, "<main class>");
     consume(tokens, Lexeme::class_keyword);
     auto name = consume(tokens, Lexeme::identifier);
     consume(tokens, Lexeme::open_brace);
@@ -105,6 +106,7 @@ template <typename istream>
 AST::ptr<AST::ClassDecl> ClassDecl(Lexer<istream>& tokens) {
     using std::make_unique;
     using std::move;
+    ContextGuard guard(tokens[0].third, "<class>");
     consume(tokens, Lexeme::class_keyword);
     auto name = consume(tokens, Lexeme::identifier);
 
@@ -128,6 +130,7 @@ AST::ptr<AST::ClassDecl> ClassDecl(Lexer<istream>& tokens) {
         methods.push_back(MethodDecl(tokens));
     consume(tokens, Lexeme::close_brace);
 
+    guard.active = false;
     if (has_superclass)
         return make_unique<AST::ClassDecl>(AST::ClassDeclInheritance{
             name, superclass, move(variables), move(methods)});
@@ -141,6 +144,7 @@ template <typename istream>
 AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>& tokens) {
     using std::make_unique;
     using std::move;
+    ContextGuard guard(tokens[0].third, "<method declaration>");
     consume(tokens, Lexeme::public_keyword);
     auto type = Type(tokens);
     auto name = consume(tokens, Lexeme::identifier);
@@ -180,6 +184,7 @@ AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>& tokens) {
     auto ret = Exp(tokens);
     consume(tokens, Lexeme::semicolon);
     consume(tokens, Lexeme::close_brace);
+    guard.active = false;
     return make_unique<AST::MethodDecl>(
         AST::MethodDeclRule{move(type), name, move(args), move(vars),
                             move(body), move(ret)});
@@ -187,9 +192,11 @@ AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>& tokens) {
 
 template <typename istream>
 AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>& tokens) {
+    ContextGuard guard(tokens[0].third, "<variable declaration>");
     auto type = Type(tokens);
     auto word = consume(tokens, Lexeme::identifier);
     consume(tokens, Lexeme::semicolon);
+    guard.active = false;
     return std::make_unique<AST::VarDecl>(
         AST::VarDeclRule{std::move(type), word});
 }
@@ -197,6 +204,8 @@ AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>& tokens) {
 template <typename istream>
 AST::ptr<AST::FormalList> FormalList(Lexer<istream>& tokens) {
     using std::make_unique;
+    ContextGuard guard(tokens[0].third,
+                       "<method declaration argument list>");
     consume(tokens, Lexeme::open_paren);
     std::vector<AST::FormalDecl> list;
     while ((*tokens).first != Lexeme::close_paren) {
@@ -206,6 +215,7 @@ AST::ptr<AST::FormalList> FormalList(Lexer<istream>& tokens) {
         list.push_back(AST::FormalDecl{std::move(type), word});
     }
     consume(tokens, Lexeme::close_paren);
+    guard.active = false;
     return make_unique<AST::FormalList>(
         AST::FormalListRule{std::move(list)});
 }
@@ -214,6 +224,7 @@ template <typename istream>
 AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
     using std::make_unique;
     auto [lex, word, lc] = tokens[0];
+    ContextGuard guard(lc, "<type>");
     AST::ptr<AST::Type> ans;
     switch (lex) {
     case Lexeme::boolean_keyword: {
@@ -236,6 +247,7 @@ AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
     default:
         throw Unexpected{lex};
     }
+    guard.active = false;
     return ans;
 }
 
@@ -243,6 +255,7 @@ template <typename istream>
 AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
     using std::make_unique;
     auto [lex, word, lc] = tokens[0];
+    ContextGuard guard(lc, "<statement>");
     AST::ptr<AST::Stm> ans;
     switch (lex) {
     case Lexeme::open_brace: {
@@ -304,19 +317,23 @@ AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
     default:
         throw Unexpected{lex};
     }
+    guard.active = false;
     return ans;
 }
 
 template <typename istream>
 AST::ptr<AST::ExpList> ExpList(Lexer<istream>& tokens) {
     using std::make_unique;
-    auto list = std::vector<AST::__detail::pExp>();
+    std::vector<AST::__detail::pExp> list;
+    ContextGuard guard(tokens[0].third,
+                       "<method call argument list>");
     consume(tokens, Lexeme::open_paren);
     while ((*tokens).first != Lexeme::close_paren) {
         if (list.size()) consume(tokens, Lexeme::comma);
         list.push_back(Exp(tokens));
     }
     consume(tokens, Lexeme::close_paren);
+    guard.active = false;
     return make_unique<AST::ExpList>(
         AST::ExpListRule{std::move(list)});
 }
@@ -326,6 +343,7 @@ AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
                         AST::ptr<AST::Exp>&& lhs) {
     using std::make_unique;
     auto [lex, word, lc] = tokens[0];
+    ContextGuard guard(lc, "<expression>");
     switch (lex) {
     case Lexeme::and_operator: {
         consume(tokens, Lexeme::and_operator);
@@ -379,8 +397,10 @@ AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
         }
         break;
     default:
+        guard.active = false;
         return std::move(lhs);
     }
+    guard.active = false;
     return _Exp(tokens, std::move(lhs));
 }
 
@@ -388,6 +408,7 @@ template <typename istream>
 AST::ptr<AST::Exp> Exp(Lexer<istream>& tokens) {
     using std::make_unique;
     auto [lex, word, lc] = tokens[0];
+    ContextGuard guard(lc, "<expression>");
     AST::ptr<AST::Exp> lhs;
     switch (lex) {
     case Lexeme::integer_literal: {
@@ -442,6 +463,7 @@ AST::ptr<AST::Exp> Exp(Lexer<istream>& tokens) {
     default:
         throw Unexpected{lex};
     }
+    guard.active = false;
     return _Exp(tokens, std::move(lhs));
 }
 
