@@ -31,6 +31,24 @@ template <typename istream>
 AST::ptr<AST::ExpList> ExpList(Lexer<istream>&);
 template <typename istream> AST::ptr<AST::Stm> Stm(Lexer<istream>&);
 template <typename istream> AST::ptr<AST::Type> Type(Lexer<istream>&);
+template <typename istream>
+AST::ptr<AST::FormalList> FormalList(Lexer<istream>&);
+
+template <typename istream>
+AST::ptr<AST::FormalList> FormalList(Lexer<istream>& tokens) {
+    using std::make_unique;
+    consume(tokens, Lexeme::open_paren);
+    std::vector<AST::FormalDecl> list;
+    while ((*tokens).first != Lexeme::close_paren) {
+        auto type      = Type(tokens);
+        auto [_, word] = *tokens;
+        consume(tokens, Lexeme::identifier);
+        list.push_back(AST::FomalDecl{std::move(type), word});
+    }
+    consume(tokens, Lexeme::close_paren);
+    return make_unique<AST::FormalList>(
+        AST::FormalListRule{std::move(list)});
+}
 
 template <typename istream>
 AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
