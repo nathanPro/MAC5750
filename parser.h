@@ -54,7 +54,7 @@ AST::ptr<AST::FormalList> FormalList(Lexer<istream>& tokens) {
         if (list.size()) consume(tokens, Lexeme::comma);
         auto type = Type(tokens);
         auto word = consume(tokens, Lexeme::identifier);
-        list.push_back(AST::FomalDecl{std::move(type), word});
+        list.push_back(AST::FormalDecl{std::move(type), word});
     }
     consume(tokens, Lexeme::close_paren);
     return make_unique<AST::FormalList>(
