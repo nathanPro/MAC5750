@@ -157,7 +157,7 @@ template <typename It> Lexeme Trie::search(It q) const {
 
 template <typename istream>
 Lexer<istream>::Lexer(istream& _in, size_t _la)
-    : symbols(reserved_words), in(_in), lo(0), la(_la), lc(0), pos(0),
+    : symbols(reserved_words), in(_in), lo(0), la(_la), lc(1), pos(0),
       LA(la) {
     for (size_t i = 0; i < la; i++) LA[i] = advance();
 }
