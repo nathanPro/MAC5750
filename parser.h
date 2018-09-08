@@ -67,7 +67,7 @@ AST::ptr<AST::MainClass> MainClass(Lexer<istream>& tokens) {
     consume(tokens, Lexeme::static_keyword);
     consume(tokens, Lexeme::void_keyword);
     if (tokens[0].second != std::string("main"))
-        throw Unexpected{tokens[0]};
+        throw Unexpected{tokens[0].first};
     consume(tokens, Lexeme::identifier);
     consume(tokens, Lexeme::open_paren);
     consume(tokens, Lexeme::string_keyword);
@@ -114,8 +114,9 @@ AST::ptr<AST::ClassDecl> ClassDecl(Lexer<istream>& tokens) {
         return make_unique<AST::ClassDecl>(AST::ClassDeclInheritance{
             name, superclass, move(variables), move(methods)});
     else
-        return make_unique<AST::ClasDecl>(AST::ClassDeclNoInheritance{
-            name, move(variables), move(methods)});
+        return make_unique<AST::ClassDecl>(
+            AST::ClassDeclNoInheritance{name, move(variables),
+                                        move(methods)});
 }
 
 template <typename istream>
@@ -222,8 +223,6 @@ AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
 
 template <typename istream>
 AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
-    debug("calling Stm({", (*tokens).first, ":", (*tokens).second,
-          "})");
     using std::make_unique;
     auto [lex, word] = *tokens;
     AST::ptr<AST::Stm> ans;
@@ -292,8 +291,6 @@ AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
 
 template <typename istream>
 AST::ptr<AST::ExpList> ExpList(Lexer<istream>& tokens) {
-    debug("calling ExpList({", (*tokens).first, ":", (*tokens).second,
-          "})");
     using std::make_unique;
     auto list = std::vector<AST::__detail::pExp>();
     consume(tokens, Lexeme::open_paren);
@@ -302,7 +299,6 @@ AST::ptr<AST::ExpList> ExpList(Lexer<istream>& tokens) {
         list.push_back(Exp(tokens));
     }
     consume(tokens, Lexeme::close_paren);
-    debug("Finished ExpList");
     return make_unique<AST::ExpList>(
         AST::ExpListRule{std::move(list)});
 }
@@ -310,8 +306,6 @@ AST::ptr<AST::ExpList> ExpList(Lexer<istream>& tokens) {
 template <typename istream>
 AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
                         AST::ptr<AST::Exp>&& lhs) {
-    debug("calling _Exp({", (*tokens).first, ":", (*tokens).second,
-          "})");
     using std::make_unique;
     auto [lex, word] = *tokens;
     switch (lex) {
@@ -374,9 +368,6 @@ AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
 
 template <typename istream>
 AST::ptr<AST::Exp> Exp(Lexer<istream>& tokens) {
-    debug("calling Exp({", (*tokens).first, ":", (*tokens).second,
-          "})");
-    ;
     using std::make_unique;
     auto [lex, word] = *tokens;
     AST::ptr<AST::Exp> lhs;
