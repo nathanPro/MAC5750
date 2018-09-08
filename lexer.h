@@ -180,8 +180,8 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
     while (true) {
         if (lo == line.size()) {
             std::getline(in, line);
-            if (!in.good()) return {Lexeme::eof, std::string()};
             lo = 0;
+            if (!in.good()) return {Lexeme::eof, std::string()};
         }
         while (lo < line.size()) {
             while (lo < line.size() && isspace(line[lo])) lo++;
