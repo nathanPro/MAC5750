@@ -4,7 +4,7 @@
 int main() {
     auto lexer = Lexer(std::cin);
     try {
-        auto r = Parser::Exp(lexer);
+        auto r = Parser::Stm(lexer);
     } catch (Parser::UnexpectedEnd e) {
         write(std::cerr, "BCC Error: File ended abruptly");
         return 1;
@@ -14,7 +14,7 @@ int main() {
         return 1;
     } catch (Parser::MismatchError e) {
         write(std::cerr, "BCC Error: Mismatch: Expected", e.expected,
-              ", found", e.found);
+              "found", e.found);
         return 1;
     }
     return 0;

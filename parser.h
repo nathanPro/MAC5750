@@ -15,10 +15,6 @@ struct Unexpected {
 
 struct UnexpectedEnd {};
 
-template <typename istream> AST::ptr<AST::Exp> Exp(Lexer<istream>&);
-template <typename istream>
-AST::ptr<AST::ExpList> ExpList(Lexer<istream>&);
-
 template <typename istream>
 std::string consume(Lexer<istream>& tokens, Lexeme lex) {
     if (tokens.empty()) throw UnexpectedEnd{};
@@ -30,19 +26,93 @@ std::string consume(Lexer<istream>& tokens, Lexeme lex) {
         throw MismatchError{lex, (*tokens).first};
 }
 
+template <typename istream> AST::ptr<AST::Exp> Exp(Lexer<istream>&);
+template <typename istream>
+AST::ptr<AST::ExpList> ExpList(Lexer<istream>&);
+template <typename istream> AST::ptr<AST::Stm> Stm(Lexer<istream>&);
+
+template <typename istream>
+AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
+    debug("calling Stm({", (*tokens).first, ":", (*tokens).second,
+          "})");
+    using std::make_unique;
+    auto [lex, word] = *tokens;
+    AST::ptr<AST::Stm> ans;
+    switch (lex) {
+    case Lexeme::open_brace: {
+        std::vector<AST::__detail::pStm> list;
+        consume(tokens, Lexeme::open_brace);
+        while ((*tokens).first != Lexeme::close_brace)
+            list.push_back(Stm(tokens));
+        consume(tokens, Lexeme::close_brace);
+        ans = make_unique<AST::Stm>(AST::blockStm{std::move(list)});
+    } break;
+    case Lexeme::if_keyword: {
+        consume(tokens, Lexeme::if_keyword);
+        consume(tokens, Lexeme::open_paren);
+        auto cond = Exp(tokens);
+        consume(tokens, Lexeme::close_paren);
+        auto if_clause = Stm(tokens);
+        consume(tokens, Lexeme::else_keyword);
+        auto else_clause = Stm(tokens);
+        ans              = make_unique<AST::Stm>(
+            AST::ifStm{std::move(cond), std::move(if_clause),
+                       std::move(else_clause)});
+    } break;
+    case Lexeme::while_keyword: {
+        consume(tokens, Lexeme::while_keyword);
+        consume(tokens, Lexeme::open_paren);
+        auto cond = Exp(tokens);
+        consume(tokens, Lexeme::close_paren);
+        auto body = Stm(tokens);
+        ans       = make_unique<AST::Stm>(
+            AST::whileStm{std::move(cond), std::move(body)});
+    } break;
+    case Lexeme::println_keyword: {
+        consume(tokens, Lexeme::println_keyword);
+        consume(tokens, Lexeme::open_paren);
+        auto exp = Exp(tokens);
+        consume(tokens, Lexeme::close_paren);
+        consume(tokens, Lexeme::semicolon);
+        ans = make_unique<AST::Stm>(AST::printStm{std::move(exp)});
+    } break;
+    case Lexeme::identifier: {
+        consume(tokens, Lexeme::identifier);
+        if ((*tokens).first == Lexeme::equals_sign) {
+            consume(tokens, Lexeme::equals_sign);
+            auto exp = Exp(tokens);
+            consume(tokens, Lexeme::semicolon);
+            ans = make_unique<AST::Stm>(
+                AST::assignStm{word, std::move(exp)});
+        } else {
+            consume(tokens, Lexeme::open_bracket);
+            auto idx = Exp(tokens);
+            consume(tokens, Lexeme::close_bracket);
+            consume(tokens, Lexeme::equals_sign);
+            auto exp = Exp(tokens);
+            consume(tokens, Lexeme::semicolon);
+            ans = make_unique<AST::Stm>(AST::indexAssignStm{
+                word, std::move(idx), std::move(exp)});
+        }
+    } break;
+    default:
+        throw Unexpected{lex};
+    }
+    return ans;
+}
+
 template <typename istream>
 AST::ptr<AST::ExpList> ExpList(Lexer<istream>& tokens) {
     debug("calling ExpList({", (*tokens).first, ":", (*tokens).second,
           "})");
     using std::make_unique;
     auto list = std::vector<AST::__detail::pExp>();
-    auto exp  = Exp(tokens);
-    list.push_back(std::move(exp));
-    while ((*tokens).first == Lexeme::comma) {
-        consume(tokens, Lexeme::comma);
-        exp = Exp(tokens);
-        list.push_back(std::move(exp));
+    consume(tokens, Lexeme::open_paren);
+    while ((*tokens).first != Lexeme::close_paren) {
+        if (list.size()) consume(tokens, Lexeme::comma);
+        list.push_back(Exp(tokens));
     }
+    consume(tokens, Lexeme::close_paren);
     debug("Finished ExpList");
     return make_unique<AST::ExpList>(
         AST::ExpListRule{std::move(list)});
@@ -102,10 +172,8 @@ AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
         } else {
             word = (*tokens).second;
             consume(tokens, Lexeme::identifier);
-            consume(tokens, Lexeme::open_paren);
             auto args = ExpList(tokens);
-            consume(tokens, Lexeme::close_paren);
-            lhs = make_unique<AST::Exp>(AST::methodCallExp{
+            lhs       = make_unique<AST::Exp>(AST::methodCallExp{
                 std::move(lhs), word, std::move(args)});
         }
         break;
