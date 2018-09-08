@@ -35,6 +35,56 @@ template <typename istream>
 AST::ptr<AST::FormalList> FormalList(Lexer<istream>&);
 template <typename istream>
 AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>&);
+template <typename istream>
+AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>&);
+
+template <typename istream>
+AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>& tokens) {
+    using std::make_unique;
+    using std::move;
+    consume(tokens, Lexeme::public_keyword);
+    auto type = Type(tokens);
+    auto name = consume(tokens, Lexeme::identifier);
+    auto args = FormalList(tokens);
+    consume(tokens, Lexeme::open_brace);
+    std::vector<AST::__detail::pVarDecl> vars;
+
+    bool eating_vars = true;
+    while (eating_vars) {
+        switch (tokens[0].first) {
+        case Lexeme::boolean_keyword:
+        case Lexeme::int_keyword:
+            vars.push_back(VarDecl(tokens));
+            break;
+        case Lexeme::open_brace:
+        case Lexeme::if_keyword:
+        case Lexeme::while_keyword:
+        case Lexeme::println_keyword:
+        case Lexeme::return_keyword:
+            eating_vars = false;
+            break;
+        case Lexeme::identifier: {
+            if (tokens[1].first == Lexeme::identifier)
+                vars.push_back(VarDecl(tokens));
+            else
+                eating_vars = false;
+        } break;
+        default:
+            throw Unexpected{tokens[0].first};
+        }
+    }
+
+    std::vector<AST::__detail::pStm> body;
+    while (tokens[0].first != Lexeme::return_keyword)
+        body.push_back(Stm(tokens));
+    consume(tokens, Lexeme::return_keyword);
+    auto ret = Exp(tokens);
+    consume(tokens, Lexeme::semicolon);
+    consume(tokens, Lexeme::close_brace);
+    return make_unique<AST::MethodDecl>(
+        AST::MethodDeclRule{move(type), name, move(args), move(vars),
+                            move(body), move(ret)});
+}
 
 template <typename istream>
 AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>& tokens) {
