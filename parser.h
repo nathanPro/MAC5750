@@ -15,6 +15,10 @@ struct Unexpected {
 
 struct UnexpectedEnd {};
 
+template <typename istream> AST::ptr<AST::Exp> Exp(Lexer<istream>&);
+template <typename istream>
+AST::ptr<AST::ExpList> ExpList(Lexer<istream>&);
+
 template <typename istream>
 std::string consume(Lexer<istream>& tokens, Lexeme lex) {
     if (tokens.empty()) throw UnexpectedEnd{};
@@ -28,10 +32,21 @@ std::string consume(Lexer<istream>& tokens, Lexeme lex) {
 
 template <typename istream>
 AST::ptr<AST::ExpList> ExpList(Lexer<istream>& tokens) {
-    return {};
+    debug("calling ExpList({", (*tokens).first, ":", (*tokens).second,
+          "})");
+    using std::make_unique;
+    auto list = std::vector<AST::__detail::pExp>();
+    auto exp  = Exp(tokens);
+    list.push_back(std::move(exp));
+    while ((*tokens).first == Lexeme::comma) {
+        consume(tokens, Lexeme::comma);
+        exp = Exp(tokens);
+        list.push_back(std::move(exp));
+    }
+    debug("Finished ExpList");
+    return make_unique<AST::ExpList>(
+        AST::ExpListRule{std::move(list)});
 }
-
-template <typename istream> AST::ptr<AST::Exp> Exp(Lexer<istream>&);
 
 template <typename istream>
 AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
@@ -104,6 +119,7 @@ template <typename istream>
 AST::ptr<AST::Exp> Exp(Lexer<istream>& tokens) {
     debug("calling Exp({", (*tokens).first, ":", (*tokens).second,
           "})");
+    ;
     using std::make_unique;
     auto [lex, word] = *tokens;
     AST::ptr<AST::Exp> lhs;
