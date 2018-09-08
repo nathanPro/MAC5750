@@ -38,12 +38,41 @@ AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>&);
 template <typename istream>
 AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>&);
 template <typename istream>
-AST::ptr<AST::ClassDecl> MethodDecl(Lexer<istream>&);
+AST::ptr<AST::ClassDecl> ClassDecl(Lexer<istream>&);
+template <typename istream>
+AST::ptr<AST::MainClass> MainClass(Lexer<istream>&);
 
 template <typename istream>
-AST::ptr<AST::ClassDecl> MethodDecl(Lexer<istream>& tokens) {
+AST::ptr<AST::MainClass> MainClass(Lexer<istream>& tokens) {
+    using std::make_unique;
     using std::move;
-    using std::unique;
+    consume(tokens, Lexeme::class_keyword);
+    auto name = consume(tokens, Lexeme::identifier);
+    consume(tokens, Lexeme::open_brace);
+    consume(tokens, Lexeme::public_keyword);
+    consume(tokens, Lexeme::static_keyword);
+    consume(tokens, Lexeme::void_keyword);
+    if (tokens[0].second != std::string("main"))
+        throw Unexpected{tokens[0]};
+    consume(tokens, Lexeme::identifier);
+    consume(tokens, Lexeme::open_paren);
+    consume(tokens, Lexeme::string_keyword);
+    consume(tokens, Lexeme::open_bracket);
+    consume(tokens, Lexeme::close_bracket);
+    auto arg = consume(tokens, Lexeme::identifier);
+    consume(tokens, Lexeme::close_paren);
+    consume(tokens, Lexeme::open_brace);
+    auto body = Stm(tokens);
+    consume(tokens, Lexeme::close_brace);
+    consume(tokens, Lexeme::close_brace);
+    return make_unique<AST::MainClass>(
+        AST::MainClassRule{name, arg, move(body)});
+}
+
+template <typename istream>
+AST::ptr<AST::ClassDecl> ClassDecl(Lexer<istream>& tokens) {
+    using std::make_unique;
+    using std::move;
     consume(tokens, Lexeme::class_keyword);
     auto name = consume(tokens, Lexeme::identifier);
 
