@@ -123,7 +123,11 @@ class Trie {
 };
 
 template <typename istream> class Lexer {
-    using state = std::pair<Lexeme, std::string>;
+    struct state {
+        Lexeme first;
+        std::string second;
+        size_t third;
+    };
 
     Trie symbols;
     istream& in;
@@ -157,7 +161,7 @@ template <typename It> Lexeme Trie::search(It q) const {
 
 template <typename istream>
 Lexer<istream>::Lexer(istream& _in, size_t _la)
-    : symbols(reserved_words), in(_in), lo(0), la(_la), lc(1), pos(0),
+    : symbols(reserved_words), in(_in), lo(0), la(_la), lc(0), pos(0),
       LA(la) {
     for (size_t i = 0; i < la; i++) LA[i] = advance();
 }
@@ -182,7 +186,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
         if (lo == line.size()) {
             std::getline(in, line);
             lo = 0;
-            if (!in.good()) return {Lexeme::eof, std::string()};
+            if (!in.good()) return {Lexeme::eof, std::string(), lc};
             lc++;
         }
         while (lo < line.size()) {
@@ -201,7 +205,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
                     continue; // NON-OBVIOUS CONTROL FLOW
                 }
                 lo += word.size();
-                return {lex, word};
+                return {lex, word, lc};
             }
 
             if (isdigit(line[lo])) {
@@ -209,7 +213,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
                     consume([](char c) { return isdigit(c); });
                 std::string word(line, lo, hi - lo);
                 lo += word.size();
-                return {Lexeme::integer_literal, word};
+                return {Lexeme::integer_literal, word, lc};
             }
 
             if (isalpha(line[lo])) {
@@ -217,7 +221,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
                 auto lex = symbols.search(word.c_str());
                 if (lex == Lexeme::println_keyword) {
                     lo += 18;
-                    return {lex, word};
+                    return {lex, word, lc};
                 }
 
                 size_t hi = consume(
@@ -225,7 +229,7 @@ typename Lexer<istream>::state Lexer<istream>::advance() {
                 word = std::string(line, lo, hi - lo);
                 lex  = symbols.search(word.c_str());
                 lo += word.size();
-                return {lex, word};
+                return {lex, word, lc};
             }
             __builtin_unreachable();
         }
@@ -238,7 +242,7 @@ template <typename istream> bool Lexer<istream>::empty() const {
 
 template <typename istream>
 size_t Lexer<istream>::line_count() const {
-    return lc;
+    return LA[pos].third;
 }
 
 template <typename istream>
