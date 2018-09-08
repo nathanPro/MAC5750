@@ -37,6 +37,43 @@ template <typename istream>
 AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>&);
 template <typename istream>
 AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>&);
+template <typename istream>
+AST::ptr<AST::ClassDecl> MethodDecl(Lexer<istream>&);
+
+template <typename istream>
+AST::ptr<AST::ClassDecl> MethodDecl(Lexer<istream>& tokens) {
+    using std::move;
+    using std::unique;
+    consume(tokens, Lexeme::class_keyword);
+    auto name = consume(tokens, Lexeme::identifier);
+
+    bool has_superclass =
+        (tokens[0].first == Lexeme::extends_keyword);
+
+    std::string superclass;
+    if (has_superclass) {
+        consume(tokens, Lexeme::extends_keyword);
+        superclass = consume(tokens, Lexeme::identifier);
+    }
+
+    consume(tokens, Lexeme::open_brace);
+    std::vector<AST::__detail::pVarDecl> variables;
+    while (tokens[0].first != Lexeme::close_brace &&
+           tokens[0].first != Lexeme::public_keyword)
+        variables.push_back(VarDecl(tokens));
+
+    std::vector<AST::__detail::pMethodDecl> methods;
+    while (tokens[0].first != Lexeme::close_brace)
+        methods.push_back(MethodDecl(tokens));
+    consume(tokens, Lexeme::close_brace);
+
+    if (has_superclass)
+        return make_unique<AST::ClassDecl>(AST::ClassDeclInheritance{
+            name, superclass, move(variables), move(methods)});
+    else
+        return make_unique<AST::ClasDecl>(AST::ClassDeclNoInheritance{
+            name, move(variables), move(methods)});
+}
 
 template <typename istream>
 AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>& tokens) {
