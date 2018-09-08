@@ -30,6 +30,36 @@ template <typename istream> AST::ptr<AST::Exp> Exp(Lexer<istream>&);
 template <typename istream>
 AST::ptr<AST::ExpList> ExpList(Lexer<istream>&);
 template <typename istream> AST::ptr<AST::Stm> Stm(Lexer<istream>&);
+template <typename istream> AST::ptr<AST::Type> Type(Lexer<istream>&);
+
+template <typename istream>
+AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
+    using std::make_unique;
+    auto [lex, word] = *tokens;
+    AST::ptr<AST::Type> ans;
+    switch (lex) {
+    case Lexeme::boolean_keyword: {
+        consume(tokens, Lexeme::boolean_keyword);
+        ans = make_unique<AST::Type>(AST::booleanType{});
+    } break;
+    case Lexeme::identifier: {
+        consume(tokens, Lexeme::identifier);
+        ans = make_unique<AST::Type>(AST::classType{word});
+    } break;
+    case Lexeme::int_keyword: {
+        consume(tokens, Lexeme::int_keyword);
+        if ((*tokens).first == Lexeme::open_bracket) {
+            consume(tokens, Lexeme::open_bracket);
+            consume(tokens, Lexeme::close_bracket);
+            ans = make_unique<AST::Type>(AST::integerArrayType{});
+        } else
+            ans = make_unique<AST::Type>(AST::integerType{});
+    } break;
+    default:
+        throw Unexpected{lex};
+    }
+    return ans;
+}
 
 template <typename istream>
 AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
