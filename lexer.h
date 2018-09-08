@@ -72,7 +72,7 @@ enum class Lexeme {
     void_keyword,
     while_keyword,
 
-    coma,
+    comma,
     semicolon,
     period,
     bang,
