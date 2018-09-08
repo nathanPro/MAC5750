@@ -41,6 +41,20 @@ template <typename istream>
 AST::ptr<AST::ClassDecl> ClassDecl(Lexer<istream>&);
 template <typename istream>
 AST::ptr<AST::MainClass> MainClass(Lexer<istream>&);
+template <typename istream>
+AST::ptr<AST::Program> Program(Lexer<istream>&);
+
+template <typename istream>
+AST::ptr<AST::Program> Program(Lexer<istream>& tokens) {
+    using std::make_unique;
+    using std::move;
+    auto main = MainClass(tokens);
+    std::vector<AST::__detail::pClassDecl> classes;
+    while (tokens[0].first != Lexeme::eof)
+        classes.push_back(ClassDecl(tokens));
+    return make_unique<AST::Program>(
+        AST::ProgramRule{move(main), move(classes)});
+}
 
 template <typename istream>
 AST::ptr<AST::MainClass> MainClass(Lexer<istream>& tokens) {
