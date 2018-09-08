@@ -2,7 +2,7 @@
 #include "util.h"
 
 int main() {
-    auto lexer = Lexer(std::cin);
+    auto lexer = Lexer(std::cin, 2);
     try {
         auto r = Parser::Stm(lexer);
     } catch (Parser::UnexpectedEnd e) {
