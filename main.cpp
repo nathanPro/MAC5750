@@ -4,7 +4,7 @@
 int main() {
     auto lexer = Lexer(std::cin, 2);
     try {
-        auto r = Parser::Stm(lexer);
+        auto r = Parser::Program(lexer);
     } catch (Parser::UnexpectedEnd e) {
         write(std::cerr, "BCC Error: File ended abruptly");
         return 1;
