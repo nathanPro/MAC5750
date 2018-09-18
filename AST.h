@@ -1,5 +1,6 @@
 #include "grammar.h"
 #include "string"
+#include "util.h"
 #include <memory>
 #include <variant>
 #include <vector>
@@ -31,7 +32,10 @@ using pType       = ptr<Type>;
 using pVarDecl    = ptr<VarDecl>;
 } // namespace __detail
 
+using Node = Entity<struct NodeTag>;
+
 struct ProgramRule {
+    Node id;
     __detail::pMainClass main = nullptr;
     std::vector<__detail::pClassDecl> classes;
 };
@@ -41,6 +45,7 @@ struct Program : Grammar::Nonterminal<std::variant<ProgramRule>> {
 };
 
 struct MainClassRule {
+    Node id;
     std::string name;
     std::string argument;
     __detail::pStm body = nullptr;
@@ -51,12 +56,14 @@ struct MainClass : Grammar::Nonterminal<std::variant<MainClassRule>> {
 };
 
 struct ClassDeclNoInheritance {
+    Node id;
     std::string name;
     std::vector<__detail::pVarDecl> variables;
     std::vector<__detail::pMethodDecl> methods;
 };
 
 struct ClassDeclInheritance {
+    Node id;
     std::string name;
     std::string superclass;
     std::vector<__detail::pVarDecl> variables;
@@ -73,6 +80,7 @@ struct ClassDecl : Grammar::Nonterminal<std::variant<
 // clang-format on
 
 struct VarDeclRule {
+    Node id;
     __detail::pType type = nullptr;
     std::string name;
 };
@@ -82,6 +90,7 @@ struct VarDecl : Grammar::Nonterminal<std::variant<VarDeclRule>> {
 };
 
 struct MethodDeclRule {
+    Node id;
     __detail::pType type = nullptr;
     std::string name;
     __detail::pFormalList arguments;
@@ -96,11 +105,13 @@ struct MethodDecl
 };
 
 struct FormalDecl {
+    Node id;
     __detail::pType type = nullptr;
     std::string name;
 };
 
 struct FormalListRule {
+    Node id;
     std::vector<FormalDecl> decls;
 };
 
@@ -109,10 +120,17 @@ struct FormalList
     using Grammar::Nonterminal<FormalList::variant_t>::Nonterminal;
 };
 
-struct integerArrayType {};
-struct booleanType {};
-struct integerType {};
+struct integerArrayType {
+    Node id;
+};
+struct booleanType {
+    Node id;
+};
+struct integerType {
+    Node id;
+};
 struct classType {
+    Node id;
     std::string name;
 };
 
@@ -129,25 +147,31 @@ struct Type : Grammar::Nonterminal<std::variant<
 // clang-format on
 
 struct blockStm {
+    Node id;
     std::vector<__detail::pStm> statements;
 };
 struct ifStm {
+    Node id;
     __detail::pExp condition   = nullptr;
     __detail::pStm if_clause   = nullptr;
     __detail::pStm else_clause = nullptr;
 };
 struct whileStm {
+    Node id;
     __detail::pExp condition = nullptr;
     __detail::pStm body;
 };
 struct printStm {
+    Node id;
     __detail::pExp exp = nullptr;
 };
 struct assignStm {
+    Node id;
     std::string name;
     __detail::pExp value = nullptr;
 };
 struct indexAssignStm {
+    Node id;
     std::string array;
     __detail::pExp index = nullptr;
     __detail::pExp value = nullptr;
@@ -166,42 +190,56 @@ struct Stm : Grammar::Nonterminal<std::variant<
 };
 // clang-format on
 
-using andExp = Grammar::BinaryRule<struct andExpTag, __detail::pExp>;
+using andExp =
+    Grammar::BinaryRule<struct andExpTag, Node, __detail::pExp>;
 using lessExp =
-    Grammar::BinaryRule<struct lessExpTag, __detail::pExp>;
-using sumExp = Grammar::BinaryRule<struct sumExpTag, __detail::pExp>;
+    Grammar::BinaryRule<struct lessExpTag, Node, __detail::pExp>;
+using sumExp =
+    Grammar::BinaryRule<struct sumExpTag, Node, __detail::pExp>;
 using minusExp =
-    Grammar::BinaryRule<struct minusExpTag, __detail::pExp>;
+    Grammar::BinaryRule<struct minusExpTag, Node, __detail::pExp>;
 using prodExp =
-    Grammar::BinaryRule<struct prodExpTag, __detail::pExp>;
+    Grammar::BinaryRule<struct prodExpTag, Node, __detail::pExp>;
 struct indexingExp {
+    Node id;
     __detail::pExp array = nullptr;
     __detail::pExp index = nullptr;
 };
 using lengthExp =
-    Grammar::UnaryRule<struct lengthExpTag, __detail::pExp>;
+    Grammar::UnaryRule<struct lengthExpTag, Node, __detail::pExp>;
 struct methodCallExp {
+    Node id;
     __detail::pExp object = nullptr;
     std::string name;
     __detail::pExpList arguments = nullptr;
 };
 struct integerExp {
+    Node id;
     int32_t value;
 };
-struct trueExp {};
-struct falseExp {};
-struct thisExp {};
+struct trueExp {
+    Node id;
+};
+struct falseExp {
+    Node id;
+};
+struct thisExp {
+    Node id;
+};
 struct identifierExp {
+    Node id;
     std::string name;
 };
 using newArrayExp =
-    Grammar::UnaryRule<struct arrayExpTag, __detail::pExp>;
+    Grammar::UnaryRule<struct arrayExpTag, Node, __detail::pExp>;
 struct newObjectExp {
+    Node id;
     std::string name;
 };
-using bangExp = Grammar::UnaryRule<struct bangExpTag, __detail::pExp>;
+using bangExp =
+    Grammar::UnaryRule<struct bangExpTag, Node, __detail::pExp>;
 using parenExp =
-    Grammar::UnaryRule<struct parenExpTag, __detail::pExp>;
+    Grammar::UnaryRule<struct parenExpTag, Node, __detail::pExp>;
 
 // clang-format off
 struct Exp : Grammar::Nonterminal<std::variant<
@@ -228,6 +266,7 @@ struct Exp : Grammar::Nonterminal<std::variant<
 // clang-format on
 
 struct ExpListRule {
+    Node id;
     std::vector<__detail::pExp> exps;
 };
 

@@ -15,20 +15,28 @@ struct Unexpected {
 
 struct UnexpectedEnd {};
 
-template <typename istream>
-std::string consume(Lexer<istream>& tokens, Lexeme lex) {
-    if (tokens.empty()) throw UnexpectedEnd{};
-    if ((*tokens).first == lex) {
-        std::string ans = (*tokens).second;
-        ++tokens;
-        return ans;
-    } else {
-        write(std::cerr, "ERROR:");
-        std::cerr << "Expected '" << lex << "' and found '"
-                  << tokens[0].first << "'\n";
-        throw MismatchError{lex, tokens[0].first};
+template <typename istream> class Parser {
+    Lexer<istream> tokens;
+    AST::Node idx;
+
+  public:
+    Parser(istream& stream) : tokens(stream, 2), idx(0) {}
+    AST::Node make_id() { return ++idx; }
+    LexState operator[](int i) { return tokens[i]; }
+    std::string consume(Lexeme lex) {
+        if (tokens.empty()) throw UnexpectedEnd{};
+        if ((*tokens).first == lex) {
+            std::string ans = (*tokens).second;
+            ++tokens;
+            return ans;
+        } else {
+            write(std::cerr, "ERROR:");
+            std::cerr << "Expected '" << lex << "' and found '"
+                      << tokens[0].first << "'\n";
+            throw MismatchError{lex, tokens[0].first};
+        }
     }
-}
+};
 
 struct ContextGuard {
     size_t line;
@@ -62,102 +70,108 @@ template <typename istream>
 AST::ptr<AST::Program> Program(Lexer<istream>&);
 
 template <typename istream>
-AST::ptr<AST::Program> Program(Lexer<istream>& tokens) {
+AST::ptr<AST::Program> Program(Parser<istream>& parser) {
     using std::make_unique;
     using std::move;
-    auto main = MainClass(tokens);
+    auto main = MainClass(parser);
     std::vector<AST::__detail::pClassDecl> classes;
-    while (tokens[0].first != Lexeme::eof)
-        classes.push_back(ClassDecl(tokens));
-    return make_unique<AST::Program>(
-        AST::ProgramRule{move(main), move(classes)});
+    while (Lexeme(parser[0]) != Lexeme::eof)
+        classes.push_back(ClassDecl(parser));
+    return make_unique<AST::Program>(AST::ProgramRule{
+        parser.make_id(), move(main), move(classes)});
 }
 
 template <typename istream>
-AST::ptr<AST::MainClass> MainClass(Lexer<istream>& tokens) {
+AST::ptr<AST::MainClass> MainClass(Parser<istream>& parser) {
     using std::make_unique;
     using std::move;
-    ContextGuard guard(tokens[0].third, "<main class>");
-    consume(tokens, Lexeme::class_keyword);
-    auto name = consume(tokens, Lexeme::identifier);
-    consume(tokens, Lexeme::open_brace);
-    consume(tokens, Lexeme::public_keyword);
-    consume(tokens, Lexeme::static_keyword);
-    consume(tokens, Lexeme::void_keyword);
-    if (tokens[0].second != std::string("main"))
-        throw Unexpected{tokens[0].first};
-    consume(tokens, Lexeme::identifier);
-    consume(tokens, Lexeme::open_paren);
-    consume(tokens, Lexeme::string_keyword);
-    consume(tokens, Lexeme::open_bracket);
-    consume(tokens, Lexeme::close_bracket);
-    auto arg = consume(tokens, Lexeme::identifier);
-    consume(tokens, Lexeme::close_paren);
-    consume(tokens, Lexeme::open_brace);
-    auto body = Stm(tokens);
-    consume(tokens, Lexeme::close_brace);
-    consume(tokens, Lexeme::close_brace);
+
+    ContextGuard guard(parser[0].third, "<main class>");
+    parser.consume(Lexeme::class_keyword);
+    auto name = parser.consume(Lexeme::identifier);
+    parser.consume(Lexeme::open_brace);
+    parser.consume(Lexeme::public_keyword);
+    parser.consume(Lexeme::static_keyword);
+    parser.consume(Lexeme::void_keyword);
+    if (parser[0].second != std::string("main"))
+        throw Unexpected{Lexeme(parser[0])};
+    parser.consume(Lexeme::identifier);
+    parser.consume(Lexeme::open_paren);
+    parser.consume(Lexeme::string_keyword);
+    parser.consume(Lexeme::open_bracket);
+    parser.consume(Lexeme::close_bracket);
+    auto arg = parser.consume(Lexeme::identifier);
+    parser.consume(Lexeme::close_paren);
+    parser.consume(Lexeme::open_brace);
+    auto body = Stm(parser);
+    parser.consume(Lexeme::close_brace);
+    parser.consume(Lexeme::close_brace);
     guard.active = false;
     return make_unique<AST::MainClass>(
-        AST::MainClassRule{name, arg, move(body)});
+        AST::MainClassRule{parser.make_id(), name, arg, move(body)});
 }
 
 template <typename istream>
-AST::ptr<AST::ClassDecl> ClassDecl(Lexer<istream>& tokens) {
+AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>& parser) {
     using std::make_unique;
     using std::move;
-    ContextGuard guard(tokens[0].third, "<class>");
-    consume(tokens, Lexeme::class_keyword);
-    auto name = consume(tokens, Lexeme::identifier);
+
+    ContextGuard guard(parser[0].third, "<class>");
+    parser.consume(Lexeme::class_keyword);
+    auto name = parser.consume(Lexeme::identifier);
 
     bool has_superclass =
-        (tokens[0].first == Lexeme::extends_keyword);
+        (Lexeme(parser[0]) == Lexeme::extends_keyword);
 
     std::string superclass;
     if (has_superclass) {
-        consume(tokens, Lexeme::extends_keyword);
-        superclass = consume(tokens, Lexeme::identifier);
+        parser.consume(Lexeme::extends_keyword);
+        superclass = parser.consume(Lexeme::identifier);
     }
 
-    consume(tokens, Lexeme::open_brace);
+    parser.consume(Lexeme::open_brace);
     std::vector<AST::__detail::pVarDecl> variables;
-    while (tokens[0].first != Lexeme::close_brace &&
-           tokens[0].first != Lexeme::public_keyword)
-        variables.push_back(VarDecl(tokens));
+    while (Lexeme(parser[0]) != Lexeme::close_brace &&
+           Lexeme(parser[0]) != Lexeme::public_keyword)
+        variables.push_back(VarDecl(parser));
 
     std::vector<AST::__detail::pMethodDecl> methods;
-    while (tokens[0].first != Lexeme::close_brace)
-        methods.push_back(MethodDecl(tokens));
-    consume(tokens, Lexeme::close_brace);
+    while (Lexeme(parser[0]) != Lexeme::close_brace)
+        methods.push_back(MethodDecl(parser));
+    parser.consume(Lexeme::close_brace);
 
     guard.active = false;
     if (has_superclass)
         return make_unique<AST::ClassDecl>(AST::ClassDeclInheritance{
-            name, superclass, move(variables), move(methods)});
+            parser.make_id(), name, superclass, move(variables),
+            move(methods)});
     else
         return make_unique<AST::ClassDecl>(
-            AST::ClassDeclNoInheritance{name, move(variables),
+            AST::ClassDeclNoInheritance{parser.make_id(), name,
+                                        move(variables),
                                         move(methods)});
 }
 
 template <typename istream>
-AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>& tokens) {
+AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>& parser) {
     using std::make_unique;
     using std::move;
-    ContextGuard guard(tokens[0].third, "<method declaration>");
-    consume(tokens, Lexeme::public_keyword);
-    auto type = Type(tokens);
-    auto name = consume(tokens, Lexeme::identifier);
-    auto args = FormalList(tokens);
-    consume(tokens, Lexeme::open_brace);
+
+    ContextGuard guard(parser[0].third, "<method declaration>");
+    parser.consume(Lexeme::public_keyword);
+    auto type = Type(parser);
+    auto name = parser.consume(Lexeme::identifier);
+    auto args = FormalList(parser);
+    parser.consume(Lexeme::open_brace);
+
     std::vector<AST::__detail::pVarDecl> vars;
 
     bool eating_vars = true;
     while (eating_vars) {
-        switch (tokens[0].first) {
+        switch (Lexeme(parser[0])) {
         case Lexeme::boolean_keyword:
         case Lexeme::int_keyword:
-            vars.push_back(VarDecl(tokens));
+            vars.push_back(VarDecl(parser));
             break;
         case Lexeme::open_brace:
         case Lexeme::if_keyword:
@@ -167,82 +181,90 @@ AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>& tokens) {
             eating_vars = false;
             break;
         case Lexeme::identifier: {
-            if (tokens[1].first == Lexeme::identifier)
-                vars.push_back(VarDecl(tokens));
+            if (Lexeme(parser[1]) == Lexeme::identifier)
+                vars.push_back(VarDecl(parser));
             else
                 eating_vars = false;
         } break;
         default:
-            throw Unexpected{tokens[0].first};
+            throw Unexpected{Lexeme(parser[0])};
         }
     }
 
     std::vector<AST::__detail::pStm> body;
-    while (tokens[0].first != Lexeme::return_keyword)
-        body.push_back(Stm(tokens));
-    consume(tokens, Lexeme::return_keyword);
-    auto ret = Exp(tokens);
-    consume(tokens, Lexeme::semicolon);
-    consume(tokens, Lexeme::close_brace);
+    while (Lexeme(parser[0]) != Lexeme::return_keyword)
+        body.push_back(Stm(parser));
+    parser.consume(Lexeme::return_keyword);
+    auto ret = Exp(parser);
+    parser.consume(Lexeme::semicolon);
+    parser.consume(Lexeme::close_brace);
     guard.active = false;
-    return make_unique<AST::MethodDecl>(
-        AST::MethodDeclRule{move(type), name, move(args), move(vars),
-                            move(body), move(ret)});
+    return make_unique<AST::MethodDecl>(AST::MethodDeclRule{
+        parser.make_id(), move(type), name, move(args), move(vars),
+        move(body), move(ret)});
 }
 
 template <typename istream>
-AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>& tokens) {
-    ContextGuard guard(tokens[0].third, "<variable declaration>");
-    auto type = Type(tokens);
-    auto word = consume(tokens, Lexeme::identifier);
-    consume(tokens, Lexeme::semicolon);
+AST::ptr<AST::VarDecl> VarDecl(Parser<istream>& parser) {
+    ContextGuard guard(parser[0].third, "<variable declaration>");
+    auto type = Type(parser);
+    auto word = parser.consume(Lexeme::identifier);
+    parser.consume(Lexeme::semicolon);
     guard.active = false;
     return std::make_unique<AST::VarDecl>(
-        AST::VarDeclRule{std::move(type), word});
+        AST::VarDeclRule{parser.make_id(), std::move(type), word});
 }
 
 template <typename istream>
-AST::ptr<AST::FormalList> FormalList(Lexer<istream>& tokens) {
+AST::ptr<AST::FormalList> FormalList(Parser<istream>& parser) {
     using std::make_unique;
-    ContextGuard guard(tokens[0].third,
+    using std::move;
+
+    ContextGuard guard(parser[0].third,
                        "<method declaration argument list>");
-    consume(tokens, Lexeme::open_paren);
+    parser.consume(Lexeme::open_paren);
     std::vector<AST::FormalDecl> list;
-    while ((*tokens).first != Lexeme::close_paren) {
-        if (list.size()) consume(tokens, Lexeme::comma);
-        auto type = Type(tokens);
-        auto word = consume(tokens, Lexeme::identifier);
-        list.push_back(AST::FormalDecl{std::move(type), word});
+    while (Lexeme(parser[0]) != Lexeme::close_paren) {
+        if (list.size()) parser.consume(Lexeme::comma);
+        auto type = Type(parser);
+        auto word = parser.consume(Lexeme::identifier);
+        list.push_back(
+            AST::FormalDecl{parser.make_id(), move(type), word});
     }
-    consume(tokens, Lexeme::close_paren);
+    parser.consume(Lexeme::close_paren);
     guard.active = false;
     return make_unique<AST::FormalList>(
-        AST::FormalListRule{std::move(list)});
+        AST::FormalListRule{parser.make_id(), move(list)});
 }
 
 template <typename istream>
-AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
+AST::ptr<AST::Type> Type(Parser<istream>& parser) {
     using std::make_unique;
-    auto [lex, word, lc] = tokens[0];
+
+    auto [lex, word, lc] = parser[0];
     ContextGuard guard(lc, "<type>");
     AST::ptr<AST::Type> ans;
     switch (lex) {
     case Lexeme::boolean_keyword: {
-        consume(tokens, Lexeme::boolean_keyword);
-        ans = make_unique<AST::Type>(AST::booleanType{});
+        parser.consume(Lexeme::boolean_keyword);
+        ans = make_unique<AST::Type>(
+            AST::booleanType{parser.make_id()});
     } break;
     case Lexeme::identifier: {
-        consume(tokens, Lexeme::identifier);
-        ans = make_unique<AST::Type>(AST::classType{word});
+        parser.consume(Lexeme::identifier);
+        ans = make_unique<AST::Type>(
+            AST::classType{parser.make_id(), word});
     } break;
     case Lexeme::int_keyword: {
-        consume(tokens, Lexeme::int_keyword);
-        if ((*tokens).first == Lexeme::open_bracket) {
-            consume(tokens, Lexeme::open_bracket);
-            consume(tokens, Lexeme::close_bracket);
-            ans = make_unique<AST::Type>(AST::integerArrayType{});
+        parser.consume(Lexeme::int_keyword);
+        if (Lexeme(parser[0]) == Lexeme::open_bracket) {
+            parser.consume(Lexeme::open_bracket);
+            parser.consume(Lexeme::close_bracket);
+            ans = make_unique<AST::Type>(
+                AST::integerArrayType{parser.make_id()});
         } else
-            ans = make_unique<AST::Type>(AST::integerType{});
+            ans = make_unique<AST::Type>(
+                AST::integerType{parser.make_id()});
     } break;
     default:
         throw Unexpected{lex};
@@ -252,66 +274,70 @@ AST::ptr<AST::Type> Type(Lexer<istream>& tokens) {
 }
 
 template <typename istream>
-AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
+AST::ptr<AST::Stm> Stm(Parser<istream>& parser) {
     using std::make_unique;
-    auto [lex, word, lc] = tokens[0];
+    using std::move;
+
+    auto [lex, word, lc] = parser[0];
     ContextGuard guard(lc, "<statement>");
     AST::ptr<AST::Stm> ans;
     switch (lex) {
     case Lexeme::open_brace: {
         std::vector<AST::__detail::pStm> list;
-        consume(tokens, Lexeme::open_brace);
-        while ((*tokens).first != Lexeme::close_brace)
-            list.push_back(Stm(tokens));
-        consume(tokens, Lexeme::close_brace);
-        ans = make_unique<AST::Stm>(AST::blockStm{std::move(list)});
+        parser.consume(Lexeme::open_brace);
+        while (Lexeme(parser[0]) != Lexeme::close_brace)
+            list.push_back(Stm(parser));
+        parser.consume(Lexeme::close_brace);
+        ans = make_unique<AST::Stm>(
+            AST::blockStm{parser.make_id(), move(list)});
     } break;
     case Lexeme::if_keyword: {
-        consume(tokens, Lexeme::if_keyword);
-        consume(tokens, Lexeme::open_paren);
-        auto cond = Exp(tokens);
-        consume(tokens, Lexeme::close_paren);
-        auto if_clause = Stm(tokens);
-        consume(tokens, Lexeme::else_keyword);
-        auto else_clause = Stm(tokens);
+        parser.consume(Lexeme::if_keyword);
+        parser.consume(Lexeme::open_paren);
+        auto cond = Exp(parser);
+        parser.consume(Lexeme::close_paren);
+        auto if_clause = Stm(parser);
+        parser.consume(Lexeme::else_keyword);
+        auto else_clause = Stm(parser);
         ans              = make_unique<AST::Stm>(
-            AST::ifStm{std::move(cond), std::move(if_clause),
-                       std::move(else_clause)});
+            AST::ifStm{parser.make_id(), move(cond), move(if_clause),
+                       move(else_clause)});
     } break;
     case Lexeme::while_keyword: {
-        consume(tokens, Lexeme::while_keyword);
-        consume(tokens, Lexeme::open_paren);
-        auto cond = Exp(tokens);
-        consume(tokens, Lexeme::close_paren);
-        auto body = Stm(tokens);
+        parser.consume(Lexeme::while_keyword);
+        parser.consume(Lexeme::open_paren);
+        auto cond = Exp(parser);
+        parser.consume(Lexeme::close_paren);
+        auto body = Stm(parser);
         ans       = make_unique<AST::Stm>(
-            AST::whileStm{std::move(cond), std::move(body)});
+            AST::whileStm{parser.make_id(), move(cond), move(body)});
     } break;
     case Lexeme::println_keyword: {
-        consume(tokens, Lexeme::println_keyword);
-        consume(tokens, Lexeme::open_paren);
-        auto exp = Exp(tokens);
-        consume(tokens, Lexeme::close_paren);
-        consume(tokens, Lexeme::semicolon);
-        ans = make_unique<AST::Stm>(AST::printStm{std::move(exp)});
+        parser.consume(Lexeme::println_keyword);
+        parser.consume(Lexeme::open_paren);
+        auto exp = Exp(parser);
+        parser.consume(Lexeme::close_paren);
+        parser.consume(Lexeme::semicolon);
+        ans = make_unique<AST::Stm>(
+            AST::printStm{parser.make_id(), move(exp)});
     } break;
     case Lexeme::identifier: {
-        consume(tokens, Lexeme::identifier);
-        if ((*tokens).first == Lexeme::equals_sign) {
-            consume(tokens, Lexeme::equals_sign);
-            auto exp = Exp(tokens);
-            consume(tokens, Lexeme::semicolon);
+        parser.consume(Lexeme::identifier);
+        if (Lexeme(parser[0]) == Lexeme::equals_sign) {
+            parser.consume(Lexeme::equals_sign);
+            auto exp = Exp(parser);
+            parser.consume(Lexeme::semicolon);
             ans = make_unique<AST::Stm>(
-                AST::assignStm{word, std::move(exp)});
+                AST::assignStm{parser.make_id(), word, move(exp)});
         } else {
-            consume(tokens, Lexeme::open_bracket);
-            auto idx = Exp(tokens);
-            consume(tokens, Lexeme::close_bracket);
-            consume(tokens, Lexeme::equals_sign);
-            auto exp = Exp(tokens);
-            consume(tokens, Lexeme::semicolon);
+            parser.consume(Lexeme::open_bracket);
+            auto idx = Exp(parser);
+            parser.consume(Lexeme::close_bracket);
+            parser.consume(Lexeme::equals_sign);
+            auto exp = Exp(parser);
+            parser.consume(Lexeme::semicolon);
             ans = make_unique<AST::Stm>(AST::indexAssignStm{
-                word, std::move(idx), std::move(exp)});
+                parser.make_id(), word, move(idx), move(exp)});
         }
     } break;
     default:
@@ -322,149 +348,160 @@ AST::ptr<AST::Stm> Stm(Lexer<istream>& tokens) {
 }
 
 template <typename istream>
-AST::ptr<AST::ExpList> ExpList(Lexer<istream>& tokens) {
+AST::ptr<AST::ExpList> ExpList(Parser<istream>& parser) {
     using std::make_unique;
+    using std::move;
+
     std::vector<AST::__detail::pExp> list;
-    ContextGuard guard(tokens[0].third,
+    ContextGuard guard(parser[0].third,
                        "<method call argument list>");
-    consume(tokens, Lexeme::open_paren);
-    while ((*tokens).first != Lexeme::close_paren) {
-        if (list.size()) consume(tokens, Lexeme::comma);
-        list.push_back(Exp(tokens));
+    parser.consume(Lexeme::open_paren);
+    while (Lexeme(parser[0]) != Lexeme::close_paren) {
+        if (list.size()) parser.consume(Lexeme::comma);
+        list.push_back(Exp(parser));
     }
-    consume(tokens, Lexeme::close_paren);
+    parser.consume(Lexeme::close_paren);
     guard.active = false;
     return make_unique<AST::ExpList>(
-        AST::ExpListRule{std::move(list)});
+        AST::ExpListRule{parser.make_id(), move(list)});
 }
 
 template <typename istream>
-AST::ptr<AST::Exp> _Exp(Lexer<istream>& tokens,
+AST::ptr<AST::Exp> _Exp(Parser<istream>& parser,
                         AST::ptr<AST::Exp>&& lhs) {
     using std::make_unique;
-    auto [lex, word, lc] = tokens[0];
+    using std::move;
+
+    auto [lex, word, lc] = parser[0];
     ContextGuard guard(lc, "<expression>");
     switch (lex) {
     case Lexeme::and_operator: {
-        consume(tokens, Lexeme::and_operator);
-        auto rhs = Exp(tokens);
+        parser.consume(Lexeme::and_operator);
+        auto rhs = Exp(parser);
         lhs      = make_unique<AST::Exp>(
-            AST::andExp{std::move(lhs), std::move(rhs)});
+            AST::andExp{parser.make_id(), move(lhs), move(rhs)});
     } break;
     case Lexeme::less_operator: {
-        consume(tokens, Lexeme::less_operator);
-        auto rhs = Exp(tokens);
+        parser.consume(Lexeme::less_operator);
+        auto rhs = Exp(parser);
         lhs      = make_unique<AST::Exp>(
-            AST::lessExp{std::move(lhs), std::move(rhs)});
+            AST::lessExp{parser.make_id(), move(lhs), move(rhs)});
     } break;
     case Lexeme::plus_operator: {
-        consume(tokens, Lexeme::plus_operator);
-        auto rhs = Exp(tokens);
+        parser.consume(Lexeme::plus_operator);
+        auto rhs = Exp(parser);
         lhs      = make_unique<AST::Exp>(
-            AST::sumExp{std::move(lhs), std::move(rhs)});
+            AST::sumExp{parser.make_id(), move(lhs), move(rhs)});
     } break;
     case Lexeme::minus_operator: {
-        consume(tokens, Lexeme::minus_operator);
-        auto rhs = Exp(tokens);
+        parser.consume(Lexeme::minus_operator);
+        auto rhs = Exp(parser);
         lhs      = make_unique<AST::Exp>(
-            AST::minusExp{std::move(lhs), std::move(rhs)});
+            AST::minusExp{parser.make_id(), move(lhs), move(rhs)});
     } break;
     case Lexeme::times_operator: {
-        consume(tokens, Lexeme::times_operator);
-        auto rhs = Exp(tokens);
+        parser.consume(Lexeme::times_operator);
+        auto rhs = Exp(parser);
         lhs      = make_unique<AST::Exp>(
-            AST::prodExp{std::move(lhs), std::move(rhs)});
+            AST::prodExp{parser.make_id(), move(lhs), move(rhs)});
     } break;
     case Lexeme::open_bracket: {
-        consume(tokens, Lexeme::open_bracket);
-        auto index = Exp(tokens);
-        consume(tokens, Lexeme::close_bracket);
-        lhs = make_unique<AST::Exp>(
-            AST::indexingExp{std::move(lhs), std::move(index)});
+        parser.consume(Lexeme::open_bracket);
+        auto index = Exp(parser);
+        parser.consume(Lexeme::close_bracket);
+        lhs = make_unique<AST::Exp>(AST::indexingExp{
+            parser.make_id(), move(lhs), move(index)});
     } break;
     case Lexeme::period:
-        consume(tokens, Lexeme::period);
-        if ((*tokens).first == Lexeme::lenght_keyword) {
-            consume(tokens, Lexeme::lenght_keyword);
-            lhs =
-                make_unique<AST::Exp>(AST::lengthExp{std::move(lhs)});
+        parser.consume(Lexeme::period);
+        if (Lexeme(parser[0]) == Lexeme::lenght_keyword) {
+            parser.consume(Lexeme::lenght_keyword);
+            lhs = make_unique<AST::Exp>(
+                AST::lengthExp{parser.make_id(), move(lhs)});
         } else {
-            word = (*tokens).second;
-            consume(tokens, Lexeme::identifier);
-            auto args = ExpList(tokens);
+            word = parser[0].second;
+            parser.consume(Lexeme::identifier);
+            auto args = ExpList(parser);
             lhs       = make_unique<AST::Exp>(AST::methodCallExp{
-                std::move(lhs), word, std::move(args)});
+                parser.make_id(), move(lhs), word, move(args)});
         }
         break;
     default:
         guard.active = false;
-        return std::move(lhs);
+        return move(lhs);
     }
     guard.active = false;
-    return _Exp(tokens, std::move(lhs));
+    return _Exp(parser, move(lhs));
 }
 
 template <typename istream>
-AST::ptr<AST::Exp> Exp(Lexer<istream>& tokens) {
+AST::ptr<AST::Exp> Exp(Parser<istream>& parser) {
     using std::make_unique;
-    auto [lex, word, lc] = tokens[0];
+    using std::move;
+
+    auto [lex, word, lc] = parser[0];
     ContextGuard guard(lc, "<expression>");
     AST::ptr<AST::Exp> lhs;
     switch (lex) {
     case Lexeme::integer_literal: {
-        consume(tokens, Lexeme::integer_literal);
+        parser.consume(Lexeme::integer_literal);
         auto value = std::stoi(word);
-        lhs        = make_unique<AST::Exp>(AST::integerExp{value});
+        lhs        = make_unique<AST::Exp>(
+            AST::integerExp{parser.make_id(), value});
     } break;
     case Lexeme::true_keyword: {
-        consume(tokens, Lexeme::true_keyword);
-        lhs = make_unique<AST::Exp>(AST::trueExp{});
+        parser.consume(Lexeme::true_keyword);
+        lhs = make_unique<AST::Exp>(AST::trueExp{parser.make_id()});
     } break;
     case Lexeme::false_keyword: {
-        consume(tokens, Lexeme::false_keyword);
-        lhs = make_unique<AST::Exp>(AST::falseExp{});
+        parser.consume(Lexeme::false_keyword);
+        lhs = make_unique<AST::Exp>(AST::falseExp{parser.make_id()});
     } break;
     case Lexeme::identifier: {
-        consume(tokens, Lexeme::identifier);
-        lhs = make_unique<AST::Exp>(AST::identifierExp{word});
+        parser.consume(Lexeme::identifier);
+        lhs = make_unique<AST::Exp>(
+            AST::identifierExp{parser.make_id(), word});
     } break;
     case Lexeme::this_keyword: {
-        consume(tokens, Lexeme::this_keyword);
-        lhs = make_unique<AST::Exp>(AST::thisExp{});
+        parser.consume(Lexeme::this_keyword);
+        lhs = make_unique<AST::Exp>(AST::thisExp{parser.make_id()});
     } break;
     case Lexeme::new_keyword: {
-        consume(tokens, Lexeme::new_keyword);
-        if ((*tokens).first == Lexeme::int_keyword) {
-            consume(tokens, Lexeme::int_keyword);
-            consume(tokens, Lexeme::open_bracket);
-            auto index = Exp(tokens);
-            consume(tokens, Lexeme::close_bracket);
+        parser.consume(Lexeme::new_keyword);
+        if (Lexeme(parser[0]) == Lexeme::int_keyword) {
+            parser.consume(Lexeme::int_keyword);
+            parser.consume(Lexeme::open_bracket);
+            auto index = Exp(parser);
+            parser.consume(Lexeme::close_bracket);
             lhs = make_unique<AST::Exp>(
-                AST::newArrayExp{std::move(index)});
+                AST::newArrayExp{parser.make_id(), move(index)});
         } else {
-            std::string name = (*tokens).second;
-            consume(tokens, Lexeme::identifier);
-            consume(tokens, Lexeme::open_paren);
-            consume(tokens, Lexeme::close_paren);
-            lhs = make_unique<AST::Exp>(AST::newObjectExp{name});
+            std::string name = parser[0].second;
+            parser.consume(Lexeme::identifier);
+            parser.consume(Lexeme::open_paren);
+            parser.consume(Lexeme::close_paren);
+            lhs = make_unique<AST::Exp>(
+                AST::newObjectExp{parser.make_id(), name});
         }
     } break;
     case Lexeme::bang: {
-        consume(tokens, Lexeme::bang);
-        auto exp = Exp(tokens);
-        lhs = make_unique<AST::Exp>(AST::bangExp{std::move(exp)});
+        parser.consume(Lexeme::bang);
+        auto exp = Exp(parser);
+        lhs      = make_unique<AST::Exp>(
+            AST::bangExp{parser.make_id(), move(exp)});
     } break;
     case Lexeme::open_paren: {
-        consume(tokens, Lexeme::open_paren);
-        auto exp = Exp(tokens);
-        consume(tokens, Lexeme::close_paren);
-        lhs = make_unique<AST::Exp>(AST::parenExp{std::move(exp)});
+        parser.consume(Lexeme::open_paren);
+        auto exp = Exp(parser);
+        parser.consume(Lexeme::close_paren);
+        lhs = make_unique<AST::Exp>(
+            AST::parenExp{parser.make_id(), move(exp)});
     } break;
     default:
         throw Unexpected{lex};
     }
     guard.active = false;
-    return _Exp(tokens, std::move(lhs));
+    return _Exp(parser, move(lhs));
 }
 
 } // namespace Parser

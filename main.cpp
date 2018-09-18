@@ -2,9 +2,9 @@
 #include "util.h"
 
 int main() {
-    auto lexer = Lexer(std::cin, 2);
+    auto parser = Parser::Parser(std::cin);
     try {
-        auto r = Parser::Program(lexer);
+        auto r = Parser::Program(parser);
     } catch (...) {}
     return 0;
 }

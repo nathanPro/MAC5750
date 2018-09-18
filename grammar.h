@@ -5,17 +5,30 @@
 #include <utility>
 #include <variant>
 
+template <typename T> class Entity {
+    uint32_t tag;
+
+  public:
+    explicit Entity(uint32_t val) : tag(val) {}
+    explicit operator uint32_t() { return tag; }
+    Entity operator++() { return Entity(1 + tag); }
+};
+
 namespace Grammar {
-template <typename tag, typename PtrL, typename PtrR = PtrL>
+template <typename TAG, typename Entity, typename PtrL,
+          typename PtrR = PtrL>
 struct BinaryRule {
     using E = typename std::pointer_traits<PtrL>::pointer;
     using F = typename std::pointer_traits<PtrR>::pointer;
-    E lhs   = nullptr;
-    F rhs   = nullptr;
+    Entity id;
+    E lhs = nullptr;
+    F rhs = nullptr;
 };
 
-template <typename tag, typename Ptr> struct UnaryRule {
+template <typename TAG, typename Entity, typename Ptr>
+struct UnaryRule {
     using E = typename std::pointer_traits<Ptr>::pointer;
+    Entity id;
     E inner = nullptr;
 };
 
@@ -38,7 +51,6 @@ template <class Visitor, class Nonterminal>
 constexpr auto visit(Visitor&& vis, Nonterminal&& nt) {
     return std::visit(std::forward<Visitor>(vis), nt.__content);
 }
-
 
 template <typename Alternative, class Nonterminal>
 constexpr const Alternative& get(Nonterminal&& nt) {
