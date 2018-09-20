@@ -370,30 +370,24 @@ AST::ptr<AST::ExpList> ExpList(Parser<istream>& parser) {
 template <typename istream>
 AST::ptr<AST::Exp> _Exp(Parser<istream>& parser,
                         AST::ptr<AST::Exp>&& lhs) {
-    auto [lex, word, lc] = parser[0];
     Builder<AST::ptr<AST::Exp>> builder(parser.make_id());
     builder.keep(std::move(lhs));
-    switch (lex) {
+    switch (Lexeme(parser[0])) {
     case Lexeme::and_operator:
         parser.consume(Lexeme::and_operator);
-        builder.keep(Exp(parser));
-        return _Exp(parser, builder.andExp());
+        return _Exp(parser, builder.keep(Exp(parser)).andExp());
     case Lexeme::less_operator:
         parser.consume(Lexeme::less_operator);
-        builder.keep(Exp(parser));
-        return _Exp(parser, builder.lessExp());
+        return _Exp(parser, builder.keep(Exp(parser)).lessExp());
     case Lexeme::plus_operator:
         parser.consume(Lexeme::plus_operator);
-        builder.keep(Exp(parser));
-        return _Exp(parser, builder.sumExp());
+        return _Exp(parser, builder.keep(Exp(parser)).sumExp());
     case Lexeme::minus_operator:
         parser.consume(Lexeme::minus_operator);
-        builder.keep(Exp(parser));
-        return _Exp(parser, builder.minusExp());
+        return _Exp(parser, builder.keep(Exp(parser)).minusExp());
     case Lexeme::times_operator:
         parser.consume(Lexeme::times_operator);
-        builder.keep(Exp(parser));
-        return _Exp(parser, builder.prodExp());
+        return _Exp(parser, builder.keep(Exp(parser)).prodExp());
     case Lexeme::open_bracket:
         parser.consume(Lexeme::open_bracket);
         builder.keep(Exp(parser));
@@ -404,26 +398,25 @@ AST::ptr<AST::Exp> _Exp(Parser<istream>& parser,
         if (Lexeme(parser[0]) == Lexeme::lenght_keyword) {
             parser.consume(Lexeme::lenght_keyword);
             return _Exp(parser, builder.lengthExp());
-        } else {
-            builder.keep(parser[0].second);
-            parser.consume(Lexeme::identifier);
-            builder.keep(ExpList(parser));
-            return _Exp(parser, builder.methodCallExp());
         }
+        return _Exp(parser,
+                    builder.keep(parser.consume(Lexeme::identifier))
+                        .keep(ExpList(parser))
+                        .methodCallExp());
     default:
         return builder.lhs();
     }
-} // namespace Parser
+}
 
 template <typename istream>
 AST::ptr<AST::Exp> Exp(Parser<istream>& parser) {
-    auto [lex, word, lc] = parser[0];
     Builder<AST::ptr<AST::Exp>> builder(parser.make_id());
-    switch (lex) {
+    switch (Lexeme(parser[0])) {
     case Lexeme::integer_literal:
-        parser.consume(Lexeme::integer_literal);
-        builder.keep(std::stoi(word));
-        return _Exp(parser, builder.integerExp());
+        return _Exp(parser, builder
+                                .keep(std::stoi(parser.consume(
+                                    Lexeme::integer_literal)))
+                                .integerExp());
     case Lexeme::true_keyword:
         parser.consume(Lexeme::true_keyword);
         return _Exp(parser, builder.trueExp());
@@ -431,8 +424,9 @@ AST::ptr<AST::Exp> Exp(Parser<istream>& parser) {
         parser.consume(Lexeme::false_keyword);
         return _Exp(parser, builder.falseExp());
     case Lexeme::identifier:
-        parser.consume(Lexeme::identifier);
-        return _Exp(parser, builder.keep(word).identifierExp());
+        return _Exp(parser,
+                    builder.keep(parser.consume(Lexeme::identifier))
+                        .identifierExp());
     case Lexeme::this_keyword:
         parser.consume(Lexeme::this_keyword);
         return _Exp(parser, builder.thisExp());
@@ -444,24 +438,21 @@ AST::ptr<AST::Exp> Exp(Parser<istream>& parser) {
             builder.keep(Exp(parser));
             parser.consume(Lexeme::close_bracket);
             return _Exp(parser, builder.newArrayExp());
-        } else {
-            builder.keep(parser[0].second);
-            parser.consume(Lexeme::identifier);
-            parser.consume(Lexeme::open_paren);
-            parser.consume(Lexeme::close_paren);
-            return _Exp(parser, builder.newObjectExp());
         }
+        builder.keep(parser.consume(Lexeme::identifier));
+        parser.consume(Lexeme::open_paren);
+        parser.consume(Lexeme::close_paren);
+        return _Exp(parser, builder.newObjectExp());
     case Lexeme::bang:
         parser.consume(Lexeme::bang);
-        builder.keep(Exp(parser));
-        return _Exp(parser, builder.bangExp());
+        return _Exp(parser, builder.keep(Exp(parser)).bangExp());
     case Lexeme::open_paren:
         parser.consume(Lexeme::open_paren);
         builder.keep(Exp(parser));
         parser.consume(Lexeme::close_paren);
         return _Exp(parser, builder.parenExp());
     default:
-        throw Unexpected{lex};
+        throw Unexpected{Lexeme(parser[0])};
     }
 }
 
