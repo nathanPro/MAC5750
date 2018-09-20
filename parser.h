@@ -1,4 +1,5 @@
 #include "AST.h"
+#include "Builder.h"
 #include "lexer.h"
 #include "util.h"
 
@@ -17,11 +18,11 @@ struct UnexpectedEnd {};
 
 template <typename istream> class Parser {
     Lexer<istream> tokens;
-    AST::Node idx;
+    int idx;
 
   public:
     Parser(istream& stream) : tokens(stream, 2), idx(0) {}
-    AST::Node make_id() { return ++idx; }
+    AST::Node make_id() { return AST::Node(idx++); }
     LexState operator[](int i) { return tokens[i]; }
     std::string consume(Lexeme lex) {
         if (tokens.empty()) throw UnexpectedEnd{};
@@ -369,139 +370,99 @@ AST::ptr<AST::ExpList> ExpList(Parser<istream>& parser) {
 template <typename istream>
 AST::ptr<AST::Exp> _Exp(Parser<istream>& parser,
                         AST::ptr<AST::Exp>&& lhs) {
-    using std::make_unique;
-    using std::move;
-
     auto [lex, word, lc] = parser[0];
-    ContextGuard guard(lc, "<expression>");
+    Builder<AST::ptr<AST::Exp>> builder(parser.make_id());
+    builder.keep(std::move(lhs));
     switch (lex) {
-    case Lexeme::and_operator: {
+    case Lexeme::and_operator:
         parser.consume(Lexeme::and_operator);
-        auto rhs = Exp(parser);
-        lhs      = make_unique<AST::Exp>(
-            AST::andExp{parser.make_id(), move(lhs), move(rhs)});
-    } break;
-    case Lexeme::less_operator: {
+        builder.keep(Exp(parser));
+        return _Exp(parser, builder.andExp());
+    case Lexeme::less_operator:
         parser.consume(Lexeme::less_operator);
-        auto rhs = Exp(parser);
-        lhs      = make_unique<AST::Exp>(
-            AST::lessExp{parser.make_id(), move(lhs), move(rhs)});
-    } break;
-    case Lexeme::plus_operator: {
+        builder.keep(Exp(parser));
+        return _Exp(parser, builder.lessExp());
+    case Lexeme::plus_operator:
         parser.consume(Lexeme::plus_operator);
-        auto rhs = Exp(parser);
-        lhs      = make_unique<AST::Exp>(
-            AST::sumExp{parser.make_id(), move(lhs), move(rhs)});
-    } break;
-    case Lexeme::minus_operator: {
+        builder.keep(Exp(parser));
+        return _Exp(parser, builder.sumExp());
+    case Lexeme::minus_operator:
         parser.consume(Lexeme::minus_operator);
-        auto rhs = Exp(parser);
-        lhs      = make_unique<AST::Exp>(
-            AST::minusExp{parser.make_id(), move(lhs), move(rhs)});
-    } break;
-    case Lexeme::times_operator: {
+        builder.keep(Exp(parser));
+        return _Exp(parser, builder.minusExp());
+    case Lexeme::times_operator:
         parser.consume(Lexeme::times_operator);
-        auto rhs = Exp(parser);
-        lhs      = make_unique<AST::Exp>(
-            AST::prodExp{parser.make_id(), move(lhs), move(rhs)});
-    } break;
-    case Lexeme::open_bracket: {
+        builder.keep(Exp(parser));
+        return _Exp(parser, builder.prodExp());
+    case Lexeme::open_bracket:
         parser.consume(Lexeme::open_bracket);
-        auto index = Exp(parser);
+        builder.keep(Exp(parser));
         parser.consume(Lexeme::close_bracket);
-        lhs = make_unique<AST::Exp>(AST::indexingExp{
-            parser.make_id(), move(lhs), move(index)});
-    } break;
+        return _Exp(parser, builder.indexingExp());
     case Lexeme::period:
         parser.consume(Lexeme::period);
         if (Lexeme(parser[0]) == Lexeme::lenght_keyword) {
             parser.consume(Lexeme::lenght_keyword);
-            lhs = make_unique<AST::Exp>(
-                AST::lengthExp{parser.make_id(), move(lhs)});
+            return _Exp(parser, builder.lengthExp());
         } else {
-            word = parser[0].second;
+            builder.keep(parser[0].second);
             parser.consume(Lexeme::identifier);
-            auto args = ExpList(parser);
-            lhs       = make_unique<AST::Exp>(AST::methodCallExp{
-                parser.make_id(), move(lhs), word, move(args)});
+            builder.keep(ExpList(parser));
+            return _Exp(parser, builder.methodCallExp());
         }
-        break;
     default:
-        guard.active = false;
-        return move(lhs);
+        return builder.lhs();
     }
-    guard.active = false;
-    return _Exp(parser, move(lhs));
-}
+} // namespace Parser
 
 template <typename istream>
 AST::ptr<AST::Exp> Exp(Parser<istream>& parser) {
-    using std::make_unique;
-    using std::move;
-
     auto [lex, word, lc] = parser[0];
-    ContextGuard guard(lc, "<expression>");
-    AST::ptr<AST::Exp> lhs;
+    Builder<AST::ptr<AST::Exp>> builder(parser.make_id());
     switch (lex) {
-    case Lexeme::integer_literal: {
+    case Lexeme::integer_literal:
         parser.consume(Lexeme::integer_literal);
-        auto value = std::stoi(word);
-        lhs        = make_unique<AST::Exp>(
-            AST::integerExp{parser.make_id(), value});
-    } break;
-    case Lexeme::true_keyword: {
+        builder.keep(std::stoi(word));
+        return _Exp(parser, builder.integerExp());
+    case Lexeme::true_keyword:
         parser.consume(Lexeme::true_keyword);
-        lhs = make_unique<AST::Exp>(AST::trueExp{parser.make_id()});
-    } break;
-    case Lexeme::false_keyword: {
+        return _Exp(parser, builder.trueExp());
+    case Lexeme::false_keyword:
         parser.consume(Lexeme::false_keyword);
-        lhs = make_unique<AST::Exp>(AST::falseExp{parser.make_id()});
-    } break;
-    case Lexeme::identifier: {
+        return _Exp(parser, builder.falseExp());
+    case Lexeme::identifier:
         parser.consume(Lexeme::identifier);
-        lhs = make_unique<AST::Exp>(
-            AST::identifierExp{parser.make_id(), word});
-    } break;
-    case Lexeme::this_keyword: {
+        return _Exp(parser, builder.keep(word).identifierExp());
+    case Lexeme::this_keyword:
         parser.consume(Lexeme::this_keyword);
-        lhs = make_unique<AST::Exp>(AST::thisExp{parser.make_id()});
-    } break;
-    case Lexeme::new_keyword: {
+        return _Exp(parser, builder.thisExp());
+    case Lexeme::new_keyword:
         parser.consume(Lexeme::new_keyword);
         if (Lexeme(parser[0]) == Lexeme::int_keyword) {
             parser.consume(Lexeme::int_keyword);
             parser.consume(Lexeme::open_bracket);
-            auto index = Exp(parser);
+            builder.keep(Exp(parser));
             parser.consume(Lexeme::close_bracket);
-            lhs = make_unique<AST::Exp>(
-                AST::newArrayExp{parser.make_id(), move(index)});
+            return _Exp(parser, builder.newArrayExp());
         } else {
-            std::string name = parser[0].second;
+            builder.keep(parser[0].second);
             parser.consume(Lexeme::identifier);
             parser.consume(Lexeme::open_paren);
             parser.consume(Lexeme::close_paren);
-            lhs = make_unique<AST::Exp>(
-                AST::newObjectExp{parser.make_id(), name});
+            return _Exp(parser, builder.newObjectExp());
         }
-    } break;
-    case Lexeme::bang: {
+    case Lexeme::bang:
         parser.consume(Lexeme::bang);
-        auto exp = Exp(parser);
-        lhs      = make_unique<AST::Exp>(
-            AST::bangExp{parser.make_id(), move(exp)});
-    } break;
-    case Lexeme::open_paren: {
+        builder.keep(Exp(parser));
+        return _Exp(parser, builder.bangExp());
+    case Lexeme::open_paren:
         parser.consume(Lexeme::open_paren);
-        auto exp = Exp(parser);
+        builder.keep(Exp(parser));
         parser.consume(Lexeme::close_paren);
-        lhs = make_unique<AST::Exp>(
-            AST::parenExp{parser.make_id(), move(exp)});
-    } break;
+        return _Exp(parser, builder.parenExp());
     default:
         throw Unexpected{lex};
     }
-    guard.active = false;
-    return _Exp(parser, move(lhs));
 }
 
 } // namespace Parser
