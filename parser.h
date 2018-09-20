@@ -276,76 +276,53 @@ AST::ptr<AST::Type> Type(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::Stm> Stm(Parser<istream>& parser) {
-    using std::make_unique;
-    using std::move;
-
-    auto [lex, word, lc] = parser[0];
-    ContextGuard guard(lc, "<statement>");
-    AST::ptr<AST::Stm> ans;
-    switch (lex) {
-    case Lexeme::open_brace: {
-        std::vector<AST::__detail::pStm> list;
+    Builder<AST::ptr<AST::Stm>> builder(parser.make_id());
+    switch (Lexeme(parser[0])) {
+    case Lexeme::open_brace:
         parser.consume(Lexeme::open_brace);
         while (Lexeme(parser[0]) != Lexeme::close_brace)
-            list.push_back(Stm(parser));
+            builder.keep(Stm(parser));
         parser.consume(Lexeme::close_brace);
-        ans = make_unique<AST::Stm>(
-            AST::blockStm{parser.make_id(), move(list)});
-    } break;
-    case Lexeme::if_keyword: {
+        return builder.blockStm();
+    case Lexeme::if_keyword:
         parser.consume(Lexeme::if_keyword);
         parser.consume(Lexeme::open_paren);
-        auto cond = Exp(parser);
+        builder.keep(Exp(parser));
         parser.consume(Lexeme::close_paren);
-        auto if_clause = Stm(parser);
+        builder.keep(Stm(parser));
         parser.consume(Lexeme::else_keyword);
-        auto else_clause = Stm(parser);
-        ans              = make_unique<AST::Stm>(
-            AST::ifStm{parser.make_id(), move(cond), move(if_clause),
-                       move(else_clause)});
-    } break;
-    case Lexeme::while_keyword: {
+        return builder.keep(Stm(parser)).ifStm();
+    case Lexeme::while_keyword:
         parser.consume(Lexeme::while_keyword);
         parser.consume(Lexeme::open_paren);
-        auto cond = Exp(parser);
+        builder.keep(Exp(parser));
         parser.consume(Lexeme::close_paren);
-        auto body = Stm(parser);
-        ans       = make_unique<AST::Stm>(
-            AST::whileStm{parser.make_id(), move(cond), move(body)});
-    } break;
-    case Lexeme::println_keyword: {
+        return builder.keep(Stm(parser)).whileStm();
+    case Lexeme::println_keyword:
         parser.consume(Lexeme::println_keyword);
         parser.consume(Lexeme::open_paren);
-        auto exp = Exp(parser);
+        builder.keep(Exp(parser));
         parser.consume(Lexeme::close_paren);
         parser.consume(Lexeme::semicolon);
-        ans = make_unique<AST::Stm>(
-            AST::printStm{parser.make_id(), move(exp)});
-    } break;
-    case Lexeme::identifier: {
-        parser.consume(Lexeme::identifier);
+        return builder.printStm();
+    case Lexeme::identifier:
+        builder.keep(parser.consume(Lexeme::identifier));
         if (Lexeme(parser[0]) == Lexeme::equals_sign) {
             parser.consume(Lexeme::equals_sign);
-            auto exp = Exp(parser);
+            builder.keep(Exp(parser));
             parser.consume(Lexeme::semicolon);
-            ans = make_unique<AST::Stm>(
-                AST::assignStm{parser.make_id(), word, move(exp)});
-        } else {
-            parser.consume(Lexeme::open_bracket);
-            auto idx = Exp(parser);
-            parser.consume(Lexeme::close_bracket);
-            parser.consume(Lexeme::equals_sign);
-            auto exp = Exp(parser);
-            parser.consume(Lexeme::semicolon);
-            ans = make_unique<AST::Stm>(AST::indexAssignStm{
-                parser.make_id(), word, move(idx), move(exp)});
+            return builder.assignStm();
         }
-    } break;
+        parser.consume(Lexeme::open_bracket);
+        builder.keep(Exp(parser));
+        parser.consume(Lexeme::close_bracket);
+        parser.consume(Lexeme::equals_sign);
+        builder.keep(Exp(parser));
+        parser.consume(Lexeme::semicolon);
+        return builder.indexAssignStm();
     default:
-        throw Unexpected{lex};
+        throw Unexpected{Lexeme(parser[0])};
     }
-    guard.active = false;
-    return ans;
 }
 
 template <typename istream>
