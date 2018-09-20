@@ -1,3 +1,6 @@
+#ifndef AST_H
+#define AST_H
+
 #include "grammar.h"
 #include "string"
 #include "util.h"
@@ -275,3 +278,4 @@ struct ExpList : Grammar::Nonterminal<std::variant<ExpListRule>> {
 };
 
 } // namespace AST
+#endif
