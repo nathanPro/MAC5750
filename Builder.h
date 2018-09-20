@@ -4,6 +4,63 @@
 
 template <typename T> class Builder;
 
+template <> class Builder<AST::ptr<AST::Stm>> {
+    AST::Node id;
+    AST::ptr<AST::Exp> E[2];
+    int ec = 0;
+    std::vector<AST::ptr<AST::Stm>> S;
+    std::string word;
+
+  public:
+    Builder(AST::Node __id) : id(__id) {}
+
+    Builder& keep(AST::ptr<AST::Exp>&& exp) {
+        E[ec++].reset(exp.release());
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::Stm>&& stm) {
+        S.push_back(std::move(stm));
+        return *this;
+    }
+
+    Builder& keep(std::string in) {
+        word = in;
+        return *this;
+    }
+
+    AST::ptr<AST::Stm> blockStm() {
+        return std::make_unique<AST::Stm>(
+            AST::blockStm{id, std::move(S)});
+    }
+
+    AST::ptr<AST::Stm> ifStm() {
+        return std::make_unique<AST::Stm>(
+            AST::ifStm{id, std::move(E[0]), std::move(S.at(0)),
+                       std::move(S.at(1))});
+    }
+
+    AST::ptr<AST::Stm> whileStm() {
+        return std::make_unique<AST::Stm>(
+            AST::whileStm{id, std::move(E[0]), std::move(S.at(0))});
+    }
+
+    AST::ptr<AST::Stm> printStm() {
+        return std::make_unique<AST::Stm>(
+            AST::printStm{id, std::move(E[0])});
+    }
+
+    AST::ptr<AST::Stm> assignStm() {
+        return std::make_unique<AST::Stm>(
+            AST::assignStm{id, word, std::move(E[0])});
+    }
+
+    AST::ptr<AST::Stm> indexAssignStm() {
+        return std::make_unique<AST::Stm>(AST::indexAssignStm{
+            id, word, std::move(E[0]), std::move(E[1])});
+    }
+};
+
 template <> class Builder<AST::ptr<AST::Exp>> {
     AST::Node id;
     AST::ptr<AST::Exp> E[2];
