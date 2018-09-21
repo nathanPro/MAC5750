@@ -5,22 +5,23 @@
 
 template <typename T> class ASTBuilder;
 
-struct ParsingError {
-    std::vector<std::string> ctx;
-};
-
-struct Unexpected : ParsingError {
+struct Unexpected {
     Lexeme lex;
 };
 
-struct Mismatch : ParsingError {
+struct Mismatch {
     Lexeme expected;
     Lexeme found;
 };
 
-struct WrongIdentifier : ParsingError {
+struct WrongIdentifier {
     std::string expected;
     std::string found;
+};
+
+struct ParsingError {
+    std::vector<std::string> ctx;
+    std::variant<Unexpected, Mismatch, WrongIdentifier> inner;
 };
 
 using ASTErrorData = std::vector<std::unique_ptr<ParsingError>>;
@@ -29,10 +30,10 @@ template <typename istream> class ParserContext {
     Lexer<istream> tokens;
     std::vector<std::string> context;
     std::vector<int32_t> lines;
-    std::vector<ASTErrorData> errors;
     int idx;
 
   public:
+    std::vector<ASTErrorData> errors;
     ParserContext(istream& stream) : tokens(stream, 2), idx(0) {}
     LexState operator[](int i) { return tokens[i]; }
     friend class ASTBuilder<istream>;
@@ -77,10 +78,9 @@ template <typename istream> class ASTBuilder {
 
     ASTBuilder& operator<<(Lexeme lex) {
         if (Lexeme(parser[0]) != lex) {
-            auto err      = std::make_unique<Mismatch>();
-            err->expected = lex;
-            err->found    = Lexeme(parser[0]);
-            err->ctx      = parser.context;
+            auto err   = std::make_unique<ParsingError>();
+            err->inner = Mismatch{lex, Lexeme(parser[0])};
+            err->ctx   = parser.context;
             parser.errors[id.get()].push_back(std::move(err));
             while (Lexeme(parser[0]) != Lexeme::eof &&
                    Lexeme(parser[0]) != lex)
@@ -96,10 +96,9 @@ template <typename istream> class ASTBuilder {
 
     ASTBuilder& operator<<(std::string in) {
         if (parser[0].second != in) {
-            auto err      = std::make_unique<WrongIdentifier>();
-            err->expected = in;
-            err->found    = parser[0].second;
-            err->ctx      = parser.context;
+            auto err   = std::make_unique<ParsingError>();
+            err->inner = WrongIdentifier{in, parser[0].second};
+            err->ctx   = parser.context;
             parser.errors[id.get()].push_back(std::move(err));
             while (Lexeme(parser[0]) != Lexeme::eof &&
                    !(Lexeme(parser[0]) == Lexeme::identifier &&
@@ -112,9 +111,9 @@ template <typename istream> class ASTBuilder {
 
     void unexpected(Lexeme un) {
         if (un == Lexeme::eof) return;
-        auto err = std::make_unique<Unexpected>();
-        err->lex = un;
-        err->ctx = parser.context;
+        auto err   = std::make_unique<ParsingError>();
+        err->inner = Unexpected{un};
+        err->ctx   = parser.context;
         parser.errors[id.get()].push_back(std::move(err));
         ++parser.tokens;
     }

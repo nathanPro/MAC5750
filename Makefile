@@ -1,6 +1,6 @@
 CXXFLAGS = --std=c++17 -Wall -Wextra -g -ggdb -O0 -DDEBUG
 
-main: lexer.o AST.h.gch parser.h.gch lexer.h.gch main.cpp
+main: lexer.o error.h AST.h.gch parser.h.gch lexer.h.gch main.cpp
 	$(CXX) $(CXXFLAGS) lexer.o main.cpp -o main
 Builder.h.gch: Builder.h
 	$(CXX) $(CXXFLAGS) Builder.h
