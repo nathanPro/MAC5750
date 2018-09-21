@@ -84,12 +84,9 @@ AST::ptr<AST::Program> Program(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::MainClass> MainClass(Parser<istream>& parser) {
-    using std::make_unique;
-    using std::move;
-
-    ContextGuard guard(parser[0].third, "<main class>");
+    Builder<AST::ptr<AST::MainClass>> builder(parser.make_id());
     parser.consume(Lexeme::class_keyword);
-    auto name = parser.consume(Lexeme::identifier);
+    builder.keep(parser.consume(Lexeme::identifier));
     parser.consume(Lexeme::open_brace);
     parser.consume(Lexeme::public_keyword);
     parser.consume(Lexeme::static_keyword);
@@ -101,56 +98,42 @@ AST::ptr<AST::MainClass> MainClass(Parser<istream>& parser) {
     parser.consume(Lexeme::string_keyword);
     parser.consume(Lexeme::open_bracket);
     parser.consume(Lexeme::close_bracket);
-    auto arg = parser.consume(Lexeme::identifier);
+    builder.keep(parser.consume(Lexeme::identifier));
     parser.consume(Lexeme::close_paren);
     parser.consume(Lexeme::open_brace);
-    auto body = Stm(parser);
+    builder.keep(Stm(parser));
     parser.consume(Lexeme::close_brace);
     parser.consume(Lexeme::close_brace);
-    guard.active = false;
-    return make_unique<AST::MainClass>(
-        AST::MainClassRule{parser.make_id(), name, arg, move(body)});
+    return builder.MainClassRule();
 }
 
 template <typename istream>
 AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>& parser) {
-    using std::make_unique;
-    using std::move;
-
-    ContextGuard guard(parser[0].third, "<class>");
+    Builder<AST::ptr<AST::MainClass>> builder(parser.make_id());
     parser.consume(Lexeme::class_keyword);
-    auto name = parser.consume(Lexeme::identifier);
+    builder.keep(parser.consume(Lexeme::identifier));
 
     bool has_superclass =
         (Lexeme(parser[0]) == Lexeme::extends_keyword);
 
-    std::string superclass;
     if (has_superclass) {
         parser.consume(Lexeme::extends_keyword);
-        superclass = parser.consume(Lexeme::identifier);
+        builder.keep(parser.consume(Lexeme::identifier));
     }
 
     parser.consume(Lexeme::open_brace);
-    std::vector<AST::__detail::pVarDecl> variables;
     while (Lexeme(parser[0]) != Lexeme::close_brace &&
            Lexeme(parser[0]) != Lexeme::public_keyword)
-        variables.push_back(VarDecl(parser));
+        builder.keep(VarDecl(parser));
 
-    std::vector<AST::__detail::pMethodDecl> methods;
     while (Lexeme(parser[0]) != Lexeme::close_brace)
-        methods.push_back(MethodDecl(parser));
+        builder.keep(MethodDecl(parser));
     parser.consume(Lexeme::close_brace);
 
-    guard.active = false;
     if (has_superclass)
-        return make_unique<AST::ClassDecl>(AST::ClassDeclInheritance{
-            parser.make_id(), name, superclass, move(variables),
-            move(methods)});
+        return builder.ClassDeclInheritance();
     else
-        return make_unique<AST::ClassDecl>(
-            AST::ClassDeclNoInheritance{parser.make_id(), name,
-                                        move(variables),
-                                        move(methods)});
+        return builder.ClassDeclNoInheritance();
 }
 
 template <typename istream>

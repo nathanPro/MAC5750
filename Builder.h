@@ -4,6 +4,60 @@
 
 template <typename T> class Builder;
 
+template <> class Builder<AST::ptr<AST::MainClass>> {
+    AST::Node id;
+    std::vector<std::string> I;
+    std::vector<AST::ptr<AST::VarDecl>> V;
+    std::vector<AST::ptr<AST::MethodDecl>> M;
+    AST::ptr<AST::Stm> stm;
+    AST::ptr<AST::Exp> exp;
+
+  public:
+    Builder(AST::Node __id) : id(__id) {}
+
+    Builder& keep(std::string in) {
+        I.push_back(in);
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::VarDecl>&& in) {
+        V.push_back(std::move(in));
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::MethodDecl>&& in) {
+        M.push_back(std::move(in));
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::Stm>&& in) {
+        stm.reset(in.release());
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::Exp>&& in) {
+        exp.reset(in.release());
+        return *this;
+    }
+
+    AST::ptr<AST::MainClass> MainClassRule() {
+        return std::make_unique<AST::MainClass>(
+            AST::MainClassRule{id, I[0], I[1], std::move(stm)});
+    }
+
+    AST::ptr<AST::ClassDecl> ClassDeclNoInheritance() {
+        return std::make_unique<AST::ClassDecl>(
+            AST::ClassDeclNoInheritance{id, I[0], std::move(V),
+                                        std::move(M)});
+    }
+
+    AST::ptr<AST::ClassDecl> ClassDeclInheritance() {
+        return std::make_unique<AST::ClassDecl>(
+            AST::ClassDeclInheritance{id, I[0], I[1], std::move(V),
+                                      std::move(M)});
+    }
+};
+
 template <> class Builder<AST::ptr<AST::MethodDecl>> {
     AST::Node id;
     AST::ptr<AST::Type> type;
