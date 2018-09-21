@@ -4,6 +4,55 @@
 
 template <typename T> class Builder;
 
+template <> class Builder<AST::ptr<AST::MethodDecl>> {
+    AST::Node id;
+    AST::ptr<AST::Type> type;
+    std::string word;
+    AST::ptr<AST::FormalList> list;
+    std::vector<AST::ptr<AST::VarDecl>> V;
+    std::vector<AST::ptr<AST::Stm>> S;
+    AST::ptr<AST::Exp> exp;
+
+  public:
+    Builder(AST::Node __id) : id(__id) {}
+
+    Builder& keep(AST::ptr<AST::Type>&& in) {
+        type.reset(in.release());
+        return *this;
+    }
+
+    Builder& keep(std::string in) {
+        word = in;
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::FormalList>&& in) {
+        list.reset(in.release());
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::VarDecl>&& in) {
+        V.push_back(std::move(in));
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::Stm>&& in) {
+        S.push_back(std::move(in));
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::Exp>&& in) {
+        exp.reset(in.release());
+        return *this;
+    }
+
+    AST::ptr<AST::MethodDecl> MethodDeclRule() {
+        return std::make_unique<AST::MethodDecl>(AST::MethodDeclRule{
+            id, std::move(type), word, std::move(list), std::move(V),
+            std::move(S), std::move(exp)});
+    }
+};
+
 template <> class Builder<AST::ptr<AST::FormalList>> {
     AST::Node id;
     std::vector<AST::ptr<AST::Type>> T;

@@ -155,54 +155,37 @@ AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>& parser) {
-    using std::make_unique;
-    using std::move;
-
-    ContextGuard guard(parser[0].third, "<method declaration>");
+    Builder<AST::ptr<AST::MethodDecl>> builder(parser.make_id());
     parser.consume(Lexeme::public_keyword);
-    auto type = Type(parser);
-    auto name = parser.consume(Lexeme::identifier);
-    auto args = FormalList(parser);
+    builder.keep(Type(parser))
+        .keep(parser.consume(Lexeme::identifier))
+        .keep(FormalList(parser));
     parser.consume(Lexeme::open_brace);
-
-    std::vector<AST::__detail::pVarDecl> vars;
 
     bool eating_vars = true;
     while (eating_vars) {
         switch (Lexeme(parser[0])) {
         case Lexeme::boolean_keyword:
         case Lexeme::int_keyword:
-            vars.push_back(VarDecl(parser));
+            builder.keep(VarDecl(parser));
             break;
-        case Lexeme::open_brace:
-        case Lexeme::if_keyword:
-        case Lexeme::while_keyword:
-        case Lexeme::println_keyword:
-        case Lexeme::return_keyword:
-            eating_vars = false;
-            break;
-        case Lexeme::identifier: {
-            if (Lexeme(parser[1]) == Lexeme::identifier)
-                vars.push_back(VarDecl(parser));
-            else
-                eating_vars = false;
-        } break;
+        case Lexeme::identifier:
+            if (Lexeme(parser[1]) == Lexeme::identifier) {
+                builder.keep(VarDecl(parser));
+                break;
+            }
         default:
-            throw Unexpected{Lexeme(parser[0])};
+            eating_vars = false;
         }
     }
 
-    std::vector<AST::__detail::pStm> body;
     while (Lexeme(parser[0]) != Lexeme::return_keyword)
-        body.push_back(Stm(parser));
+        builder.keep(Stm(parser));
     parser.consume(Lexeme::return_keyword);
-    auto ret = Exp(parser);
+    builder.keep(Exp(parser));
     parser.consume(Lexeme::semicolon);
     parser.consume(Lexeme::close_brace);
-    guard.active = false;
-    return make_unique<AST::MethodDecl>(AST::MethodDeclRule{
-        parser.make_id(), move(type), name, move(args), move(vars),
-        move(body), move(ret)});
+    return builder.MethodDeclRule();
 }
 
 template <typename istream>
