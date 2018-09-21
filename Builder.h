@@ -49,6 +49,7 @@ template <typename istream> class ASTBuilder {
     AST::ptr<AST::FormalList> list;
     AST::ptr<AST::ExpList> arguments;
     int32_t value;
+    bool pop = false;
 
   public:
     ASTBuilder(ParserContext<istream>& __parser)
@@ -57,6 +58,11 @@ template <typename istream> class ASTBuilder {
     ASTBuilder(ParserContext<istream>& __parser, std::string label)
         : parser(__parser), id(parser.idx++) {
         parser.context.push_back(label);
+        pop = true;
+    }
+
+    ~ASTBuilder() {
+        if (pop) parser.context.pop_back();
     }
 
     ASTBuilder& operator<<(Lexeme lex) {
