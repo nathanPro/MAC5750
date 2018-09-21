@@ -1,16 +1,32 @@
-#ifndef BUILDER
-#define BUILDER
+#ifndef BCC_ASTBUILDER
+#define BCC_ASTBUILDER
 #include "AST.h"
 #include "lexer.h"
 
 template <typename T> class ASTBuilder;
 
-struct Unexpected {
+struct ParsingError {
+    std::vector<std::string> ctx;
+};
+
+struct Unexpected : ParsingError {
     Lexeme lex;
+};
+
+struct Mismatch : ParsingError {
+    Lexeme expected;
+    Lexeme found;
+};
+
+struct WrongIdentifier : ParsingError {
+    std::string expected;
+    std::string found;
 };
 
 template <typename istream> class ParserContext {
     Lexer<istream> tokens;
+    std::vector<std::string> context;
+    std::vector<std::vector<std::unique_ptr<ParsingError>>> errors;
     int idx;
 
   public:
@@ -38,8 +54,24 @@ template <typename istream> class ASTBuilder {
     ASTBuilder(ParserContext<istream>& __parser)
         : parser(__parser), id(parser.idx++) {}
 
+    ASTBuilder(ParserContext<istream>& __parser, std::string label)
+        : parser(__parser), id(parser.idx++) {
+        parser.context.push_back(label);
+    }
+
     ASTBuilder& operator<<(Lexeme lex) {
-        if (Lexeme(parser[0]) != lex) throw;
+        if (Lexeme(parser[0]) != lex) {
+            if (parser.errors.size() <= id.get())
+                parser.errors.resize(1 + id.get());
+            auto err      = std::make_unique<Mismatch>();
+            err->expected = lex;
+            err->found    = Lexeme(parser[0]);
+            err->ctx      = parser.context;
+            parser.errors[id.get()].push_back(std::move(err));
+            while (Lexeme(parser[0]) != Lexeme::eof &&
+                   Lexeme(parser[0]) != lex)
+                ++parser.tokens;
+        }
         if (Lexeme::identifier == lex)
             W.push_back(parser[0].second);
         else if (Lexeme::integer_literal == lex)
@@ -49,14 +81,32 @@ template <typename istream> class ASTBuilder {
     }
 
     ASTBuilder& operator<<(std::string in) {
-        if (parser[0].second != in) throw;
+        if (parser[0].second != in) {
+            if (parser.errors.size() <= id.get())
+                parser.errors.resize(1 + id.get());
+            auto err      = std::make_unique<WrongIdentifier>();
+            err->expected = in;
+            err->found    = parser[0].second;
+            err->ctx      = parser.context;
+            parser.errors[id.get()].push_back(std::move(err));
+            while (Lexeme(parser[0]) != Lexeme::eof &&
+                   !(Lexeme(parser[0]) == Lexeme::identifier &&
+                     parser[0].second == in))
+                ++parser.tokens;
+        }
         ++parser.tokens;
         return *this;
     }
 
-    ASTBuilder& operator<<(Unexpected un) {
-        throw;
-        return *this;
+    void unexpected(Lexeme un) {
+        if (parser.errors.size() <= id.get())
+            parser.errors.resize(1 + id.get());
+
+        auto err = std::make_unique<Unexpected>();
+        err->lex = un;
+        err->ctx = parser.context;
+        parser.errors[id.get()].push_back(std::move(err));
+        ++parser.tokens;
     }
 
     ASTBuilder& operator<<(AST::ptr<AST::MainClass>&& in) {

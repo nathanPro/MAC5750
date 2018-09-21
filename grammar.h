@@ -10,7 +10,7 @@ template <typename T> class Entity {
 
   public:
     explicit Entity(uint32_t val) : tag(val) {}
-    explicit operator uint32_t() { return tag; }
+    uint32_t get() const { return tag; }
     Entity operator++() { return Entity(1 + tag); }
 };
 

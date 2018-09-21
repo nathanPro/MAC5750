@@ -137,7 +137,7 @@ AST::ptr<AST::Type> Type(ParserContext<istream>& parser) {
         }
         return builder.integerType();
     default:
-        builder << Unexpected{Lexeme(parser[0])};
+        builder.unexpected(Lexeme(parser[0]));
         return builder.integerType();
     }
 }
@@ -178,7 +178,7 @@ AST::ptr<AST::Stm> Stm(ParserContext<istream>& parser) {
                 << Exp(parser) << Lexeme::semicolon;
         return builder.indexAssignStm();
     default:
-        builder << Unexpected{Lexeme(parser[0])};
+        builder.unexpected(Lexeme(parser[0]));
         return builder.blockStm();
     }
 }
@@ -272,7 +272,7 @@ AST::ptr<AST::Exp> Exp(ParserContext<istream>& parser) {
                 << Lexeme::close_paren;
         return _Exp(parser, builder.parenExp());
     default:
-        builder << Unexpected{Lexeme(parser[0])};
+        builder.unexpected(Lexeme(parser[0]));
         return builder.parenExp();
     }
 }
