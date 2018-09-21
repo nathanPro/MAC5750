@@ -4,6 +4,24 @@
 
 template <typename T> class Builder;
 
+template <> class Builder<AST::ptr<AST::ExpList>> {
+    AST::Node id;
+    std::vector<AST::ptr<AST::Exp>> E;
+
+  public:
+    Builder(AST::Node __id) : id(__id) {}
+
+    Builder& keep(AST::ptr<AST::Exp>&& exp) {
+        E.push_back(std::move(exp));
+        return *this;
+    }
+
+    AST::ptr<AST::ExpList> ExpListRule() {
+        return std::make_unique<AST::ExpList>(
+            AST::ExpListRule{id, std::move(E)});
+    }
+};
+
 template <> class Builder<AST::ptr<AST::Stm>> {
     AST::Node id;
     AST::ptr<AST::Exp> E[2];

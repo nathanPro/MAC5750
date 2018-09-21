@@ -327,21 +327,16 @@ AST::ptr<AST::Stm> Stm(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::ExpList> ExpList(Parser<istream>& parser) {
-    using std::make_unique;
-    using std::move;
-
-    std::vector<AST::__detail::pExp> list;
-    ContextGuard guard(parser[0].third,
-                       "<method call argument list>");
+    Builder<AST::ptr<AST::ExpList>> builder(parser.make_id());
     parser.consume(Lexeme::open_paren);
+    bool read = false;
     while (Lexeme(parser[0]) != Lexeme::close_paren) {
-        if (list.size()) parser.consume(Lexeme::comma);
-        list.push_back(Exp(parser));
+        if (read) parser.consume(Lexeme::comma);
+        read = true;
+        builder.keep(Exp(parser));
     }
     parser.consume(Lexeme::close_paren);
-    guard.active = false;
-    return make_unique<AST::ExpList>(
-        AST::ExpListRule{parser.make_id(), move(list)});
+    return builder.ExpListRule();
 }
 
 template <typename istream>
