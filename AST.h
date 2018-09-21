@@ -108,7 +108,6 @@ struct MethodDecl
 };
 
 struct FormalDecl {
-    Node id;
     __detail::pType type = nullptr;
     std::string name;
 };

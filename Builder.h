@@ -4,6 +4,35 @@
 
 template <typename T> class Builder;
 
+template <> class Builder<AST::ptr<AST::FormalList>> {
+    AST::Node id;
+    std::vector<AST::ptr<AST::Type>> T;
+    std::vector<std::string> W;
+
+  public:
+    Builder(AST::Node __id) : id(__id) {}
+
+    Builder& keep(AST::ptr<AST::Type>&& type) {
+        T.push_back(std::move(type));
+        return *this;
+    }
+
+    Builder& keep(std::string name) {
+        W.push_back(name);
+        return *this;
+    }
+
+    AST::ptr<AST::FormalList> FormalListRule() {
+        std::vector<AST::FormalDecl> D;
+        int s = T.size() < W.size() ? T.size() : W.size();
+        for (int i = 0; i < s; i++)
+            D.push_back(AST::FormalDecl{std::move(T[i]), W[i]});
+
+        return std::make_unique<AST::FormalList>(
+            AST::FormalListRule{id, std::move(D)});
+    }
+};
+
 template <> class Builder<AST::ptr<AST::Type>> {
     AST::Node id;
     std::string word;

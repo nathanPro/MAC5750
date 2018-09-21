@@ -218,24 +218,17 @@ AST::ptr<AST::VarDecl> VarDecl(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::FormalList> FormalList(Parser<istream>& parser) {
-    using std::make_unique;
-    using std::move;
-
-    ContextGuard guard(parser[0].third,
-                       "<method declaration argument list>");
+    Builder<AST::ptr<AST::FormalList>> builder(parser.make_id());
     parser.consume(Lexeme::open_paren);
-    std::vector<AST::FormalDecl> list;
+    bool first = true;
     while (Lexeme(parser[0]) != Lexeme::close_paren) {
-        if (list.size()) parser.consume(Lexeme::comma);
-        auto type = Type(parser);
-        auto word = parser.consume(Lexeme::identifier);
-        list.push_back(
-            AST::FormalDecl{parser.make_id(), move(type), word});
+        if (!first) parser.consume(Lexeme::comma);
+        first = false;
+        builder.keep(Type(parser))
+            .keep(parser.consume(Lexeme::identifier));
     }
     parser.consume(Lexeme::close_paren);
-    guard.active = false;
-    return make_unique<AST::FormalList>(
-        AST::FormalListRule{parser.make_id(), move(list)});
+    return builder.FormalListRule();
 }
 
 template <typename istream>
