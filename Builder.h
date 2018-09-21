@@ -23,11 +23,13 @@ struct WrongIdentifier : ParsingError {
     std::string found;
 };
 
+using ASTErrorData = std::vector<std::unique_ptr<ParsingError>>;
+
 template <typename istream> class ParserContext {
     Lexer<istream> tokens;
     std::vector<std::string> context;
     std::vector<int32_t> lines;
-    std::vector<std::vector<std::unique_ptr<ParsingError>>> errors;
+    std::vector<ASTErrorData> errors;
     int idx;
 
   public:
