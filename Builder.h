@@ -2,23 +2,75 @@
 #define BUILDER
 #include "AST.h"
 
-template <typename T> class Builder;
-
-template <> class Builder<AST::ptr<AST::Program>> {
+class ASTBuilder {
     AST::Node id;
     AST::ptr<AST::MainClass> main;
+    std::vector<std::string> W;
     std::vector<AST::ptr<AST::ClassDecl>> C;
+    std::vector<AST::ptr<AST::VarDecl>> V;
+    std::vector<AST::ptr<AST::MethodDecl>> M;
+    std::vector<AST::ptr<AST::Type>> T;
+    std::vector<AST::ptr<AST::Exp>> E;
+    std::vector<AST::ptr<AST::Stm>> S;
+    AST::ptr<AST::FormalList> list;
+    AST::ptr<AST::ExpList> arguments;
+    int32_t value;
 
   public:
-    Builder(AST::Node __id) : id(__id) {}
+    ASTBuilder(AST::Node __id) : id(__id) {}
 
-    Builder& keep(AST::ptr<AST::MainClass>&& in) {
+    ASTBuilder& keep(AST::ptr<AST::MainClass>&& in) {
         main.reset(in.release());
         return *this;
     }
 
-    Builder& keep(AST::ptr<AST::ClassDecl>&& in) {
+    ASTBuilder& keep(std::string in) {
+        W.push_back(in);
+        return *this;
+    }
+
+    ASTBuilder& keep(AST::ptr<AST::ClassDecl>&& in) {
         C.push_back(std::move(in));
+        return *this;
+    }
+
+    ASTBuilder& keep(AST::ptr<AST::VarDecl>&& in) {
+        V.push_back(std::move(in));
+        return *this;
+    }
+
+    ASTBuilder& keep(AST::ptr<AST::MethodDecl>&& in) {
+        M.push_back(std::move(in));
+        return *this;
+    }
+
+    ASTBuilder& keep(AST::ptr<AST::Type>&& in) {
+        T.push_back(std::move(in));
+        return *this;
+    }
+
+    ASTBuilder& keep(AST::ptr<AST::Exp>&& in) {
+        E.push_back(std::move(in));
+        return *this;
+    }
+
+    ASTBuilder& keep(AST::ptr<AST::Stm>&& in) {
+        S.push_back(std::move(in));
+        return *this;
+    }
+
+    ASTBuilder& keep(AST::ptr<AST::ExpList>&& in) {
+        arguments.reset(in.release());
+        return *this;
+    }
+
+    ASTBuilder& keep(AST::ptr<AST::FormalList>&& in) {
+        list.reset(in.release());
+        return *this;
+    }
+
+    ASTBuilder& keep(int32_t v) {
+        value = v;
         return *this;
     }
 
@@ -26,151 +78,33 @@ template <> class Builder<AST::ptr<AST::Program>> {
         return std::make_unique<AST::Program>(
             AST::ProgramRule{id, std::move(main), std::move(C)});
     }
-};
-
-template <> class Builder<AST::ptr<AST::MainClass>> {
-    AST::Node id;
-    std::vector<std::string> I;
-    std::vector<AST::ptr<AST::VarDecl>> V;
-    std::vector<AST::ptr<AST::MethodDecl>> M;
-    AST::ptr<AST::Stm> stm;
-    AST::ptr<AST::Exp> exp;
-
-  public:
-    Builder(AST::Node __id) : id(__id) {}
-
-    Builder& keep(std::string in) {
-        I.push_back(in);
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::VarDecl>&& in) {
-        V.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::MethodDecl>&& in) {
-        M.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::Stm>&& in) {
-        stm.reset(in.release());
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::Exp>&& in) {
-        exp.reset(in.release());
-        return *this;
-    }
 
     AST::ptr<AST::MainClass> MainClassRule() {
         return std::make_unique<AST::MainClass>(
-            AST::MainClassRule{id, I[0], I[1], std::move(stm)});
+            AST::MainClassRule{id, W[0], W[1], std::move(S[0])});
     }
 
     AST::ptr<AST::ClassDecl> ClassDeclNoInheritance() {
         return std::make_unique<AST::ClassDecl>(
-            AST::ClassDeclNoInheritance{id, I[0], std::move(V),
+            AST::ClassDeclNoInheritance{id, W[0], std::move(V),
                                         std::move(M)});
     }
 
     AST::ptr<AST::ClassDecl> ClassDeclInheritance() {
         return std::make_unique<AST::ClassDecl>(
-            AST::ClassDeclInheritance{id, I[0], I[1], std::move(V),
+            AST::ClassDeclInheritance{id, W[0], W[1], std::move(V),
                                       std::move(M)});
-    }
-};
-
-template <> class Builder<AST::ptr<AST::MethodDecl>> {
-    AST::Node id;
-    AST::ptr<AST::Type> type;
-    std::string word;
-    AST::ptr<AST::FormalList> list;
-    std::vector<AST::ptr<AST::VarDecl>> V;
-    std::vector<AST::ptr<AST::Stm>> S;
-    AST::ptr<AST::Exp> exp;
-
-  public:
-    Builder(AST::Node __id) : id(__id) {}
-
-    Builder& keep(AST::ptr<AST::Type>&& in) {
-        type.reset(in.release());
-        return *this;
-    }
-
-    Builder& keep(std::string in) {
-        word = in;
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::FormalList>&& in) {
-        list.reset(in.release());
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::VarDecl>&& in) {
-        V.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::Stm>&& in) {
-        S.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::Exp>&& in) {
-        exp.reset(in.release());
-        return *this;
     }
 
     AST::ptr<AST::MethodDecl> MethodDeclRule() {
         return std::make_unique<AST::MethodDecl>(AST::MethodDeclRule{
-            id, std::move(type), word, std::move(list), std::move(V),
-            std::move(S), std::move(exp)});
-    }
-};
-
-template <> class Builder<AST::ptr<AST::VarDecl>> {
-    AST::Node id;
-    AST::ptr<AST::Type> type;
-    std::string word;
-
-  public:
-    Builder(AST::Node __id) : id(__id) {}
-
-    Builder& keep(AST::ptr<AST::Type>&& in) {
-        type.reset(in.release());
-        return *this;
-    }
-
-    Builder& keep(std::string in) {
-        word = in;
-        return *this;
+            id, std::move(T[0]), W[0], std::move(list), std::move(V),
+            std::move(S), std::move(E[0])});
     }
 
     AST::ptr<AST::VarDecl> VarDeclRule() {
         return std::make_unique<AST::VarDecl>(
-            AST::VarDeclRule{id, std::move(type), word});
-    }
-};
-
-template <> class Builder<AST::ptr<AST::FormalList>> {
-    AST::Node id;
-    std::vector<AST::ptr<AST::Type>> T;
-    std::vector<std::string> W;
-
-  public:
-    Builder(AST::Node __id) : id(__id) {}
-
-    Builder& keep(AST::ptr<AST::Type>&& type) {
-        T.push_back(std::move(type));
-        return *this;
-    }
-
-    Builder& keep(std::string name) {
-        W.push_back(name);
-        return *this;
+            AST::VarDeclRule{id, std::move(T[0]), W[0]});
     }
 
     AST::ptr<AST::FormalList> FormalListRule() {
@@ -181,19 +115,6 @@ template <> class Builder<AST::ptr<AST::FormalList>> {
 
         return std::make_unique<AST::FormalList>(
             AST::FormalListRule{id, std::move(D)});
-    }
-};
-
-template <> class Builder<AST::ptr<AST::Type>> {
-    AST::Node id;
-    std::string word;
-
-  public:
-    Builder(AST::Node __id) : id(__id) {}
-
-    Builder& keep(std::string in) {
-        word = in;
-        return *this;
     }
 
     AST::ptr<AST::Type> integerArrayType() {
@@ -209,51 +130,12 @@ template <> class Builder<AST::ptr<AST::Type>> {
     }
 
     AST::ptr<AST::Type> classType() {
-        return std::make_unique<AST::Type>(AST::classType{id, word});
-    }
-};
-
-template <> class Builder<AST::ptr<AST::ExpList>> {
-    AST::Node id;
-    std::vector<AST::ptr<AST::Exp>> E;
-
-  public:
-    Builder(AST::Node __id) : id(__id) {}
-
-    Builder& keep(AST::ptr<AST::Exp>&& exp) {
-        E.push_back(std::move(exp));
-        return *this;
+        return std::make_unique<AST::Type>(AST::classType{id, W[0]});
     }
 
     AST::ptr<AST::ExpList> ExpListRule() {
         return std::make_unique<AST::ExpList>(
             AST::ExpListRule{id, std::move(E)});
-    }
-};
-
-template <> class Builder<AST::ptr<AST::Stm>> {
-    AST::Node id;
-    AST::ptr<AST::Exp> E[2];
-    int ec = 0;
-    std::vector<AST::ptr<AST::Stm>> S;
-    std::string word;
-
-  public:
-    Builder(AST::Node __id) : id(__id) {}
-
-    Builder& keep(AST::ptr<AST::Exp>&& exp) {
-        E[ec++].reset(exp.release());
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::Stm>&& stm) {
-        S.push_back(std::move(stm));
-        return *this;
-    }
-
-    Builder& keep(std::string in) {
-        word = in;
-        return *this;
     }
 
     AST::ptr<AST::Stm> blockStm() {
@@ -262,14 +144,13 @@ template <> class Builder<AST::ptr<AST::Stm>> {
     }
 
     AST::ptr<AST::Stm> ifStm() {
-        return std::make_unique<AST::Stm>(
-            AST::ifStm{id, std::move(E[0]), std::move(S.at(0)),
-                       std::move(S.at(1))});
+        return std::make_unique<AST::Stm>(AST::ifStm{
+            id, std::move(E[0]), std::move(S[0]), std::move(S[1])});
     }
 
     AST::ptr<AST::Stm> whileStm() {
         return std::make_unique<AST::Stm>(
-            AST::whileStm{id, std::move(E[0]), std::move(S.at(0))});
+            AST::whileStm{id, std::move(E[0]), std::move(S[0])});
     }
 
     AST::ptr<AST::Stm> printStm() {
@@ -279,44 +160,12 @@ template <> class Builder<AST::ptr<AST::Stm>> {
 
     AST::ptr<AST::Stm> assignStm() {
         return std::make_unique<AST::Stm>(
-            AST::assignStm{id, word, std::move(E[0])});
+            AST::assignStm{id, W[0], std::move(E[0])});
     }
 
     AST::ptr<AST::Stm> indexAssignStm() {
         return std::make_unique<AST::Stm>(AST::indexAssignStm{
-            id, word, std::move(E[0]), std::move(E[1])});
-    }
-};
-
-template <> class Builder<AST::ptr<AST::Exp>> {
-    AST::Node id;
-    AST::ptr<AST::Exp> E[2];
-    AST::ptr<AST::ExpList> arguments;
-    int32_t value;
-    std::string name;
-    int ec = 0;
-
-  public:
-    Builder(AST::Node __id) : id(__id) {}
-
-    Builder& keep(AST::ptr<AST::Exp>&& exp) {
-        E[ec++].reset(exp.release());
-        return *this;
-    }
-
-    Builder& keep(AST::ptr<AST::ExpList>&& args) {
-        arguments.reset(args.release());
-        return *this;
-    }
-
-    Builder& keep(std::string word) {
-        name = word;
-        return *this;
-    }
-
-    Builder& keep(int32_t val) {
-        value = val;
-        return *this;
+            id, W[0], std::move(E[0]), std::move(E[1])});
     }
 
     AST::ptr<AST::Exp> lhs() { return std::move(E[0]); }
@@ -325,58 +174,73 @@ template <> class Builder<AST::ptr<AST::Exp>> {
         return std::make_unique<AST::Exp>(
             AST::andExp{id, std::move(E[0]), std::move(E[1])});
     }
+
     AST::ptr<AST::Exp> lessExp() {
         return std::make_unique<AST::Exp>(
             AST::lessExp{id, std::move(E[0]), std::move(E[1])});
     }
+
     AST::ptr<AST::Exp> sumExp() {
         return std::make_unique<AST::Exp>(
             AST::sumExp{id, std::move(E[0]), std::move(E[1])});
     }
+
     AST::ptr<AST::Exp> minusExp() {
         return std::make_unique<AST::Exp>(
             AST::minusExp{id, std::move(E[0]), std::move(E[1])});
     }
+
     AST::ptr<AST::Exp> prodExp() {
         return std::make_unique<AST::Exp>(
             AST::lessExp{id, std::move(E[0]), std::move(E[1])});
     }
+
     AST::ptr<AST::Exp> indexingExp() {
         return std::make_unique<AST::Exp>(
             AST::indexingExp{id, std::move(E[0]), std::move(E[1])});
     }
+
     AST::ptr<AST::Exp> lengthExp() {
         return std::make_unique<AST::Exp>(
             AST::lengthExp{id, std::move(E[0])});
     }
+
     AST::ptr<AST::Exp> methodCallExp() {
         return std::make_unique<AST::Exp>(AST::methodCallExp{
-            id, std::move(E[0]), name, std::move(arguments)});
+            id, std::move(E[0]), W[0], std::move(arguments)});
     }
+
     AST::ptr<AST::Exp> integerExp() {
         return std::make_unique<AST::Exp>(AST::integerExp{id, value});
     }
+
     AST::ptr<AST::Exp> trueExp() {
         return std::make_unique<AST::Exp>(AST::trueExp{id});
     }
+
     AST::ptr<AST::Exp> falseExp() {
         return std::make_unique<AST::Exp>(AST::falseExp{id});
     }
+
     AST::ptr<AST::Exp> thisExp() {
         return std::make_unique<AST::Exp>(AST::thisExp{id});
     }
+
     AST::ptr<AST::Exp> identifierExp() {
         return std::make_unique<AST::Exp>(
-            AST::identifierExp{id, name});
+            AST::identifierExp{id, W[0]});
     }
+
     AST::ptr<AST::Exp> newArrayExp() {
         return std::make_unique<AST::Exp>(
             AST::newArrayExp{id, std::move(E[0])});
     }
+
     AST::ptr<AST::Exp> newObjectExp() {
         return std::make_unique<AST::Exp>(
-            AST::newObjectExp{id, name});
+            AST::newObjectExp{id, W[0]});
     }
+
     AST::ptr<AST::Exp> bangExp() {
         return std::make_unique<AST::Exp>(
             AST::bangExp{id, std::move(E[0])});

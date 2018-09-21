@@ -52,27 +52,28 @@ struct ContextGuard {
     }
 };
 
-template <typename istream> AST::ptr<AST::Exp> Exp(Lexer<istream>&);
+template <typename istream> AST::ptr<AST::Exp> Exp(Parser<istream>&);
 template <typename istream>
-AST::ptr<AST::ExpList> ExpList(Lexer<istream>&);
-template <typename istream> AST::ptr<AST::Stm> Stm(Lexer<istream>&);
-template <typename istream> AST::ptr<AST::Type> Type(Lexer<istream>&);
+AST::ptr<AST::ExpList> ExpList(Parser<istream>&);
+template <typename istream> AST::ptr<AST::Stm> Stm(Parser<istream>&);
 template <typename istream>
-AST::ptr<AST::FormalList> FormalList(Lexer<istream>&);
+AST::ptr<AST::Type> Type(Parser<istream>&);
 template <typename istream>
-AST::ptr<AST::VarDecl> VarDecl(Lexer<istream>&);
+AST::ptr<AST::FormalList> FormalList(Parser<istream>&);
 template <typename istream>
-AST::ptr<AST::MethodDecl> MethodDecl(Lexer<istream>&);
+AST::ptr<AST::VarDecl> VarDecl(Parser<istream>&);
 template <typename istream>
-AST::ptr<AST::ClassDecl> ClassDecl(Lexer<istream>&);
+AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>&);
 template <typename istream>
-AST::ptr<AST::MainClass> MainClass(Lexer<istream>&);
+AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>&);
 template <typename istream>
-AST::ptr<AST::Program> Program(Lexer<istream>&);
+AST::ptr<AST::MainClass> MainClass(Parser<istream>&);
+template <typename istream>
+AST::ptr<AST::Program> Program(Parser<istream>&);
 
 template <typename istream>
 AST::ptr<AST::Program> Program(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::Program>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     builder.keep(MainClass(parser));
     while (Lexeme(parser[0]) != Lexeme::eof)
         builder.keep(ClassDecl(parser));
@@ -81,7 +82,7 @@ AST::ptr<AST::Program> Program(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::MainClass> MainClass(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::MainClass>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     parser.consume(Lexeme::class_keyword);
     builder.keep(parser.consume(Lexeme::identifier));
     parser.consume(Lexeme::open_brace);
@@ -106,7 +107,7 @@ AST::ptr<AST::MainClass> MainClass(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::MainClass>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     parser.consume(Lexeme::class_keyword);
     builder.keep(parser.consume(Lexeme::identifier));
 
@@ -135,7 +136,7 @@ AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::MethodDecl>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     parser.consume(Lexeme::public_keyword);
     builder.keep(Type(parser))
         .keep(parser.consume(Lexeme::identifier))
@@ -170,7 +171,7 @@ AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::VarDecl> VarDecl(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::VarDecl>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     builder.keep(Type(parser))
         .keep(parser.consume(Lexeme::identifier));
     parser.consume(Lexeme::semicolon);
@@ -179,7 +180,7 @@ AST::ptr<AST::VarDecl> VarDecl(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::FormalList> FormalList(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::FormalList>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     parser.consume(Lexeme::open_paren);
     bool first = true;
     while (Lexeme(parser[0]) != Lexeme::close_paren) {
@@ -194,7 +195,7 @@ AST::ptr<AST::FormalList> FormalList(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::Type> Type(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::Type>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     switch (Lexeme(parser[0])) {
     case Lexeme::boolean_keyword:
         parser.consume(Lexeme::boolean_keyword);
@@ -217,7 +218,7 @@ AST::ptr<AST::Type> Type(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::Stm> Stm(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::Stm>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     switch (Lexeme(parser[0])) {
     case Lexeme::open_brace:
         parser.consume(Lexeme::open_brace);
@@ -268,7 +269,7 @@ AST::ptr<AST::Stm> Stm(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::ExpList> ExpList(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::ExpList>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     parser.consume(Lexeme::open_paren);
     bool read = false;
     while (Lexeme(parser[0]) != Lexeme::close_paren) {
@@ -283,7 +284,7 @@ AST::ptr<AST::ExpList> ExpList(Parser<istream>& parser) {
 template <typename istream>
 AST::ptr<AST::Exp> _Exp(Parser<istream>& parser,
                         AST::ptr<AST::Exp>&& lhs) {
-    Builder<AST::ptr<AST::Exp>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     builder.keep(std::move(lhs));
     switch (Lexeme(parser[0])) {
     case Lexeme::and_operator:
@@ -323,7 +324,7 @@ AST::ptr<AST::Exp> _Exp(Parser<istream>& parser,
 
 template <typename istream>
 AST::ptr<AST::Exp> Exp(Parser<istream>& parser) {
-    Builder<AST::ptr<AST::Exp>> builder(parser.make_id());
+    ASTBuilder builder(parser.make_id());
     switch (Lexeme(parser[0])) {
     case Lexeme::integer_literal:
         return _Exp(parser, builder
