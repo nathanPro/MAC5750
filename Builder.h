@@ -131,6 +131,30 @@ template <> class Builder<AST::ptr<AST::MethodDecl>> {
     }
 };
 
+template <> class Builder<AST::ptr<AST::VarDecl>> {
+    AST::Node id;
+    AST::ptr<AST::Type> type;
+    std::string word;
+
+  public:
+    Builder(AST::Node __id) : id(__id) {}
+
+    Builder& keep(AST::ptr<AST::Type>&& in) {
+        type.reset(in.release());
+        return *this;
+    }
+
+    Builder& keep(std::string in) {
+        word = in;
+        return *this;
+    }
+
+    AST::ptr<AST::VarDecl> VarDeclRule() {
+        return std::make_unique<AST::VarDecl>(
+            AST::VarDeclRule{id, std::move(type), word});
+    }
+};
+
 template <> class Builder<AST::ptr<AST::FormalList>> {
     AST::Node id;
     std::vector<AST::ptr<AST::Type>> T;

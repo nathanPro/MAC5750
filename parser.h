@@ -170,13 +170,11 @@ AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::VarDecl> VarDecl(Parser<istream>& parser) {
-    ContextGuard guard(parser[0].third, "<variable declaration>");
-    auto type = Type(parser);
-    auto word = parser.consume(Lexeme::identifier);
+    Builder<AST::ptr<AST::VarDecl>> builder(parser.make_id());
+    builder.keep(Type(parser))
+        .keep(parser.consume(Lexeme::identifier));
     parser.consume(Lexeme::semicolon);
-    guard.active = false;
-    return std::make_unique<AST::VarDecl>(
-        AST::VarDeclRule{parser.make_id(), std::move(type), word});
+    return builder.VarDeclRule();
 }
 
 template <typename istream>
