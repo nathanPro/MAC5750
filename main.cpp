@@ -3,8 +3,5 @@
 
 int main() {
     auto parser = Parser::Parser(std::cin);
-    try {
-        auto r = Parser::Program(parser);
-    } catch (...) {}
-    return 0;
+    auto r      = Parser::Program(parser);
 }
