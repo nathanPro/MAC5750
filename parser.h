@@ -72,14 +72,11 @@ AST::ptr<AST::Program> Program(Lexer<istream>&);
 
 template <typename istream>
 AST::ptr<AST::Program> Program(Parser<istream>& parser) {
-    using std::make_unique;
-    using std::move;
-    auto main = MainClass(parser);
-    std::vector<AST::__detail::pClassDecl> classes;
+    Builder<AST::ptr<AST::Program>> builder(parser.make_id());
+    builder.keep(MainClass(parser));
     while (Lexeme(parser[0]) != Lexeme::eof)
-        classes.push_back(ClassDecl(parser));
-    return make_unique<AST::Program>(AST::ProgramRule{
-        parser.make_id(), move(main), move(classes)});
+        builder.keep(ClassDecl(parser));
+    return builder.ProgramRule();
 }
 
 template <typename istream>

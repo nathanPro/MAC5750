@@ -4,6 +4,30 @@
 
 template <typename T> class Builder;
 
+template <> class Builder<AST::ptr<AST::Program>> {
+    AST::Node id;
+    AST::ptr<AST::MainClass> main;
+    std::vector<AST::ptr<AST::ClassDecl>> C;
+
+  public:
+    Builder(AST::Node __id) : id(__id) {}
+
+    Builder& keep(AST::ptr<AST::MainClass>&& in) {
+        main.reset(in.release());
+        return *this;
+    }
+
+    Builder& keep(AST::ptr<AST::ClassDecl>&& in) {
+        C.push_back(std::move(in));
+        return *this;
+    }
+
+    AST::ptr<AST::Program> ProgramRule() {
+        return std::make_unique<AST::Program>(
+            AST::ProgramRule{id, std::move(main), std::move(C)});
+    }
+};
+
 template <> class Builder<AST::ptr<AST::MainClass>> {
     AST::Node id;
     std::vector<std::string> I;
