@@ -54,10 +54,13 @@ template <typename istream> class ASTBuilder {
 
   public:
     ASTBuilder(ParserContext<istream>& __parser)
-        : parser(__parser), id(parser.idx++) {}
+        : parser(__parser), id(parser.idx++) {
+        parser.errors.push_back({});
+    }
 
     ASTBuilder(ParserContext<istream>& __parser, std::string label)
         : parser(__parser), id(parser.idx++) {
+        parser.errors.push_back({});
         parser.context.push_back(label);
         parser.lines.push_back(parser[0].third);
         pop = true;
@@ -72,8 +75,6 @@ template <typename istream> class ASTBuilder {
 
     ASTBuilder& operator<<(Lexeme lex) {
         if (Lexeme(parser[0]) != lex) {
-            if (parser.errors.size() <= id.get())
-                parser.errors.resize(1 + id.get());
             auto err      = std::make_unique<Mismatch>();
             err->expected = lex;
             err->found    = Lexeme(parser[0]);
@@ -93,8 +94,6 @@ template <typename istream> class ASTBuilder {
 
     ASTBuilder& operator<<(std::string in) {
         if (parser[0].second != in) {
-            if (parser.errors.size() <= id.get())
-                parser.errors.resize(1 + id.get());
             auto err      = std::make_unique<WrongIdentifier>();
             err->expected = in;
             err->found    = parser[0].second;
@@ -110,9 +109,6 @@ template <typename istream> class ASTBuilder {
     }
 
     void unexpected(Lexeme un) {
-        if (parser.errors.size() <= id.get())
-            parser.errors.resize(1 + id.get());
-
         if (un == Lexeme::eof) return;
         auto err = std::make_unique<Unexpected>();
         err->lex = un;
