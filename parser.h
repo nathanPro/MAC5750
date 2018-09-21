@@ -1,132 +1,75 @@
+#ifndef BCC_PARSER
+#define BCC_PARSER
 #include "AST.h"
 #include "Builder.h"
-#include "lexer.h"
 #include "util.h"
 
 namespace Parser {
 
-struct MismatchError {
-    Lexeme expected;
-    Lexeme found;
-};
-
-struct Unexpected {
-    Lexeme lex;
-};
-
-struct UnexpectedEnd {};
-
-template <typename istream> class Parser {
-    Lexer<istream> tokens;
-    int idx;
-
-  public:
-    Parser(istream& stream) : tokens(stream, 2), idx(0) {}
-    AST::Node make_id() { return AST::Node(idx++); }
-    LexState operator[](int i) { return tokens[i]; }
-    std::string consume(Lexeme lex) {
-        if (tokens.empty()) throw UnexpectedEnd{};
-        if ((*tokens).first == lex) {
-            std::string ans = (*tokens).second;
-            ++tokens;
-            return ans;
-        } else {
-            write(std::cerr, "ERROR:");
-            std::cerr << "Expected '" << lex << "' and found '"
-                      << tokens[0].first << "'\n";
-            throw MismatchError{lex, tokens[0].first};
-        }
-    }
-};
-
-struct ContextGuard {
-    size_t line;
-    std::string label;
-    bool active;
-
-    ContextGuard(size_t _line, std::string _label)
-        : line(_line), label(_label), active(true) {}
-    ~ContextGuard() {
-        if (!active) return;
-        write(std::cerr, "while parsing", label, "from line", line);
-    }
-};
-
-template <typename istream> AST::ptr<AST::Exp> Exp(Parser<istream>&);
 template <typename istream>
-AST::ptr<AST::ExpList> ExpList(Parser<istream>&);
-template <typename istream> AST::ptr<AST::Stm> Stm(Parser<istream>&);
+AST::ptr<AST::Exp> Exp(ParserContext<istream>&);
 template <typename istream>
-AST::ptr<AST::Type> Type(Parser<istream>&);
+AST::ptr<AST::ExpList> ExpList(ParserContext<istream>&);
 template <typename istream>
-AST::ptr<AST::FormalList> FormalList(Parser<istream>&);
+AST::ptr<AST::Stm> Stm(ParserContext<istream>&);
 template <typename istream>
-AST::ptr<AST::VarDecl> VarDecl(Parser<istream>&);
+AST::ptr<AST::Type> Type(ParserContext<istream>&);
 template <typename istream>
-AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>&);
+AST::ptr<AST::FormalList> FormalList(ParserContext<istream>&);
 template <typename istream>
-AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>&);
+AST::ptr<AST::VarDecl> VarDecl(ParserContext<istream>&);
 template <typename istream>
-AST::ptr<AST::MainClass> MainClass(Parser<istream>&);
+AST::ptr<AST::MethodDecl> MethodDecl(ParserContext<istream>&);
 template <typename istream>
-AST::ptr<AST::Program> Program(Parser<istream>&);
+AST::ptr<AST::ClassDecl> ClassDecl(ParserContext<istream>&);
+template <typename istream>
+AST::ptr<AST::MainClass> MainClass(ParserContext<istream>&);
+template <typename istream>
+AST::ptr<AST::Program> Program(ParserContext<istream>&);
 
 template <typename istream>
-AST::ptr<AST::Program> Program(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
-    builder.keep(MainClass(parser));
+AST::ptr<AST::Program> Program(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
+    builder << MainClass(parser);
     while (Lexeme(parser[0]) != Lexeme::eof)
-        builder.keep(ClassDecl(parser));
+        builder << ClassDecl(parser);
     return builder.ProgramRule();
 }
 
 template <typename istream>
-AST::ptr<AST::MainClass> MainClass(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
-    parser.consume(Lexeme::class_keyword);
-    builder.keep(parser.consume(Lexeme::identifier));
-    parser.consume(Lexeme::open_brace);
-    parser.consume(Lexeme::public_keyword);
-    parser.consume(Lexeme::static_keyword);
-    parser.consume(Lexeme::void_keyword);
-    if (parser[0].second != std::string("main"))
-        throw Unexpected{Lexeme(parser[0])};
-    parser.consume(Lexeme::identifier);
-    parser.consume(Lexeme::open_paren);
-    parser.consume(Lexeme::string_keyword);
-    parser.consume(Lexeme::open_bracket);
-    parser.consume(Lexeme::close_bracket);
-    builder.keep(parser.consume(Lexeme::identifier));
-    parser.consume(Lexeme::close_paren);
-    parser.consume(Lexeme::open_brace);
-    builder.keep(Stm(parser));
-    parser.consume(Lexeme::close_brace);
-    parser.consume(Lexeme::close_brace);
+AST::ptr<AST::MainClass> MainClass(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
+    builder << Lexeme::class_keyword << Lexeme::identifier
+            << Lexeme::open_brace << Lexeme::public_keyword
+            << Lexeme::static_keyword << Lexeme::void_keyword
+            << std::string("main") << Lexeme::open_paren
+            << Lexeme::string_keyword << Lexeme::open_bracket
+            << Lexeme::close_bracket << Lexeme::identifier
+            << Lexeme::close_paren << Lexeme::open_brace
+            << Stm(parser) << Lexeme::close_brace
+            << Lexeme::close_brace;
     return builder.MainClassRule();
 }
 
 template <typename istream>
-AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
-    parser.consume(Lexeme::class_keyword);
-    builder.keep(parser.consume(Lexeme::identifier));
+AST::ptr<AST::ClassDecl> ClassDecl(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
+    builder << Lexeme::class_keyword << Lexeme::identifier;
 
     bool has_superclass =
         (Lexeme(parser[0]) == Lexeme::extends_keyword);
 
-    if (has_superclass) {
-        parser.consume(Lexeme::extends_keyword);
-        builder.keep(parser.consume(Lexeme::identifier));
-    }
+    if (has_superclass)
+        builder << Lexeme::extends_keyword << Lexeme::identifier;
 
-    parser.consume(Lexeme::open_brace);
+    builder << Lexeme::open_brace;
     while (Lexeme(parser[0]) != Lexeme::close_brace &&
            Lexeme(parser[0]) != Lexeme::public_keyword)
-        builder.keep(VarDecl(parser));
+        builder << VarDecl(parser);
 
     while (Lexeme(parser[0]) != Lexeme::close_brace)
-        builder.keep(MethodDecl(parser));
-    parser.consume(Lexeme::close_brace);
+        builder << MethodDecl(parser);
+    builder << Lexeme::close_brace;
 
     if (has_superclass)
         return builder.ClassDeclInheritance();
@@ -135,24 +78,22 @@ AST::ptr<AST::ClassDecl> ClassDecl(Parser<istream>& parser) {
 }
 
 template <typename istream>
-AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
-    parser.consume(Lexeme::public_keyword);
-    builder.keep(Type(parser))
-        .keep(parser.consume(Lexeme::identifier))
-        .keep(FormalList(parser));
-    parser.consume(Lexeme::open_brace);
+AST::ptr<AST::MethodDecl> MethodDecl(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
+    builder << Lexeme::public_keyword << Type(parser)
+            << Lexeme::identifier << FormalList(parser)
+            << Lexeme::open_brace;
 
     bool eating_vars = true;
     while (eating_vars) {
         switch (Lexeme(parser[0])) {
         case Lexeme::boolean_keyword:
         case Lexeme::int_keyword:
-            builder.keep(VarDecl(parser));
+            builder << VarDecl(parser);
             break;
         case Lexeme::identifier:
             if (Lexeme(parser[1]) == Lexeme::identifier) {
-                builder.keep(VarDecl(parser));
+                builder << VarDecl(parser);
                 break;
             }
         default:
@@ -161,213 +102,191 @@ AST::ptr<AST::MethodDecl> MethodDecl(Parser<istream>& parser) {
     }
 
     while (Lexeme(parser[0]) != Lexeme::return_keyword)
-        builder.keep(Stm(parser));
-    parser.consume(Lexeme::return_keyword);
-    builder.keep(Exp(parser));
-    parser.consume(Lexeme::semicolon);
-    parser.consume(Lexeme::close_brace);
+        builder << Stm(parser);
+    builder << Lexeme::return_keyword << Exp(parser)
+            << Lexeme::semicolon << Lexeme::close_brace;
     return builder.MethodDeclRule();
 }
 
 template <typename istream>
-AST::ptr<AST::VarDecl> VarDecl(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
-    builder.keep(Type(parser))
-        .keep(parser.consume(Lexeme::identifier));
-    parser.consume(Lexeme::semicolon);
+AST::ptr<AST::VarDecl> VarDecl(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
+    builder << Type(parser) << Lexeme::identifier
+            << Lexeme::semicolon;
     return builder.VarDeclRule();
 }
 
 template <typename istream>
-AST::ptr<AST::FormalList> FormalList(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
-    parser.consume(Lexeme::open_paren);
+AST::ptr<AST::FormalList> FormalList(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
+    builder << Lexeme::open_paren;
     bool first = true;
     while (Lexeme(parser[0]) != Lexeme::close_paren) {
-        if (!first) parser.consume(Lexeme::comma);
+        if (!first) builder << Lexeme::comma;
         first = false;
-        builder.keep(Type(parser))
-            .keep(parser.consume(Lexeme::identifier));
+        builder << Type(parser) << Lexeme::identifier;
     }
-    parser.consume(Lexeme::close_paren);
+    builder << Lexeme::close_paren;
     return builder.FormalListRule();
 }
 
 template <typename istream>
-AST::ptr<AST::Type> Type(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
+AST::ptr<AST::Type> Type(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
     switch (Lexeme(parser[0])) {
     case Lexeme::boolean_keyword:
-        parser.consume(Lexeme::boolean_keyword);
+        builder << Lexeme::boolean_keyword;
         return builder.booleanType();
     case Lexeme::identifier:
-        return builder.keep(parser.consume(Lexeme::identifier))
-            .classType();
+        builder << Lexeme::identifier;
+        return builder.classType();
     case Lexeme::int_keyword:
-        parser.consume(Lexeme::int_keyword);
+        builder << Lexeme::int_keyword;
         if (Lexeme(parser[0]) == Lexeme::open_bracket) {
-            parser.consume(Lexeme::open_bracket);
-            parser.consume(Lexeme::close_bracket);
+            builder << Lexeme::open_bracket << Lexeme::close_bracket;
             return builder.integerArrayType();
         }
         return builder.integerType();
     default:
-        throw Unexpected{Lexeme(parser[0])};
+        builder << Unexpected{Lexeme(parser[0])};
+        return builder.integerType();
     }
 }
 
 template <typename istream>
-AST::ptr<AST::Stm> Stm(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
+AST::ptr<AST::Stm> Stm(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
     switch (Lexeme(parser[0])) {
     case Lexeme::open_brace:
-        parser.consume(Lexeme::open_brace);
+        builder << Lexeme::open_brace;
         while (Lexeme(parser[0]) != Lexeme::close_brace)
-            builder.keep(Stm(parser));
-        parser.consume(Lexeme::close_brace);
+            builder << Stm(parser);
+        builder << Lexeme::close_brace;
         return builder.blockStm();
     case Lexeme::if_keyword:
-        parser.consume(Lexeme::if_keyword);
-        parser.consume(Lexeme::open_paren);
-        builder.keep(Exp(parser));
-        parser.consume(Lexeme::close_paren);
-        builder.keep(Stm(parser));
-        parser.consume(Lexeme::else_keyword);
-        return builder.keep(Stm(parser)).ifStm();
+        builder << Lexeme::if_keyword << Lexeme::open_paren
+                << Exp(parser) << Lexeme::close_paren << Stm(parser)
+                << Lexeme::else_keyword << Stm(parser);
+        return builder.ifStm();
     case Lexeme::while_keyword:
-        parser.consume(Lexeme::while_keyword);
-        parser.consume(Lexeme::open_paren);
-        builder.keep(Exp(parser));
-        parser.consume(Lexeme::close_paren);
-        return builder.keep(Stm(parser)).whileStm();
+        builder << Lexeme::while_keyword << Lexeme::open_paren
+                << Exp(parser) << Lexeme::close_paren << Stm(parser);
+        return builder.whileStm();
     case Lexeme::println_keyword:
-        parser.consume(Lexeme::println_keyword);
-        parser.consume(Lexeme::open_paren);
-        builder.keep(Exp(parser));
-        parser.consume(Lexeme::close_paren);
-        parser.consume(Lexeme::semicolon);
+        builder << Lexeme::println_keyword << Lexeme::open_paren
+                << Exp(parser) << Lexeme::close_paren
+                << Lexeme::semicolon;
         return builder.printStm();
     case Lexeme::identifier:
-        builder.keep(parser.consume(Lexeme::identifier));
+        builder << Lexeme::identifier;
         if (Lexeme(parser[0]) == Lexeme::equals_sign) {
-            parser.consume(Lexeme::equals_sign);
-            builder.keep(Exp(parser));
-            parser.consume(Lexeme::semicolon);
+            builder << Lexeme::equals_sign << Exp(parser)
+                    << Lexeme::semicolon;
             return builder.assignStm();
         }
-        parser.consume(Lexeme::open_bracket);
-        builder.keep(Exp(parser));
-        parser.consume(Lexeme::close_bracket);
-        parser.consume(Lexeme::equals_sign);
-        builder.keep(Exp(parser));
-        parser.consume(Lexeme::semicolon);
+        builder << Lexeme::open_bracket << Exp(parser)
+                << Lexeme::close_bracket << Lexeme::equals_sign
+                << Exp(parser) << Lexeme::semicolon;
         return builder.indexAssignStm();
     default:
-        throw Unexpected{Lexeme(parser[0])};
+        builder << Unexpected{Lexeme(parser[0])};
+        return builder.blockStm();
     }
 }
 
 template <typename istream>
-AST::ptr<AST::ExpList> ExpList(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
-    parser.consume(Lexeme::open_paren);
-    bool read = false;
+AST::ptr<AST::ExpList> ExpList(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
+    builder << Lexeme::open_paren;
+    bool first = true;
     while (Lexeme(parser[0]) != Lexeme::close_paren) {
-        if (read) parser.consume(Lexeme::comma);
-        read = true;
-        builder.keep(Exp(parser));
+        if (!first) builder << Lexeme::comma;
+        first = false;
+        builder << Exp(parser);
     }
-    parser.consume(Lexeme::close_paren);
+    builder << Lexeme::close_paren;
     return builder.ExpListRule();
 }
 
 template <typename istream>
-AST::ptr<AST::Exp> _Exp(Parser<istream>& parser,
+AST::ptr<AST::Exp> _Exp(ParserContext<istream>& parser,
                         AST::ptr<AST::Exp>&& lhs) {
-    ASTBuilder builder(parser.make_id());
-    builder.keep(std::move(lhs));
+    ASTBuilder builder(parser);
+    builder << std::move(lhs);
     switch (Lexeme(parser[0])) {
     case Lexeme::and_operator:
-        parser.consume(Lexeme::and_operator);
-        return _Exp(parser, builder.keep(Exp(parser)).andExp());
+        builder << Lexeme::and_operator << Exp(parser);
+        return _Exp(parser, builder.andExp());
     case Lexeme::less_operator:
-        parser.consume(Lexeme::less_operator);
-        return _Exp(parser, builder.keep(Exp(parser)).lessExp());
+        builder << Lexeme::less_operator << Exp(parser);
+        return _Exp(parser, builder.lessExp());
     case Lexeme::plus_operator:
-        parser.consume(Lexeme::plus_operator);
-        return _Exp(parser, builder.keep(Exp(parser)).sumExp());
+        builder << Lexeme::plus_operator << Exp(parser);
+        return _Exp(parser, builder.sumExp());
     case Lexeme::minus_operator:
-        parser.consume(Lexeme::minus_operator);
-        return _Exp(parser, builder.keep(Exp(parser)).minusExp());
+        builder << Lexeme::minus_operator << Exp(parser);
+        return _Exp(parser, builder.minusExp());
     case Lexeme::times_operator:
-        parser.consume(Lexeme::times_operator);
-        return _Exp(parser, builder.keep(Exp(parser)).prodExp());
+        builder << Lexeme::times_operator << Exp(parser);
+        return _Exp(parser, builder.prodExp());
     case Lexeme::open_bracket:
-        parser.consume(Lexeme::open_bracket);
-        builder.keep(Exp(parser));
-        parser.consume(Lexeme::close_bracket);
+        builder << Lexeme::open_bracket << Exp(parser)
+                << Lexeme::close_bracket;
         return _Exp(parser, builder.indexingExp());
     case Lexeme::period:
-        parser.consume(Lexeme::period);
+        builder << Lexeme::period;
         if (Lexeme(parser[0]) == Lexeme::lenght_keyword) {
-            parser.consume(Lexeme::lenght_keyword);
+            builder << Lexeme::lenght_keyword;
             return _Exp(parser, builder.lengthExp());
         }
-        return _Exp(parser,
-                    builder.keep(parser.consume(Lexeme::identifier))
-                        .keep(ExpList(parser))
-                        .methodCallExp());
+        builder << Lexeme::identifier << ExpList(parser);
+        return _Exp(parser, builder.methodCallExp());
     default:
         return builder.lhs();
     }
 }
 
 template <typename istream>
-AST::ptr<AST::Exp> Exp(Parser<istream>& parser) {
-    ASTBuilder builder(parser.make_id());
+AST::ptr<AST::Exp> Exp(ParserContext<istream>& parser) {
+    ASTBuilder builder(parser);
     switch (Lexeme(parser[0])) {
     case Lexeme::integer_literal:
-        return _Exp(parser, builder
-                                .keep(std::stoi(parser.consume(
-                                    Lexeme::integer_literal)))
-                                .integerExp());
+        builder << Lexeme::integer_literal;
+        return _Exp(parser, builder.integerExp());
     case Lexeme::true_keyword:
-        parser.consume(Lexeme::true_keyword);
+        builder << Lexeme::true_keyword;
         return _Exp(parser, builder.trueExp());
     case Lexeme::false_keyword:
-        parser.consume(Lexeme::false_keyword);
+        builder << Lexeme::false_keyword;
         return _Exp(parser, builder.falseExp());
     case Lexeme::identifier:
-        return _Exp(parser,
-                    builder.keep(parser.consume(Lexeme::identifier))
-                        .identifierExp());
+        builder << Lexeme::identifier;
+        return _Exp(parser, builder.identifierExp());
     case Lexeme::this_keyword:
-        parser.consume(Lexeme::this_keyword);
+        builder << Lexeme::this_keyword;
         return _Exp(parser, builder.thisExp());
     case Lexeme::new_keyword:
-        parser.consume(Lexeme::new_keyword);
+        builder << Lexeme::new_keyword;
         if (Lexeme(parser[0]) == Lexeme::int_keyword) {
-            parser.consume(Lexeme::int_keyword);
-            parser.consume(Lexeme::open_bracket);
-            builder.keep(Exp(parser));
-            parser.consume(Lexeme::close_bracket);
+            builder << Lexeme::int_keyword << Lexeme::open_bracket
+                    << Exp(parser) << Lexeme::close_bracket;
             return _Exp(parser, builder.newArrayExp());
         }
-        builder.keep(parser.consume(Lexeme::identifier));
-        parser.consume(Lexeme::open_paren);
-        parser.consume(Lexeme::close_paren);
+        builder << Lexeme::identifier << Lexeme::open_paren
+                << Lexeme::close_paren;
         return _Exp(parser, builder.newObjectExp());
     case Lexeme::bang:
-        parser.consume(Lexeme::bang);
-        return _Exp(parser, builder.keep(Exp(parser)).bangExp());
+        builder << Lexeme::bang << Exp(parser);
+        return _Exp(parser, builder.bangExp());
     case Lexeme::open_paren:
-        parser.consume(Lexeme::open_paren);
-        builder.keep(Exp(parser));
-        parser.consume(Lexeme::close_paren);
+        builder << Lexeme::open_paren << Exp(parser)
+                << Lexeme::close_paren;
         return _Exp(parser, builder.parenExp());
     default:
-        throw Unexpected{Lexeme(parser[0])};
+        builder << Unexpected{Lexeme(parser[0])};
+        return builder.bangExp();
     }
 }
 
 } // namespace Parser
+#endif

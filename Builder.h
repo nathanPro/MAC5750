@@ -1,8 +1,26 @@
 #ifndef BUILDER
 #define BUILDER
 #include "AST.h"
+#include "lexer.h"
 
-class ASTBuilder {
+template <typename T> class ASTBuilder;
+
+struct Unexpected {
+    Lexeme lex;
+};
+
+template <typename istream> class ParserContext {
+    Lexer<istream> tokens;
+    int idx;
+
+  public:
+    ParserContext(istream& stream) : tokens(stream, 2), idx(0) {}
+    LexState operator[](int i) { return tokens[i]; }
+    friend class ASTBuilder<istream>;
+};
+
+template <typename istream> class ASTBuilder {
+    ParserContext<istream>& parser;
     AST::Node id;
     AST::ptr<AST::MainClass> main;
     std::vector<std::string> W;
@@ -17,60 +35,72 @@ class ASTBuilder {
     int32_t value;
 
   public:
-    ASTBuilder(AST::Node __id) : id(__id) {}
+    ASTBuilder(ParserContext<istream>& __parser)
+        : parser(__parser), id(parser.idx++) {}
 
-    ASTBuilder& keep(AST::ptr<AST::MainClass>&& in) {
+    ASTBuilder& operator<<(Lexeme lex) {
+        if (Lexeme(parser[0]) != lex) throw;
+        if (Lexeme::identifier == lex)
+            W.push_back(parser[0].second);
+        else if (Lexeme::integer_literal == lex)
+            value = std::stoi(parser[0].second);
+        ++parser.tokens;
+        return *this;
+    }
+
+    ASTBuilder& operator<<(std::string in) {
+        if (parser[0].second != in) throw;
+        ++parser.tokens;
+        return *this;
+    }
+
+    ASTBuilder& operator<<(Unexpected un) {
+        throw;
+        return *this;
+    }
+
+    ASTBuilder& operator<<(AST::ptr<AST::MainClass>&& in) {
         main.reset(in.release());
         return *this;
     }
 
-    ASTBuilder& keep(std::string in) {
-        W.push_back(in);
-        return *this;
-    }
-
-    ASTBuilder& keep(AST::ptr<AST::ClassDecl>&& in) {
+    ASTBuilder& operator<<(AST::ptr<AST::ClassDecl>&& in) {
         C.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& keep(AST::ptr<AST::VarDecl>&& in) {
+    ASTBuilder& operator<<(AST::ptr<AST::VarDecl>&& in) {
         V.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& keep(AST::ptr<AST::MethodDecl>&& in) {
+    ASTBuilder& operator<<(AST::ptr<AST::MethodDecl>&& in) {
         M.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& keep(AST::ptr<AST::Type>&& in) {
+    ASTBuilder& operator<<(AST::ptr<AST::Type>&& in) {
         T.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& keep(AST::ptr<AST::Exp>&& in) {
+    ASTBuilder& operator<<(AST::ptr<AST::Exp>&& in) {
         E.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& keep(AST::ptr<AST::Stm>&& in) {
+    ASTBuilder& operator<<(AST::ptr<AST::Stm>&& in) {
         S.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& keep(AST::ptr<AST::ExpList>&& in) {
+    ASTBuilder& operator<<(AST::ptr<AST::ExpList>&& in) {
         arguments.reset(in.release());
         return *this;
     }
 
-    ASTBuilder& keep(AST::ptr<AST::FormalList>&& in) {
+    ASTBuilder& operator<<(AST::ptr<AST::FormalList>&& in) {
         list.reset(in.release());
-        return *this;
-    }
-
-    ASTBuilder& keep(int32_t v) {
-        value = v;
         return *this;
     }
 

@@ -2,6 +2,6 @@
 #include "util.h"
 
 int main() {
-    auto parser = Parser::Parser(std::cin);
-    auto r      = Parser::Program(parser);
+    auto ctx = ParserContext(std::cin);
+    auto r   = Parser::Program(ctx);
 }
