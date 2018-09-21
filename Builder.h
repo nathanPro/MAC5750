@@ -26,6 +26,7 @@ struct WrongIdentifier : ParsingError {
 template <typename istream> class ParserContext {
     Lexer<istream> tokens;
     std::vector<std::string> context;
+    std::vector<int32_t> lines;
     std::vector<std::vector<std::unique_ptr<ParsingError>>> errors;
     int idx;
 
@@ -58,11 +59,15 @@ template <typename istream> class ASTBuilder {
     ASTBuilder(ParserContext<istream>& __parser, std::string label)
         : parser(__parser), id(parser.idx++) {
         parser.context.push_back(label);
+        parser.lines.push_back(parser[0].third);
         pop = true;
     }
 
     ~ASTBuilder() {
-        if (pop) parser.context.pop_back();
+        if (pop) {
+            parser.context.pop_back();
+            parser.lines.pop_back();
+        }
     }
 
     ASTBuilder& operator<<(Lexeme lex) {
@@ -108,6 +113,7 @@ template <typename istream> class ASTBuilder {
         if (parser.errors.size() <= id.get())
             parser.errors.resize(1 + id.get());
 
+        if (un == Lexeme::eof) return;
         auto err = std::make_unique<Unexpected>();
         err->lex = un;
         err->ctx = parser.context;

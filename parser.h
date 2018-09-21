@@ -90,7 +90,8 @@ AST::ptr<AST::MethodDecl> MethodDecl(ParserContext<istream>& parser) {
             Lexeme(parser[1]) == Lexeme::identifier))
         builder << VarDecl(parser);
 
-    while (Lexeme(parser[0]) != Lexeme::return_keyword)
+    while (Lexeme(parser[0]) != Lexeme::return_keyword &&
+           Lexeme(parser[0]) != Lexeme::eof)
         builder << Stm(parser);
     builder << Lexeme::return_keyword << Exp(parser)
             << Lexeme::semicolon << Lexeme::close_brace;
