@@ -240,38 +240,25 @@ AST::ptr<AST::FormalList> FormalList(Parser<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::Type> Type(Parser<istream>& parser) {
-    using std::make_unique;
-
-    auto [lex, word, lc] = parser[0];
-    ContextGuard guard(lc, "<type>");
-    AST::ptr<AST::Type> ans;
-    switch (lex) {
-    case Lexeme::boolean_keyword: {
+    Builder<AST::ptr<AST::Type>> builder(parser.make_id());
+    switch (Lexeme(parser[0])) {
+    case Lexeme::boolean_keyword:
         parser.consume(Lexeme::boolean_keyword);
-        ans = make_unique<AST::Type>(
-            AST::booleanType{parser.make_id()});
-    } break;
-    case Lexeme::identifier: {
-        parser.consume(Lexeme::identifier);
-        ans = make_unique<AST::Type>(
-            AST::classType{parser.make_id(), word});
-    } break;
-    case Lexeme::int_keyword: {
+        return builder.booleanType();
+    case Lexeme::identifier:
+        return builder.keep(parser.consume(Lexeme::identifier))
+            .classType();
+    case Lexeme::int_keyword:
         parser.consume(Lexeme::int_keyword);
         if (Lexeme(parser[0]) == Lexeme::open_bracket) {
             parser.consume(Lexeme::open_bracket);
             parser.consume(Lexeme::close_bracket);
-            ans = make_unique<AST::Type>(
-                AST::integerArrayType{parser.make_id()});
-        } else
-            ans = make_unique<AST::Type>(
-                AST::integerType{parser.make_id()});
-    } break;
+            return builder.integerArrayType();
+        }
+        return builder.integerType();
     default:
-        throw Unexpected{lex};
+        throw Unexpected{Lexeme(parser[0])};
     }
-    guard.active = false;
-    return ans;
 }
 
 template <typename istream>

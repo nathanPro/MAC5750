@@ -4,6 +4,35 @@
 
 template <typename T> class Builder;
 
+template <> class Builder<AST::ptr<AST::Type>> {
+    AST::Node id;
+    std::string word;
+
+  public:
+    Builder(AST::Node __id) : id(__id) {}
+
+    Builder& keep(std::string in) {
+        word = in;
+        return *this;
+    }
+
+    AST::ptr<AST::Type> integerArrayType() {
+        return std::make_unique<AST::Type>(AST::integerArrayType{id});
+    }
+
+    AST::ptr<AST::Type> booleanType() {
+        return std::make_unique<AST::Type>(AST::booleanType{id});
+    }
+
+    AST::ptr<AST::Type> integerType() {
+        return std::make_unique<AST::Type>(AST::integerType{id});
+    }
+
+    AST::ptr<AST::Type> classType() {
+        return std::make_unique<AST::Type>(AST::classType{id, word});
+    }
+};
+
 template <> class Builder<AST::ptr<AST::ExpList>> {
     AST::Node id;
     std::vector<AST::ptr<AST::Exp>> E;
