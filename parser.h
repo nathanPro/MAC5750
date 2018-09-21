@@ -84,22 +84,11 @@ AST::ptr<AST::MethodDecl> MethodDecl(ParserContext<istream>& parser) {
             << Lexeme::identifier << FormalList(parser)
             << Lexeme::open_brace;
 
-    bool eating_vars = true;
-    while (eating_vars) {
-        switch (Lexeme(parser[0])) {
-        case Lexeme::boolean_keyword:
-        case Lexeme::int_keyword:
-            builder << VarDecl(parser);
-            break;
-        case Lexeme::identifier:
-            if (Lexeme(parser[1]) == Lexeme::identifier) {
-                builder << VarDecl(parser);
-                break;
-            }
-        default:
-            eating_vars = false;
-        }
-    }
+    while (Lexeme(parser[0]) == Lexeme::boolean_keyword ||
+           Lexeme(parser[0]) == Lexeme::int_keyword ||
+           (Lexeme(parser[0]) == Lexeme::identifier &&
+            Lexeme(parser[1]) == Lexeme::identifier))
+        builder << VarDecl(parser);
 
     while (Lexeme(parser[0]) != Lexeme::return_keyword)
         builder << Stm(parser);
