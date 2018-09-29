@@ -274,7 +274,7 @@ AST::ptr<AST::Exp> Exp(ParserContext<istream>& parser) {
         return _Exp(parser, builder.parenExp());
     default:
         builder.unexpected(Lexeme(parser[0]));
-        return builder.parenExp();
+        return builder.falseExp();
     }
 }
 
