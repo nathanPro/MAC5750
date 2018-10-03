@@ -1,15 +1,16 @@
 #include "IRBuilder.h"
+#include "gtest/gtest.h"
 
-bool create_const_exp() {
+class IRTest : public ::testing::Test {
+    protected:
+        IRTest() : tree() {}
+
     IR tree;
-    IRBuilder builder(tree);
-    builder << IR::ExpType::CONST << 42;
-    auto ref = builder.Exp();
+};
 
-    try {
-        auto exp = Exp(tree, ref);
-    } catch (IRBadAccess) {
-        return false;
-    }
-    return true;
+TEST_F(IRTest, BuilderFromTree) {
+    IRBuilder builder(tree);
+    EXPECT_EQ(tree.size(), 0);
+    builder << IR::Exp::Const << 42;
+    EXPECT_EQ(tree.size(), 1);
 }
