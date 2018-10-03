@@ -5,12 +5,17 @@ class IRTest : public ::testing::Test {
     protected:
         IRTest() : tree() {}
 
-    IR tree;
+    IR::Tree tree;
 };
 
 TEST_F(IRTest, BuilderFromTree) {
-    IRBuilder builder(tree);
     EXPECT_EQ(tree.size(), 0);
-    builder << IR::Exp::Const << 42;
+    IRBuilder builder(tree);
+    builder << IR::ExpId::CONST << 42;
     EXPECT_EQ(tree.size(), 1);
+}
+
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
