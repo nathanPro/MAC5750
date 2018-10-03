@@ -6,12 +6,15 @@
 class IRBuilder {
     IR::Tree& base;
     int ref;
+    int kind;
+    int data[5];
+    size_t ds;
 
   public:
     IRBuilder(IR::Tree& tree);
-    operator int();
     IRBuilder& operator<<(IR::ExpId in);
     IRBuilder& operator<<(int in);
+    int build();
 };
 
 #endif
