@@ -8,7 +8,7 @@ GTESTFLAGS = -isystem $(GTEST_DIR)/include -I $(GTEST_DIR) -pthread
 
 IR_OBJS = $(BIN_DIR)/IR.o $(BIN_DIR)/IRBuilder.o
 
-test: $(TEST_DIR)/libgtest.a $(BIN_DIR)/IR.o $(BIN_DIR)/IRBuilder.o
+test: $(TEST_DIR)/IRtest.cpp $(TEST_DIR)/libgtest.a $(BIN_DIR)/IR.o $(BIN_DIR)/IRBuilder.o
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(IR_OBJS) $(TEST_DIR)/IRtest.cpp $(TEST_DIR)/libgtest.a -o $(TEST_DIR)/IRtest
 	./test/IRtest
 $(BIN_DIR)/IR.o: src/IR.h src/IR.cpp 
@@ -24,7 +24,7 @@ bcc: $(BIN_DIR)/lexer.o src/error.h src/AST.h src/parser.h src/lexer.h src/main.
 	$(CXX) $(CXXFLAGS) $(BIN_DIR)/lexer.o src/main.cpp -o $(BIN_DIR)/bcc
 all: test bcc
 
-.PHONY: clean
+.PHONY: clean, test
 clean:
 	-rm $(TEST_DIR)/*.a
 	-rm $(TEST_DIR)/*.o
