@@ -1,8 +1,8 @@
 GTEST_DIR = googletest/googletest
 CXXFLAGS = --std=c++17 -Wall -Wextra -g -ggdb -O0 -DDEBUG
-GTESTFLAGS = -isystem $(GTEST_DIR)/include -I$(GTEST_DIR) -pthread
+GTESTFLAGS = -isystem $(GTEST_DIR)/include -I $(GTEST_DIR) -pthread
 test: libgtest.a
-	$(CXX) $(GTESTFLAGS) IRtest.cpp libgtest.a -o IRTest
+	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) IRtest.cpp libgtest.a -o IRtest
 libgtest.a:
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) -c $(GTEST_DIR)/src/gtest-all.cc
 	ar -rv libgtest.a gtest-all.o
