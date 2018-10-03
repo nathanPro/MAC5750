@@ -7,6 +7,11 @@
 class IRBuilder;
 namespace IR {
 
+struct BadAccess {
+    int found;
+    int expected;
+};
+
 enum ExpId
 {
     CONST,

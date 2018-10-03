@@ -48,6 +48,13 @@ TEST_F(IRBuilderTest, treeKeepsType) {
     EXPECT_NE(tree.get_type(n), IR::ExpId::CONST);
 }
 
+TEST_F(IRBuilderTest, wrongGetNameThrows) {
+    IRBuilder builder(tree);
+    builder << IR::ExpId::CONST << 42;
+    auto c = builder.build();
+    EXPECT_THROW(tree.get_name(c), IR::BadAccess);
+}
+
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

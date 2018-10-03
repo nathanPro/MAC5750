@@ -1,15 +1,18 @@
 #include "IR.h"
 
+static void check_for_exp(int found, int expected) {
+    if (found / 8 != 0 || found % 8 != expected)
+        throw IR::BadAccess{found, expected};
+}
+
 namespace IR {
     Const& Tree::get_const(int ref) {
-        assert(kind[ref] / 8 == 0);
-        assert(kind[ref] == IR::ExpId::CONST);
+        check_for_exp(kind[ref], IR::ExpId::CONST);
         return _const[pos[ref]];
     }
 
     Name& Tree::get_name(int ref) {
-        assert(kind[ref] / 8 == 0);
-        assert(kind[ref] == IR::ExpId::NAME);
+        check_for_exp(kind[ref], IR::ExpId::NAME);
         return _name[pos[ref]];
     }
 
