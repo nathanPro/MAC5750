@@ -14,11 +14,16 @@ IRBuilder& IRBuilder::operator<<(int in) {
 
 int IRBuilder::build() {
     base.kind.push_back(kind);
+    ref = base.id++;
     switch (kind) {
         case IR::ExpId::CONST:
-            ref = base.id++;
             base.pos.emplace_back(base._const.size());
             base._const.push_back(IR::Const{data[0]});
+        break;
+        case IR::ExpId::NAME:
+            base.pos.emplace_back(base._name.size());
+            base._name.push_back(IR::Name{data[0]});
+        break;
     }
     return ref;
 }
