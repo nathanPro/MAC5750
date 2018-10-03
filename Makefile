@@ -1,12 +1,22 @@
 GTEST_DIR = googletest/googletest
-CXXFLAGS = --std=c++17 -Wall -Wextra -g -ggdb -O0 -DDEBUG
+TEST_DIR = test
+BIN_DIR = bin
+
+CXXFLAGS = --std=c++17 -Wall -Wextra -g -ggdb -O0 -DDEBUG -I src
 GTESTFLAGS = -isystem $(GTEST_DIR)/include -I $(GTEST_DIR) -pthread
-test: libgtest.a IR.o IRBuilder.o
-	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) IR.o IRBuilder.o IRtest.cpp libgtest.a -o IRtest
-	./IRtest
-libgtest.a:
-	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) -c $(GTEST_DIR)/src/gtest-all.cc
-	ar -rv libgtest.a gtest-all.o
+
+IR_OBJS = $(BIN_DIR)/IR.o $(BIN_DIR)/IRBuilder.o
+
+test: libgtest IR
+	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(IR_OBJS) $(TEST_DIR)/IRtest.cpp $(TEST_DIR)/libgtest.a -o $(TEST_DIR)/IRtest
+	./test/IRtest
+IR: src/IR.h src/IR.cpp src/IRBuilder.h src/IRBuilder.cpp
+	$(CXX) $(CXXFLAGS) -c src/IR.cpp -o $(BIN_DIR)/IR.o
+	$(CXX) $(CXXFLAGS) -c src/IRBuilder.cpp -o $(BIN_DIR)/IRBuilder.o
+libgtest:
+	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) -c $(GTEST_DIR)/src/gtest-all.cc -o $(TEST_DIR)/gtest-all.o
+	ar -rv $(TEST_DIR)/libgtest.a gtest-all.o
+
 main: lexer.o error.h AST.h.gch parser.h.gch lexer.h.gch main.cpp
 	$(CXX) $(CXXFLAGS) lexer.o main.cpp -o main
 Builder.h.gch: Builder.h
