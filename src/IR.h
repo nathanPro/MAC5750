@@ -151,13 +151,17 @@ struct Catamorphism {
     F<rec_t>       f;
 
     Catamorphism(IR::Tree& _t)
-        : tree(_t), x(tree.size()), f([&](int i) { return x[i]; }) {}
+        : tree(_t), x(tree.size()), f([&](int i) { return x[i]; }) {
+        for (size_t i = 0; i < tree.size(); i++) x[i] = calculate(i);
+    }
 
-    auto operator()(int ref) {
+    R operator()(int ref) { return x[ref]; }
+
+  private:
+    R calculate(int ref) {
 #define IR_DISPATCH(ID, name)                                        \
     case (ID):                                                       \
-        return (x[ref] = (*this)(tree.get##name(ref)));
-
+        return f(tree.get##name(ref));
         if (tree.get_type(ref) / 8 == 0) {
             switch (static_cast<ExpId>(tree.get_type(ref))) {
                 IR_DISPATCH(ExpId::CONST, _const);
@@ -180,54 +184,6 @@ struct Catamorphism {
 #undef IR_DISPATCH
         __builtin_unreachable();
     }
-
-    auto operator()(const IR::Binop& binop) {
-        (*this)(binop.lhs);
-        (*this)(binop.rhs);
-        return f(binop);
-    }
-
-    auto operator()(const IR::Mem& mem) {
-        (*this)(mem.exp);
-        return f(mem);
-    }
-
-    auto operator()(const IR::Call& call) {
-        (*this)(call.func);
-        return f(call);
-    }
-
-    auto operator()(const IR::Eseq& eseq) {
-        (*this)(eseq.stm);
-        (*this)(eseq.exp);
-        return f(eseq);
-    }
-
-    auto operator()(const IR::Exp& exp) {
-        (*this)(exp.exp);
-        return f(exp);
-    }
-
-    auto operator()(const IR::Jump& jmp) {
-        (*this)(jmp.exp);
-        return f(jmp);
-    }
-
-    auto operator()(const IR::Cjump& cjmp) {
-        (*this)(cjmp.lhs);
-        (*this)(cjmp.rhs);
-        (*this)(cjmp.iftrue);
-        (*this)(cjmp.iffalse);
-        return f(cjmp);
-    }
-
-    auto operator()(const IR::Seq& seq) {
-        (*this)(seq.lhs);
-        (*this)(seq.rhs);
-        return f(seq);
-    }
-
-    template <typename T> auto operator()(const T& t) { return f(t); }
 };
 } // namespace IR
 
