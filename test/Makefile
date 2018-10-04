@@ -1,12 +1,17 @@
 GTEST_DIR = googletest/googletest
 GTESTFLAGS = -isystem $(GTEST_DIR)/include -I $(GTEST_DIR) -pthread
 
-test: IRtest.cpp libgtest.a
+.PHONY: test
+test: IRtest translation
+
+IRtest: IRtest.cpp libgtest.a
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) \
 	../$(BIN_DIR)/IR.o ../$(BIN_DIR)/IRBuilder.o \
 	IRtest.cpp libgtest.a -o IRtest
 	./IRtest
+translation: translation.cpp libgtest.a
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) \
+	../$(BIN_DIR)/lexer.o \
 	translation.cpp libgtest.a -o translationtest
 	./translationtest
 
