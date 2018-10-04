@@ -27,8 +27,8 @@ enum BinopId {
     XOR
 };
 
-enum ExpId { CONST, NAME, TEMP, BINOP, MEM, CALL, ESEQ };
-enum StmId { MOVE, EXP, JUMP, CJUMP, SEQ, LABEL };
+enum class ExpId { CONST, NAME, TEMP, BINOP, MEM, CALL, ESEQ };
+enum class StmId { MOVE, EXP, JUMP, CJUMP, SEQ, LABEL };
 
 struct Const {
     int value;

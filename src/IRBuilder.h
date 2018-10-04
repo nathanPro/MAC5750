@@ -5,16 +5,17 @@
 
 class IRBuilder {
     IR::Tree& base;
-    int ref;
-    int kind;
-    int data[5];
-    size_t ds;
+    int       ref;
+    int       kind;
+    int       data[5];
+    size_t    ds;
 
   public:
     IRBuilder(IR::Tree& tree);
     IRBuilder& operator<<(IR::ExpId in);
+    IRBuilder& operator<<(IR::StmId in);
     IRBuilder& operator<<(int in);
-    int build();
+    int        build();
 };
 
 #endif

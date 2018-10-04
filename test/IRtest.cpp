@@ -99,7 +99,7 @@ TEST_F(IRBuilderTest, cjumpBuiltWithBuilder) {
     auto ref = builder.build();
     EXPECT_EQ(tree.get_cjump(ref).op, IR::RelopId::LE);
     EXPECT_EQ(tree.get_cjump(ref).lhs, 2);
-    EXPECT_EQ(tree.get_cjump(ref).rhs, 2);
+    EXPECT_EQ(tree.get_cjump(ref).rhs, 3);
     EXPECT_EQ(tree.get_cjump(ref).iftrue, 32);
     EXPECT_EQ(tree.get_cjump(ref).iffalse, 36);
 }
@@ -131,10 +131,10 @@ TEST_F(IRBuilderTest, treeKeepsType) {
         builder << IR::ExpId::NAME << 13;
         n = builder.build();
     }
-    EXPECT_EQ(tree.get_type(c), IR::ExpId::CONST);
-    EXPECT_EQ(tree.get_type(n), IR::ExpId::NAME);
-    EXPECT_NE(tree.get_type(c), IR::ExpId::NAME);
-    EXPECT_NE(tree.get_type(n), IR::ExpId::CONST);
+    EXPECT_EQ(tree.get_type(c), static_cast<int>(IR::ExpId::CONST));
+    EXPECT_EQ(tree.get_type(n), static_cast<int>(IR::ExpId::NAME));
+    EXPECT_NE(tree.get_type(c), static_cast<int>(IR::ExpId::NAME));
+    EXPECT_NE(tree.get_type(n), static_cast<int>(IR::ExpId::CONST));
 }
 
 TEST_F(IRBuilderTest, wrongGetNameThrows) {
@@ -148,7 +148,8 @@ TEST_F(IRBuilderTest, stmAccessedAsExpThrows) {
     IRBuilder builder(tree);
     builder << IR::StmId::MOVE << 12 << 14;
     auto stm = builder.build();
-    EXPECT_EQ(IR::ExpId::CONST, IR::StmId::MOVE);
+    EXPECT_EQ(static_cast<int>(IR::ExpId::CONST),
+              static_cast<int>(IR::StmId::MOVE));
     EXPECT_THROW(tree.get_const(stm), IR::BadAccess);
 }
 

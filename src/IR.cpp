@@ -13,7 +13,7 @@ static void check_for_stm(int found, int expected) {
 namespace IR {
 #define IR_GETTER(name, ID, ret)                                     \
     ret& Tree::get##name(int ref) {                                  \
-        check_for_exp(kind[ref], ID);                                \
+        check_for_exp(kind[ref], static_cast<int>(ID));              \
         return name[pos[ref]];                                       \
     }
 
@@ -28,7 +28,7 @@ IR_GETTER(_eseq, ExpId::ESEQ, Eseq)
 #undef IR_GETTER
 #define IR_GETTER(name, ID, ret)                                     \
     ret& Tree::get##name(int ref) {                                  \
-        check_for_stm(kind[ref], ID);                                \
+        check_for_stm(kind[ref], static_cast<int>(ID));              \
         return name[pos[ref]];                                       \
     }
 IR_GETTER(_move, StmId::MOVE, Move);
