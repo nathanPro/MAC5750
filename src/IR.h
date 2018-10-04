@@ -2,6 +2,8 @@
 #define BCC_IR
 
 #include <cassert>
+#include <functional>
+#include <iostream>
 #include <vector>
 
 class IRBuilder;
@@ -139,6 +141,93 @@ class Tree {
     // generic functinality
     int    get_type(int ref);
     size_t size() const;
+};
+
+template <template <typename C> typename F, typename R>
+struct Catamorphism {
+    using rec_t = std::function<R(int)>;
+    Tree&          tree;
+    std::vector<R> x;
+    F<rec_t>       f;
+
+    Catamorphism(IR::Tree& _t)
+        : tree(_t), x(tree.size()), f([&](int i) { return x[i]; }) {}
+
+    auto operator()(int ref) {
+#define IR_DISPATCH(ID, name)                                        \
+    case (ID):                                                       \
+        return (x[ref] = (*this)(tree.get##name(ref)));
+
+        if (tree.get_type(ref) / 8 == 0) {
+            switch (static_cast<ExpId>(tree.get_type(ref))) {
+                IR_DISPATCH(ExpId::CONST, _const);
+                IR_DISPATCH(ExpId::NAME, _name);
+                IR_DISPATCH(ExpId::TEMP, _temp);
+                IR_DISPATCH(ExpId::BINOP, _binop);
+                IR_DISPATCH(ExpId::MEM, _mem);
+                IR_DISPATCH(ExpId::CALL, _call);
+                IR_DISPATCH(ExpId::ESEQ, _eseq);
+            }
+        }
+        switch (static_cast<StmId>(tree.get_type(ref))) {
+            IR_DISPATCH(StmId::MOVE, _move);
+            IR_DISPATCH(StmId::EXP, _exp);
+            IR_DISPATCH(StmId::JUMP, _jump);
+            IR_DISPATCH(StmId::CJUMP, _cjump);
+            IR_DISPATCH(StmId::SEQ, _seq);
+            IR_DISPATCH(StmId::LABEL, _label);
+        }
+#undef IR_DISPATCH
+        __builtin_unreachable();
+    }
+
+    auto operator()(const IR::Binop& binop) {
+        (*this)(binop.lhs);
+        (*this)(binop.rhs);
+        return f(binop);
+    }
+
+    auto operator()(const IR::Mem& mem) {
+        (*this)(mem.exp);
+        return f(mem);
+    }
+
+    auto operator()(const IR::Call& call) {
+        (*this)(call.func);
+        return f(call);
+    }
+
+    auto operator()(const IR::Eseq& eseq) {
+        (*this)(eseq.stm);
+        (*this)(eseq.exp);
+        return f(eseq);
+    }
+
+    auto operator()(const IR::Exp& exp) {
+        (*this)(exp.exp);
+        return f(exp);
+    }
+
+    auto operator()(const IR::Jump& jmp) {
+        (*this)(jmp.exp);
+        return f(jmp);
+    }
+
+    auto operator()(const IR::Cjump& cjmp) {
+        (*this)(cjmp.lhs);
+        (*this)(cjmp.rhs);
+        (*this)(cjmp.iftrue);
+        (*this)(cjmp.iffalse);
+        return f(cjmp);
+    }
+
+    auto operator()(const IR::Seq& seq) {
+        (*this)(seq.lhs);
+        (*this)(seq.rhs);
+        return f(seq);
+    }
+
+    template <typename T> auto operator()(const T& t) { return f(t); }
 };
 } // namespace IR
 
