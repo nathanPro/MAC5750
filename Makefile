@@ -3,9 +3,16 @@ export BIN_DIR = bin
 
 export CXXFLAGS = --std=c++17 -Wall -Wextra -g -ggdb -O0 -DDEBUG -I ../src
 
-test: $(BIN_DIR)/IR.o $(BIN_DIR)/IRBuilder.o $(BIN_DIR)/lexer.o
+OBJSDEP = $(BIN_DIR)/IR.o \
+          $(BIN_DIR)/IRBuilder.o \
+          $(BIN_DIR)/lexer.o
+
+export OBJS = ../$(BIN_DIR)/IR.o \
+              ../$(BIN_DIR)/IRBuilder.o \
+              ../$(BIN_DIR)/lexer.o
+test: $(OBJSDEP)
 	$(MAKE) -C test
-bcc: $(BIN_DIR)/lexer.o src/error.h src/AST.h src/parser.h \
+bcc: $(OBJSDEP) src/error.h src/AST.h src/parser.h \
     src/lexer.h src/main.cpp
 	$(MAKE) -C bin
 all: test bcc
