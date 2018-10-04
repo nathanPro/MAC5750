@@ -39,9 +39,9 @@ TEST_F(IRBuilderTest, tempBuiltWithBuilder) {
 
 TEST_F(IRBuilderTest, binopBuiltWithBuilder) {
     IRBuilder builder(tree);
-    builder << IR::ExpId::BINOP << IR::Binop::PLUS << 10 << 11;
+    builder << IR::ExpId::BINOP << IR::BinopId::PLUS << 10 << 11;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_binop(ref).op, IR::BinOp::PLUS);
+    EXPECT_EQ(tree.get_binop(ref).op, IR::BinopId::PLUS);
     EXPECT_EQ(tree.get_binop(ref).lhs, 10);
     EXPECT_EQ(tree.get_binop(ref).rhs, 11);
 }
@@ -94,10 +94,10 @@ TEST_F(IRBuilderTest, jumpBuiltWithBuilder) {
 
 TEST_F(IRBuilderTest, cjumpBuiltWithBuilder) {
     IRBuilder builder(tree);
-    builder << IR::StmId::CJUMP << IR::Relop::LESS << 2 << 3 << 32
+    builder << IR::StmId::CJUMP << IR::RelopId::LESS << 2 << 3 << 32
             << 36;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_cjump(ref).op, IR::Relop::Less);
+    EXPECT_EQ(tree.get_cjump(ref).op, IR::RelopId::Less);
     EXPECT_EQ(tree.get_cjump(ref).lhs, 2);
     EXPECT_EQ(tree.get_cjump(ref).rhs, 2);
     EXPECT_EQ(tree.get_cjump(ref).iftrue, 32);
