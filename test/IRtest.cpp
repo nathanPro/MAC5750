@@ -30,6 +30,49 @@ TEST_F(IRBuilderTest, nameBuiltWithBuilder) {
     EXPECT_EQ(tree.get_name(ref).label, 13);
 }
 
+TEST_F(IRBuilderTest, tempBuiltWithBuilder) {
+    IRBuilder builder(tree);
+    builder << IR::ExpId::TEMP << 11;
+    auto ref = builder.build();
+    EXPECT_EQ(tree.get_temp(ref).id, 11);
+}
+
+TEST_F(IRBuilderTest, binopBuiltWithBuilder) {
+    IRBuilder builder(tree);
+    builder << IR::ExpId::BINOP
+            << IR::BinOp::PLUS << 10 << 11;
+    auto ref = builder.build();
+    EXPECT_EQ(tree.get_binop(ref).op, IR::BinOp::PLUS);
+    EXPECT_EQ(tree.get_binop(ref).lhs, 10);
+    EXPECT_EQ(tree.get_binop(ref).rhs, 11);
+}
+
+TEST_F(IRBuilderTest, memBuiltWithBuilder) {
+    IRBuilder builder(tree);
+    builder << IR::ExpId::MEM
+            << 32;
+    auto ref = builder.build();
+    EXPECT_EQ(tree.get_mem(ref).exp, 32);
+}
+
+TEST_F(IRBuilderTest, callBuiltWithBuilder) {
+    IRBuilder builder(tree);
+    builder << IR::ExpId::CALL
+            << 1 << 2;
+    auto ref = builder.build();
+    EXPECT_EQ(tree.get_call(ref).func, 1);
+    EXPECT_EQ(tree.get_call(ref).explist, 2);
+}
+
+TEST_F(IRBuilderTest, eseqBuiltWithBuilder) {
+    IRBuilder builder(tree);
+    builder << IR::ExpId::ESEQ
+            << 1 << 2;
+    auto ref = builder.build();
+    EXPECT_EQ(tree.get_eseq(ref).stm, 1);
+    EXPECT_EQ(tree.get_eseq(ref).exp, 2);
+}
+
 TEST_F(IRBuilderTest, treeKeepsType) {
     int c, n;
     {
