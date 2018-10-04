@@ -3,6 +3,7 @@
 #include "AST.h"
 #include "Builder.h"
 #include "util.h"
+#include <fstream>
 
 namespace Parser {
 
@@ -200,7 +201,7 @@ AST::ptr<AST::ExpList> ExpList(ParserContext<istream>& parser) {
 
 template <typename istream>
 AST::ptr<AST::Exp> _Exp(ParserContext<istream>& parser,
-                        AST::ptr<AST::Exp>&& lhs) {
+                        AST::ptr<AST::Exp>&&    lhs) {
     ASTBuilder builder(parser);
     builder << std::move(lhs);
     switch (Lexeme(parser[0])) {
@@ -279,4 +280,22 @@ AST::ptr<AST::Exp> Exp(ParserContext<istream>& parser) {
 }
 
 } // namespace Parser
+
+class TranslationUnit {
+    std::string                  filename;
+    std::ifstream                stream;
+    ParserContext<std::ifstream> ctx;
+    AST::ptr<AST::Program>       syntax_tree;
+
+  public:
+    TranslationUnit(std::string name)
+        : filename(name), stream(filename, std::ios::in), ctx(stream),
+          syntax_tree(Parser::Program(ctx)) {}
+
+    bool check() {
+        Reporter rep(std::cout, ctx.errors);
+        Grammar::visit(rep, *syntax_tree);
+        return rep;
+    }
+};
 #endif

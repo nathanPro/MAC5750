@@ -2,14 +2,15 @@
 #include "parser.h"
 #include "translate.h"
 #include "gtest/gtest.h"
-#include <fstream>
 
 class translatorTest : public ::testing::Test {
   protected:
-    IRBuilderTest() : tree() { no_err = tu.check(); }
+    translatorTest() : tu("../input/sample.miniJava") {
+        no_err = tu.check();
+    }
 
     IR::Tree        tree;
-    TranslationUnit tu("input/sample.miniJava");
+    TranslationUnit tu;
     bool            no_err = true;
 };
 
