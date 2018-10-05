@@ -10,14 +10,14 @@ class catamorphismTest : public ::testing::Test {
     catamorphismTest() {
         root = [&] {
             IRBuilder builder(tree);
-            builder << IR::ExpId::CONST << 0;
+            builder << IR::IRTag::CONST << 0;
             return builder.build();
         }();
         for (int i = 0; i < 10; i++) {
             IRBuilder sum(tree);
             IRBuilder lhs(tree);
-            lhs << IR::ExpId::CONST << i;
-            sum << IR::ExpId::BINOP << IR::BinopId::PLUS << root
+            lhs << IR::IRTag::CONST << i;
+            sum << IR::IRTag::BINOP << IR::BinopId::PLUS << root
                 << lhs.build();
             root = sum.build();
         }

@@ -29,8 +29,21 @@ enum BinopId {
     XOR
 };
 
-enum class ExpId { CONST, NAME, TEMP, BINOP, MEM, CALL, ESEQ };
-enum class StmId { MOVE, EXP, JUMP, CJUMP, SEQ, LABEL };
+enum class IRTag {
+    CONST,
+    NAME,
+    TEMP,
+    BINOP,
+    MEM,
+    CALL,
+    ESEQ,
+    MOVE,
+    EXP,
+    JUMP,
+    CJUMP,
+    SEQ,
+    LABEL
+};
 
 struct Const {
     int value;
@@ -159,29 +172,34 @@ struct Catamorphism {
 
   private:
     R calculate(int ref) {
-#define IR_DISPATCH(ID, name)                                        \
-    case (ID):                                                       \
-        return f(tree.get##name(ref));
-        if (tree.get_type(ref) / 8 == 0) {
-            switch (static_cast<ExpId>(tree.get_type(ref))) {
-                IR_DISPATCH(ExpId::CONST, _const);
-                IR_DISPATCH(ExpId::NAME, _name);
-                IR_DISPATCH(ExpId::TEMP, _temp);
-                IR_DISPATCH(ExpId::BINOP, _binop);
-                IR_DISPATCH(ExpId::MEM, _mem);
-                IR_DISPATCH(ExpId::CALL, _call);
-                IR_DISPATCH(ExpId::ESEQ, _eseq);
-            }
+        switch (static_cast<IRTag>(tree.get_type(ref))) {
+        case IRTag::CONST:
+            return f(tree.get_const(ref));
+        case IRTag::NAME:
+            return f(tree.get_name(ref));
+        case IRTag::TEMP:
+            return f(tree.get_temp(ref));
+        case IRTag::BINOP:
+            return f(tree.get_binop(ref));
+        case IRTag::MEM:
+            return f(tree.get_mem(ref));
+        case IRTag::CALL:
+            return f(tree.get_call(ref));
+        case IRTag::ESEQ:
+            return f(tree.get_eseq(ref));
+        case IRTag::MOVE:
+            return f(tree.get_move(ref));
+        case IRTag::EXP:
+            return f(tree.get_exp(ref));
+        case IRTag::JUMP:
+            return f(tree.get_jump(ref));
+        case IRTag::CJUMP:
+            return f(tree.get_cjump(ref));
+        case IRTag::SEQ:
+            return f(tree.get_seq(ref));
+        case IRTag::LABEL:
+            return f(tree.get_label(ref));
         }
-        switch (static_cast<StmId>(tree.get_type(ref))) {
-            IR_DISPATCH(StmId::MOVE, _move);
-            IR_DISPATCH(StmId::EXP, _exp);
-            IR_DISPATCH(StmId::JUMP, _jump);
-            IR_DISPATCH(StmId::CJUMP, _cjump);
-            IR_DISPATCH(StmId::SEQ, _seq);
-            IR_DISPATCH(StmId::LABEL, _label);
-        }
-#undef IR_DISPATCH
         __builtin_unreachable();
     }
 };

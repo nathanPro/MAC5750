@@ -12,8 +12,7 @@ class IRBuilder {
 
   public:
     IRBuilder(IR::Tree& tree);
-    IRBuilder& operator<<(IR::ExpId in);
-    IRBuilder& operator<<(IR::StmId in);
+    IRBuilder& operator<<(IR::IRTag in);
     IRBuilder& operator<<(int in);
     int        build();
 };
