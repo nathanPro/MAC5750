@@ -20,48 +20,36 @@ struct WrongIdentifier {
 };
 
 struct ParsingError {
-    std::vector<std::string> ctx;
+    std::vector<std::string>                            ctx;
     std::variant<Unexpected, Mismatch, WrongIdentifier> inner;
 };
 
 using ASTErrorData = std::vector<std::unique_ptr<ParsingError>>;
 
-template <typename istream> class ParserContext {
-    Lexer<istream> tokens;
-    std::vector<std::string> context;
-    std::vector<int32_t> lines;
-    int idx;
-
-  public:
-    std::vector<ASTErrorData> errors;
-    ParserContext(istream& stream) : tokens(stream, 2), idx(0) {}
-    LexState operator[](int i) { return tokens[i]; }
-    friend class ASTBuilder<istream>;
-};
-
+template <typename istream> class Parser;
 template <typename istream> class ASTBuilder {
-    ParserContext<istream>& parser;
-    AST::Node id;
-    AST::ptr<AST::MainClass> main;
-    std::vector<std::string> W;
-    std::vector<AST::ptr<AST::ClassDecl>> C;
-    std::vector<AST::ptr<AST::VarDecl>> V;
+    Parser<istream>&                       parser;
+    AST::Node                              id;
+    AST::ptr<AST::MainClass>               main;
+    std::vector<std::string>               W;
+    std::vector<AST::ptr<AST::ClassDecl>>  C;
+    std::vector<AST::ptr<AST::VarDecl>>    V;
     std::vector<AST::ptr<AST::MethodDecl>> M;
-    std::vector<AST::ptr<AST::Type>> T;
-    std::vector<AST::ptr<AST::Exp>> E;
-    std::vector<AST::ptr<AST::Stm>> S;
-    AST::ptr<AST::FormalList> list;
-    AST::ptr<AST::ExpList> arguments;
-    int32_t value;
-    bool pop = false;
+    std::vector<AST::ptr<AST::Type>>       T;
+    std::vector<AST::ptr<AST::Exp>>        E;
+    std::vector<AST::ptr<AST::Stm>>        S;
+    AST::ptr<AST::FormalList>              list;
+    AST::ptr<AST::ExpList>                 arguments;
+    int32_t                                value;
+    bool                                   pop = false;
 
   public:
-    ASTBuilder(ParserContext<istream>& __parser)
+    ASTBuilder(Parser<istream>& __parser)
         : parser(__parser), id(parser.idx++) {
         parser.errors.push_back({});
     }
 
-    ASTBuilder(ParserContext<istream>& __parser, std::string label)
+    ASTBuilder(Parser<istream>& __parser, std::string label)
         : parser(__parser), id(parser.idx++) {
         parser.errors.push_back({});
         parser.context.push_back(label);
