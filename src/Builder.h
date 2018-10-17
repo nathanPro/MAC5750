@@ -157,6 +157,8 @@ template <typename istream> class Builder {
     friend struct AST::__detail::TagRule;
     template <typename target, typename ntPtr>
     friend struct AST::__detail::BinaryRule;
+    template <typename target, typename ntPtr>
+    friend struct AST::__detail::UnaryRule;
     friend struct ProgramRule;
     friend struct MainClassRule;
     friend struct ClassDeclNoInheritance;
@@ -172,14 +174,10 @@ template <typename istream> class Builder {
     friend struct assignStm;
     friend struct indexAssignStm;
     friend struct ExpListRule;
-    friend struct lengthExp;
     friend struct methodCallExp;
     friend struct integerExp;
     friend struct identifierExp;
-    friend struct newArrayExp;
     friend struct newObjectExp;
-    friend struct bangExp;
-    friend struct parenExp;
 
     ptr<Exp> lhs() { return std::move(E[0]); }
 };

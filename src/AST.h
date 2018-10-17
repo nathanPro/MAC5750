@@ -190,6 +190,20 @@ template <typename target, typename ntPtr> struct BinaryRule {
             target{data.id, data.get(ptr{}, 0), data.get(ptr{}, 1)});
     }
 };
+
+template <typename target, typename ntPtr> struct UnaryRule {
+    using ptr = typename std::pointer_traits<ntPtr>::pointer;
+    using elm = typename std::pointer_traits<ntPtr>::element_type;
+
+    Node id;
+    ptr  inner = nullptr;
+
+    template <typename istream>
+    static ptr build(Builder<istream>&& data) {
+        return std::make_unique<elm>(
+            target{data.id, data.get(ptr{}, 0)});
+    }
+};
 } // namespace __detail
 
 struct integerArrayType
@@ -315,17 +329,7 @@ struct indexingExp : __detail::BinaryRule<indexingExp, ptr<Exp>> {
     ptr& array = lhs;
     ptr& index = rhs;
 };
-
-struct lengthExp {
-    Node     id;
-    ptr<Exp> inner = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(
-            lengthExp{data.id, std::move(data.E[0])});
-    }
-};
+struct lengthExp : __detail::UnaryRule<lengthExp, ptr<Exp>> {};
 
 struct methodCallExp {
     Node         id;
@@ -366,16 +370,7 @@ struct identifierExp {
     }
 };
 
-struct newArrayExp {
-    Node     id;
-    ptr<Exp> inner = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(
-            newArrayExp{data.id, std::move(data.E[0])});
-    }
-};
+struct newArrayExp : __detail::UnaryRule<newArrayExp, ptr<Exp>> {};
 
 struct newObjectExp {
     Node        id;
@@ -388,27 +383,8 @@ struct newObjectExp {
     }
 };
 
-struct bangExp {
-    Node     id;
-    ptr<Exp> inner = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(
-            newArrayExp{data.id, std::move(data.E[0])});
-    }
-};
-
-struct parenExp {
-    Node     id;
-    ptr<Exp> inner = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(
-            newArrayExp{data.id, std::move(data.E[0])});
-    }
-};
+struct bangExp : __detail::UnaryRule<bangExp, ptr<Exp>> {};
+struct parenExp : __detail::UnaryRule<parenExp, ptr<Exp>> {};
 
 // clang-format off
 struct Exp : Grammar::Nonterminal<std::variant<
