@@ -12,36 +12,37 @@ template <typename istream> class Parser {
     int                      idx;
 
     AST::ptr<AST::Exp> _Exp(AST::ptr<AST::Exp>&& lhs) {
+        using std::move;
         AST::Builder builder(*this);
         builder << std::move(lhs);
         switch (Lexeme(tokens[0])) {
         case Lexeme::and_operator:
             builder << Lexeme::and_operator << Exp();
-            return _Exp(builder.andExp());
+            return _Exp(AST::andExp::build(move(builder)));
         case Lexeme::less_operator:
             builder << Lexeme::less_operator << Exp();
-            return _Exp(builder.lessExp());
+            return _Exp(AST::lessExp::build(move(builder)));
         case Lexeme::plus_operator:
             builder << Lexeme::plus_operator << Exp();
-            return _Exp(builder.sumExp());
+            return _Exp(AST::sumExp::build(move(builder)));
         case Lexeme::minus_operator:
             builder << Lexeme::minus_operator << Exp();
-            return _Exp(builder.minusExp());
+            return _Exp(AST::minusExp::build(move(builder)));
         case Lexeme::times_operator:
             builder << Lexeme::times_operator << Exp();
-            return _Exp(builder.prodExp());
+            return _Exp(AST::prodExp::build(move(builder)));
         case Lexeme::open_bracket:
             builder << Lexeme::open_bracket << Exp()
                     << Lexeme::close_bracket;
-            return _Exp(builder.indexingExp());
+            return _Exp(AST::indexingExp::build(move(builder)));
         case Lexeme::period:
             builder << Lexeme::period;
             if (Lexeme(tokens[0]) == Lexeme::lenght_keyword) {
                 builder << Lexeme::lenght_keyword;
-                return _Exp(builder.lengthExp());
+                return _Exp(AST::lengthExp::build(move(builder)));
             }
             builder << Lexeme::identifier << ExpList();
-            return _Exp(builder.methodCallExp());
+            return _Exp(AST::methodCallExp::build(move(builder)));
         default:
             return builder.lhs();
         }
@@ -54,43 +55,44 @@ template <typename istream> class Parser {
     friend class AST::Builder<istream>;
 
     AST::ptr<AST::Exp> Exp() {
+        using std::move;
         AST::Builder builder(*this, "Expression");
         switch (Lexeme(tokens[0])) {
         case Lexeme::integer_literal:
             builder << Lexeme::integer_literal;
-            return _Exp(builder.integerExp());
+            return _Exp(AST::integerExp::build(move(builder)));
         case Lexeme::true_keyword:
             builder << Lexeme::true_keyword;
-            return _Exp(builder.trueExp());
+            return _Exp(AST::trueExp::build(move(builder)));
         case Lexeme::false_keyword:
             builder << Lexeme::false_keyword;
-            return _Exp(builder.falseExp());
+            return _Exp(AST::falseExp::build(move(builder)));
         case Lexeme::identifier:
             builder << Lexeme::identifier;
-            return _Exp(builder.identifierExp());
+            return _Exp(AST::identifierExp::build(move(builder)));
         case Lexeme::this_keyword:
             builder << Lexeme::this_keyword;
-            return _Exp(builder.thisExp());
+            return _Exp(AST::thisExp::build(move(builder)));
         case Lexeme::new_keyword:
             builder << Lexeme::new_keyword;
             if (Lexeme(tokens[0]) == Lexeme::int_keyword) {
                 builder << Lexeme::int_keyword << Lexeme::open_bracket
                         << Exp() << Lexeme::close_bracket;
-                return _Exp(builder.newArrayExp());
+                return _Exp(AST::newArrayExp::build(move(builder)));
             }
             builder << Lexeme::identifier << Lexeme::open_paren
                     << Lexeme::close_paren;
-            return _Exp(builder.newObjectExp());
+            return _Exp(AST::newObjectExp::build(move(builder)));
         case Lexeme::bang:
             builder << Lexeme::bang << Exp();
-            return _Exp(builder.bangExp());
+            return _Exp(AST::bangExp::build(move(builder)));
         case Lexeme::open_paren:
             builder << Lexeme::open_paren << Exp()
                     << Lexeme::close_paren;
-            return _Exp(builder.parenExp());
+            return _Exp(AST::parenExp::build(move(builder)));
         default:
             builder.unexpected(Lexeme(tokens[0]));
-            return builder.falseExp();
+            return AST::falseExp::build(move(builder));
         }
     }
 
@@ -104,10 +106,11 @@ template <typename istream> class Parser {
             builder << Exp();
         }
         builder << Lexeme::close_paren;
-        return builder.ExpListRule();
+        return AST::ExpListRule::build(std::move(builder));
     }
 
     AST::ptr<AST::Stm> Stm() {
+        using std::move;
         AST::Builder builder(*this, "Statement");
         switch (Lexeme(tokens[0])) {
         case Lexeme::open_brace:
@@ -115,35 +118,35 @@ template <typename istream> class Parser {
             while (Lexeme(tokens[0]) != Lexeme::close_brace)
                 builder << Stm();
             builder << Lexeme::close_brace;
-            return builder.blockStm();
+            return AST::blockStm::build(move(builder));
         case Lexeme::if_keyword:
             builder << Lexeme::if_keyword << Lexeme::open_paren
                     << Exp() << Lexeme::close_paren << Stm()
                     << Lexeme::else_keyword << Stm();
-            return builder.ifStm();
+            return AST::ifStm::build(move(builder));
         case Lexeme::while_keyword:
             builder << Lexeme::while_keyword << Lexeme::open_paren
                     << Exp() << Lexeme::close_paren << Stm();
-            return builder.whileStm();
+            return AST::whileStm::build(move(builder));
         case Lexeme::println_keyword:
             builder << Lexeme::println_keyword << Lexeme::open_paren
                     << Exp() << Lexeme::close_paren
                     << Lexeme::semicolon;
-            return builder.printStm();
+            return AST::printStm::build(move(builder));
         case Lexeme::identifier:
             builder << Lexeme::identifier;
             if (Lexeme(tokens[0]) == Lexeme::equals_sign) {
                 builder << Lexeme::equals_sign << Exp()
                         << Lexeme::semicolon;
-                return builder.assignStm();
+                return AST::assignStm::build(move(builder));
             }
             builder << Lexeme::open_bracket << Exp()
                     << Lexeme::close_bracket << Lexeme::equals_sign
                     << Exp() << Lexeme::semicolon;
-            return builder.indexAssignStm();
+            return AST::indexAssignStm::build(move(builder));
         default:
             builder.unexpected(Lexeme(tokens[0]));
-            return builder.blockStm();
+            return AST::blockStm::build(move(builder));
         }
     }
 
@@ -152,21 +155,22 @@ template <typename istream> class Parser {
         switch (Lexeme(tokens[0])) {
         case Lexeme::boolean_keyword:
             builder << Lexeme::boolean_keyword;
-            return builder.booleanType();
+            return AST::booleanType::build(std::move(builder));
         case Lexeme::identifier:
             builder << Lexeme::identifier;
-            return builder.classType();
+            return AST::classType::build(std::move(builder));
         case Lexeme::int_keyword:
             builder << Lexeme::int_keyword;
             if (Lexeme(tokens[0]) == Lexeme::open_bracket) {
                 builder << Lexeme::open_bracket
                         << Lexeme::close_bracket;
-                return builder.integerArrayType();
+                return AST::integerArrayType::build(
+                    std::move(builder));
             }
-            return builder.integerType();
+            return AST::integerType::build(std::move(builder));
         default:
             builder.unexpected(Lexeme(tokens[0]));
-            return builder.integerType();
+            return AST::integerType::build(std::move(builder));
         }
     }
 
@@ -180,13 +184,13 @@ template <typename istream> class Parser {
             builder << Type() << Lexeme::identifier;
         }
         builder << Lexeme::close_paren;
-        return builder.FormalListRule();
+        return AST::FormalListRule::build(std::move(builder));
     }
 
     AST::ptr<AST::VarDecl> VarDecl() {
         AST::Builder builder(*this, "Variable Declaration");
         builder << Type() << Lexeme::identifier << Lexeme::semicolon;
-        return builder.VarDeclRule();
+        return AST::VarDeclRule::build(std::move(builder));
     }
 
     AST::ptr<AST::MethodDecl> MethodDecl() {
@@ -206,7 +210,7 @@ template <typename istream> class Parser {
             builder << Stm();
         builder << Lexeme::return_keyword << Exp()
                 << Lexeme::semicolon << Lexeme::close_brace;
-        return builder.MethodDeclRule();
+        return AST::MethodDeclRule::build(std::move(builder));
     }
 
     AST::ptr<AST::ClassDecl> ClassDecl() {
@@ -229,9 +233,11 @@ template <typename istream> class Parser {
         builder << Lexeme::close_brace;
 
         if (has_superclass)
-            return builder.ClassDeclInheritance();
+            return AST::ClassDeclInheritance::build(
+                std::move(builder));
         else
-            return builder.ClassDeclNoInheritance();
+            return AST::ClassDeclNoInheritance::build(
+                std::move(builder));
     }
 
     AST::ptr<AST::MainClass> MainClass() {
@@ -244,7 +250,7 @@ template <typename istream> class Parser {
                 << Lexeme::close_bracket << Lexeme::identifier
                 << Lexeme::close_paren << Lexeme::open_brace << Stm()
                 << Lexeme::close_brace << Lexeme::close_brace;
-        return builder.MainClassRule();
+        return AST::MainClassRule::build(std::move(builder));
     }
 
     AST::ptr<AST::Program> Program() {
@@ -252,7 +258,7 @@ template <typename istream> class Parser {
         builder << MainClass();
         while (Lexeme(tokens[0]) != Lexeme::eof)
             builder << ClassDecl();
-        return builder.ProgramRule();
+        return AST::ProgramRule::build(std::move(builder));
     }
 };
 

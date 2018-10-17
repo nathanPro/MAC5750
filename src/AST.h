@@ -4,6 +4,7 @@
 #include "grammar.h"
 #include "string"
 #include "util.h"
+#include <algorithm>
 #include <memory>
 #include <variant>
 #include <vector>
@@ -22,25 +23,19 @@ struct Stm;
 struct Exp;
 struct ExpList;
 
-namespace __detail {
-using pProgram    = ptr<Program>;
-using pClassDecl  = ptr<ClassDecl>;
-using pExp        = ptr<Exp>;
-using pExpList    = ptr<ExpList>;
-using pFormalList = ptr<FormalList>;
-using pMainClass  = ptr<MainClass>;
-using pMethodDecl = ptr<MethodDecl>;
-using pStm        = ptr<Stm>;
-using pType       = ptr<Type>;
-using pVarDecl    = ptr<VarDecl>;
-} // namespace __detail
-
+template <typename istream> class Builder;
 using Node = Entity<struct NodeTag>;
 
 struct ProgramRule {
-    Node id;
-    __detail::pMainClass main = nullptr;
-    std::vector<__detail::pClassDecl> classes;
+    Node                        id;
+    ptr<MainClass>              main = nullptr;
+    std::vector<ptr<ClassDecl>> classes;
+
+    template <typename istream>
+    static ptr<Program> build(Builder<istream>&& data) {
+        return std::make_unique<Program>(ProgramRule{
+            data.id, std::move(data.main), std::move(data.C)});
+    }
 };
 
 struct Program : Grammar::Nonterminal<std::variant<ProgramRule>> {
@@ -48,10 +43,16 @@ struct Program : Grammar::Nonterminal<std::variant<ProgramRule>> {
 };
 
 struct MainClassRule {
-    Node id;
+    Node        id;
     std::string name;
     std::string argument;
-    __detail::pStm body = nullptr;
+    ptr<Stm>    body = nullptr;
+
+    template <typename istream>
+    static ptr<MainClass> build(Builder<istream>&& data) {
+        return std::make_unique<MainClass>(MainClassRule{
+            data.id, data.W[0], data.W[1], std::move(data.S[0])});
+    }
 };
 
 struct MainClass : Grammar::Nonterminal<std::variant<MainClassRule>> {
@@ -59,18 +60,32 @@ struct MainClass : Grammar::Nonterminal<std::variant<MainClassRule>> {
 };
 
 struct ClassDeclNoInheritance {
-    Node id;
-    std::string name;
-    std::vector<__detail::pVarDecl> variables;
-    std::vector<__detail::pMethodDecl> methods;
+    Node                         id;
+    std::string                  name;
+    std::vector<ptr<VarDecl>>    variables;
+    std::vector<ptr<MethodDecl>> methods;
+
+    template <typename istream>
+    static ptr<ClassDecl> build(Builder<istream>&& data) {
+        return std::make_unique<ClassDecl>(ClassDeclNoInheritance{
+            data.id, data.W[0], std::move(data.V),
+            std::move(data.M)});
+    }
 };
 
 struct ClassDeclInheritance {
-    Node id;
-    std::string name;
-    std::string superclass;
-    std::vector<__detail::pVarDecl> variables;
-    std::vector<__detail::pMethodDecl> methods;
+    Node                         id;
+    std::string                  name;
+    std::string                  superclass;
+    std::vector<ptr<VarDecl>>    variables;
+    std::vector<ptr<MethodDecl>> methods;
+
+    template <typename istream>
+    static ptr<ClassDecl> build(Builder<istream>&& data) {
+        return std::make_unique<ClassDecl>(ClassDeclInheritance{
+            data.id, data.W[0], data.W[1], std::move(data.V),
+            std::move(data.M)});
+    }
 };
 
 // clang-format off
@@ -83,9 +98,15 @@ struct ClassDecl : Grammar::Nonterminal<std::variant<
 // clang-format on
 
 struct VarDeclRule {
-    Node id;
-    __detail::pType type = nullptr;
+    Node        id;
+    ptr<Type>   type = nullptr;
     std::string name;
+
+    template <typename istream>
+    static ptr<VarDecl> build(Builder<istream>&& data) {
+        return std::make_unique<VarDecl>(
+            VarDeclRule{data.id, std::move(data.T[0]), data.W[0]});
+    }
 };
 
 struct VarDecl : Grammar::Nonterminal<std::variant<VarDeclRule>> {
@@ -93,13 +114,21 @@ struct VarDecl : Grammar::Nonterminal<std::variant<VarDeclRule>> {
 };
 
 struct MethodDeclRule {
-    Node id;
-    __detail::pType type = nullptr;
-    std::string name;
-    __detail::pFormalList arguments;
-    std::vector<__detail::pVarDecl> variables;
-    std::vector<__detail::pStm> body;
-    __detail::pExp return_exp = nullptr;
+    Node                      id;
+    ptr<Type>                 type = nullptr;
+    std::string               name;
+    ptr<FormalList>           arguments;
+    std::vector<ptr<VarDecl>> variables;
+    std::vector<ptr<Stm>>     body;
+    ptr<Exp>                  return_exp = nullptr;
+
+    template <typename istream>
+    static ptr<MethodDecl> build(Builder<istream>&& data) {
+        return std::make_unique<MethodDecl>(
+            MethodDeclRule{data.id, std::move(data.T[0]), data.W[0],
+                           std::move(data.list), std::move(data.V),
+                           std::move(data.S), std::move(data.E[0])});
+    }
 };
 
 struct MethodDecl
@@ -108,13 +137,25 @@ struct MethodDecl
 };
 
 struct FormalDecl {
-    __detail::pType type = nullptr;
+    ptr<Type>   type = nullptr;
     std::string name;
 };
 
 struct FormalListRule {
-    Node id;
+    Node                    id;
     std::vector<FormalDecl> decls;
+
+    template <typename istream>
+    static ptr<FormalList> build(Builder<istream>&& data) {
+        std::vector<FormalDecl> D;
+
+        int s = std::min(data.T.size(), data.W.size());
+        for (int i = 0; i < s; i++)
+            D.push_back(FormalDecl{std::move(data.T[i]), data.W[i]});
+
+        return std::make_unique<FormalList>(
+            FormalListRule{data.id, std::move(D)});
+    }
 };
 
 struct FormalList
@@ -124,16 +165,39 @@ struct FormalList
 
 struct integerArrayType {
     Node id;
+
+    template <typename istream>
+    static ptr<Type> build(Builder<istream>&& data) {
+        return std::make_unique<Type>(integerArrayType{data.id});
+    }
 };
+
 struct booleanType {
     Node id;
+
+    template <typename istream>
+    static ptr<Type> build(Builder<istream>&& data) {
+        return std::make_unique<Type>(booleanType{data.id});
+    }
 };
+
 struct integerType {
     Node id;
+
+    template <typename istream>
+    static ptr<Type> build(Builder<istream>&& data) {
+        return std::make_unique<Type>(integerType{data.id});
+    }
 };
+
 struct classType {
-    Node id;
+    Node        id;
     std::string name;
+
+    template <typename istream>
+    static ptr<Type> build(Builder<istream>&& data) {
+        return std::make_unique<Type>(classType{data.id, data.W[1]});
+    }
 };
 
 // clang-format off
@@ -149,34 +213,77 @@ struct Type : Grammar::Nonterminal<std::variant<
 // clang-format on
 
 struct blockStm {
-    Node id;
-    std::vector<__detail::pStm> statements;
+    Node                  id;
+    std::vector<ptr<Stm>> statements;
+
+    template <typename istream>
+    static ptr<Stm> build(Builder<istream>&& data) {
+        return std::make_unique<Stm>(
+            blockStm{data.id, std::move(data.S)});
+    }
 };
+
 struct ifStm {
-    Node id;
-    __detail::pExp condition   = nullptr;
-    __detail::pStm if_clause   = nullptr;
-    __detail::pStm else_clause = nullptr;
+    Node     id;
+    ptr<Exp> condition   = nullptr;
+    ptr<Stm> if_clause   = nullptr;
+    ptr<Stm> else_clause = nullptr;
+
+    template <typename istream>
+    static ptr<Stm> build(Builder<istream>&& data) {
+        return std::make_unique<Stm>(
+            ifStm{data.id, std::move(data.E[0]), std::move(data.S[0]),
+                  std::move(data.S[1])});
+    }
 };
+
 struct whileStm {
-    Node id;
-    __detail::pExp condition = nullptr;
-    __detail::pStm body;
+    Node     id;
+    ptr<Exp> condition = nullptr;
+    ptr<Stm> body;
+
+    template <typename istream>
+    static ptr<Stm> build(Builder<istream>&& data) {
+        return std::make_unique<Stm>(whileStm{
+            data.id, std::move(data.E[0]), std::move(data.S[0])});
+    }
 };
+
 struct printStm {
-    Node id;
-    __detail::pExp exp = nullptr;
+    Node     id;
+    ptr<Exp> exp = nullptr;
+
+    template <typename istream>
+    static ptr<Stm> build(Builder<istream>&& data) {
+        return std::make_unique<Stm>(
+            printStm{data.id, std::move(data.E[0])});
+    };
 };
+
 struct assignStm {
-    Node id;
+    Node        id;
     std::string name;
-    __detail::pExp value = nullptr;
+    ptr<Exp>    value = nullptr;
+
+    template <typename istream>
+    static ptr<Stm> build(Builder<istream>&& data) {
+        return std::make_unique<Stm>(
+            assignStm{data.id, data.W[0], std::move(data.E[0])});
+    }
 };
+
 struct indexAssignStm {
-    Node id;
+    Node        id;
     std::string array;
-    __detail::pExp index = nullptr;
-    __detail::pExp value = nullptr;
+    ptr<Exp>    index = nullptr;
+    ptr<Exp>    value = nullptr;
+
+    template <typename istream>
+    static ptr<Stm> build(Builder<istream>&& data) {
+        return std::make_unique<Stm>(
+            indexAssignStm{data.id, data.W[0], std::move(data.E[0]),
+                           std::move(data.E[1])});
+    }
 };
 
 // clang-format off
@@ -192,56 +299,195 @@ struct Stm : Grammar::Nonterminal<std::variant<
 };
 // clang-format on
 
-using andExp =
-    Grammar::BinaryRule<struct andExpTag, Node, __detail::pExp>;
-using lessExp =
-    Grammar::BinaryRule<struct lessExpTag, Node, __detail::pExp>;
-using sumExp =
-    Grammar::BinaryRule<struct sumExpTag, Node, __detail::pExp>;
-using minusExp =
-    Grammar::BinaryRule<struct minusExpTag, Node, __detail::pExp>;
-using prodExp =
-    Grammar::BinaryRule<struct prodExpTag, Node, __detail::pExp>;
+struct andExp {
+    Node     id;
+    ptr<Exp> lhs = nullptr;
+    ptr<Exp> rhs = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(andExp{
+            data.id, std::move(data.E[0]), std::move(data.E[1])});
+    }
+};
+
+struct lessExp {
+    Node     id;
+    ptr<Exp> lhs = nullptr;
+    ptr<Exp> rhs = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(andExp{
+            data.id, std::move(data.E[0]), std::move(data.E[1])});
+    }
+};
+
+struct sumExp {
+    Node     id;
+    ptr<Exp> lhs = nullptr;
+    ptr<Exp> rhs = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(andExp{
+            data.id, std::move(data.E[0]), std::move(data.E[1])});
+    }
+};
+
+struct minusExp {
+    Node     id;
+    ptr<Exp> lhs = nullptr;
+    ptr<Exp> rhs = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(andExp{
+            data.id, std::move(data.E[0]), std::move(data.E[1])});
+    }
+};
+
+struct prodExp {
+    Node     id;
+    ptr<Exp> lhs = nullptr;
+    ptr<Exp> rhs = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(andExp{
+            data.id, std::move(data.E[0]), std::move(data.E[1])});
+    }
+};
+
 struct indexingExp {
-    Node id;
-    __detail::pExp array = nullptr;
-    __detail::pExp index = nullptr;
+    Node     id;
+    ptr<Exp> array = nullptr;
+    ptr<Exp> index = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(indexingExp{
+            data.id, std::move(data.E[0]), std::move(data.E[1])});
+    }
 };
-using lengthExp =
-    Grammar::UnaryRule<struct lengthExpTag, Node, __detail::pExp>;
+
+struct lengthExp {
+    Node     id;
+    ptr<Exp> lhs = nullptr;
+    ptr<Exp> rhs = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(andExp{
+            data.id, std::move(data.E[0]), std::move(data.E[1])});
+    }
+};
+
 struct methodCallExp {
-    Node id;
-    __detail::pExp object = nullptr;
-    std::string name;
-    __detail::pExpList arguments = nullptr;
+    Node         id;
+    ptr<Exp>     object = nullptr;
+    std::string  name;
+    ptr<ExpList> arguments = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(
+            AST::methodCallExp{data.id, std::move(data.E[0]),
+                               data.W[0], std::move(data.arguments)});
+    }
 };
+
 struct integerExp {
-    Node id;
+    Node    id;
     int32_t value;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(integerExp{data.id, data.value});
+    }
 };
+
 struct trueExp {
     Node id;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(trueExp{data.id});
+    }
 };
+
 struct falseExp {
     Node id;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(falseExp{data.id});
+    }
 };
+
 struct thisExp {
     Node id;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(thisExp{data.id});
+    }
 };
+
 struct identifierExp {
-    Node id;
+    Node        id;
     std::string name;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(
+            identifierExp{data.id, data.W[0]});
+    }
 };
-using newArrayExp =
-    Grammar::UnaryRule<struct arrayExpTag, Node, __detail::pExp>;
+
+struct newArrayExp {
+    Node     id;
+    ptr<Exp> inner = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(
+            newArrayExp{data.id, std::move(data.E[0])});
+    }
+};
+
 struct newObjectExp {
-    Node id;
+    Node        id;
     std::string name;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(
+            newObjectExp{data.id, data.W[0]});
+    }
 };
-using bangExp =
-    Grammar::UnaryRule<struct bangExpTag, Node, __detail::pExp>;
-using parenExp =
-    Grammar::UnaryRule<struct parenExpTag, Node, __detail::pExp>;
+
+struct bangExp {
+    Node     id;
+    ptr<Exp> inner = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(
+            newArrayExp{data.id, std::move(data.E[0])});
+    }
+};
+
+struct parenExp {
+    Node     id;
+    ptr<Exp> inner = nullptr;
+
+    template <typename istream>
+    static ptr<Exp> build(Builder<istream>&& data) {
+        return std::make_unique<Exp>(
+            newArrayExp{data.id, std::move(data.E[0])});
+    }
+};
 
 // clang-format off
 struct Exp : Grammar::Nonterminal<std::variant<
@@ -268,8 +514,14 @@ struct Exp : Grammar::Nonterminal<std::variant<
 // clang-format on
 
 struct ExpListRule {
-    Node id;
-    std::vector<__detail::pExp> exps;
+    Node                  id;
+    std::vector<ptr<Exp>> exps;
+
+    template <typename istream>
+    static ptr<ExpList> build(Builder<istream>&& data) {
+        return std::make_unique<ExpList>(
+            ExpListRule{data.id, std::move(data.E)});
+    }
 };
 
 struct ExpList : Grammar::Nonterminal<std::variant<ExpListRule>> {

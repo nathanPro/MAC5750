@@ -42,6 +42,8 @@ template <typename istream> class Builder {
     int32_t                      value;
     bool                         pop = false;
 
+    friend class ProgramRule;
+
   public:
     Builder(Parser<istream>& __parser)
         : parser(__parser), id(parser.idx++) {
@@ -150,177 +152,42 @@ template <typename istream> class Builder {
         return *this;
     }
 
-    ptr<Program> ProgramRule() {
-        return std::make_unique<Program>(
-            AST::ProgramRule{id, std::move(main), std::move(C)});
-    }
-
-    ptr<MainClass> MainClassRule() {
-        return std::make_unique<MainClass>(
-            AST::MainClassRule{id, W[0], W[1], std::move(S[0])});
-    }
-
-    ptr<ClassDecl> ClassDeclNoInheritance() {
-        return std::make_unique<ClassDecl>(
-            AST::ClassDeclNoInheritance{id, W[0], std::move(V),
-                                        std::move(M)});
-    }
-
-    ptr<ClassDecl> ClassDeclInheritance() {
-        return std::make_unique<ClassDecl>(AST::ClassDeclInheritance{
-            id, W[0], W[1], std::move(V), std::move(M)});
-    }
-
-    ptr<MethodDecl> MethodDeclRule() {
-        return std::make_unique<MethodDecl>(AST::MethodDeclRule{
-            id, std::move(T[0]), W[0], std::move(list), std::move(V),
-            std::move(S), std::move(E[0])});
-    }
-
-    ptr<VarDecl> VarDeclRule() {
-        return std::make_unique<VarDecl>(
-            AST::VarDeclRule{id, std::move(T[0]), W[0]});
-    }
-
-    ptr<FormalList> FormalListRule() {
-        std::vector<FormalDecl> D;
-        int s = T.size() < W.size() ? T.size() : W.size();
-        for (int i = 0; i < s; i++)
-            D.push_back(AST::FormalDecl{std::move(T[i]), W[i]});
-
-        return std::make_unique<FormalList>(
-            AST::FormalListRule{id, std::move(D)});
-    }
-
-    ptr<Type> integerArrayType() {
-        return std::make_unique<Type>(AST::integerArrayType{id});
-    }
-
-    ptr<Type> booleanType() {
-        return std::make_unique<Type>(AST::booleanType{id});
-    }
-
-    ptr<Type> integerType() {
-        return std::make_unique<Type>(AST::integerType{id});
-    }
-
-    ptr<Type> classType() {
-        return std::make_unique<Type>(AST::classType{id, W[0]});
-    }
-
-    ptr<ExpList> ExpListRule() {
-        return std::make_unique<ExpList>(
-            AST::ExpListRule{id, std::move(E)});
-    }
-
-    ptr<Stm> blockStm() {
-        return std::make_unique<Stm>(AST::blockStm{id, std::move(S)});
-    }
-
-    ptr<Stm> ifStm() {
-        return std::make_unique<Stm>(AST::ifStm{
-            id, std::move(E[0]), std::move(S[0]), std::move(S[1])});
-    }
-
-    ptr<Stm> whileStm() {
-        return std::make_unique<Stm>(
-            AST::whileStm{id, std::move(E[0]), std::move(S[0])});
-    }
-
-    ptr<Stm> printStm() {
-        return std::make_unique<Stm>(
-            AST::printStm{id, std::move(E[0])});
-    }
-
-    ptr<Stm> assignStm() {
-        return std::make_unique<Stm>(
-            AST::assignStm{id, W[0], std::move(E[0])});
-    }
-
-    ptr<Stm> indexAssignStm() {
-        return std::make_unique<Stm>(AST::indexAssignStm{
-            id, W[0], std::move(E[0]), std::move(E[1])});
-    }
+    friend struct MainClassRule;
+    friend struct ClassDeclNoInheritance;
+    friend struct ClassDeclInheritance;
+    friend struct MethodDeclRule;
+    friend struct VarDeclRule;
+    friend struct FormalListRule;
+    friend struct integerArrayType;
+    friend struct booleanType;
+    friend struct integerType;
+    friend struct classType;
+    friend struct blockStm;
+    friend struct ifStm;
+    friend struct whileStm;
+    friend struct printStm;
+    friend struct assignStm;
+    friend struct indexAssignStm;
+    friend struct ExpListRule;
+    friend struct andExp;
+    friend struct lessExp;
+    friend struct sumExp;
+    friend struct minusExp;
+    friend struct prodExp;
+    friend struct indexingExp;
+    friend struct lengthExp;
+    friend struct methodCallExp;
+    friend struct integerExp;
+    friend struct trueExp;
+    friend struct falseExp;
+    friend struct thisExp;
+    friend struct identifierExp;
+    friend struct newArrayExp;
+    friend struct newObjectExp;
+    friend struct bangExp;
+    friend struct parenExp;
 
     ptr<Exp> lhs() { return std::move(E[0]); }
-
-    ptr<Exp> andExp() {
-        return std::make_unique<Exp>(
-            AST::andExp{id, std::move(E[0]), std::move(E[1])});
-    }
-
-    ptr<Exp> lessExp() {
-        return std::make_unique<Exp>(
-            AST::lessExp{id, std::move(E[0]), std::move(E[1])});
-    }
-
-    ptr<Exp> sumExp() {
-        return std::make_unique<Exp>(
-            AST::sumExp{id, std::move(E[0]), std::move(E[1])});
-    }
-
-    ptr<Exp> minusExp() {
-        return std::make_unique<Exp>(
-            AST::minusExp{id, std::move(E[0]), std::move(E[1])});
-    }
-
-    ptr<Exp> prodExp() {
-        return std::make_unique<Exp>(
-            AST::lessExp{id, std::move(E[0]), std::move(E[1])});
-    }
-
-    ptr<Exp> indexingExp() {
-        return std::make_unique<Exp>(
-            AST::indexingExp{id, std::move(E[0]), std::move(E[1])});
-    }
-
-    ptr<Exp> lengthExp() {
-        return std::make_unique<Exp>(
-            AST::lengthExp{id, std::move(E[0])});
-    }
-
-    ptr<Exp> methodCallExp() {
-        return std::make_unique<Exp>(AST::methodCallExp{
-            id, std::move(E[0]), W[0], std::move(arguments)});
-    }
-
-    ptr<Exp> integerExp() {
-        return std::make_unique<Exp>(AST::integerExp{id, value});
-    }
-
-    ptr<Exp> trueExp() {
-        return std::make_unique<Exp>(AST::trueExp{id});
-    }
-
-    ptr<Exp> falseExp() {
-        return std::make_unique<Exp>(AST::falseExp{id});
-    }
-
-    ptr<Exp> thisExp() {
-        return std::make_unique<Exp>(AST::thisExp{id});
-    }
-
-    ptr<Exp> identifierExp() {
-        return std::make_unique<Exp>(AST::identifierExp{id, W[0]});
-    }
-
-    ptr<Exp> newArrayExp() {
-        return std::make_unique<Exp>(
-            AST::newArrayExp{id, std::move(E[0])});
-    }
-
-    ptr<Exp> newObjectExp() {
-        return std::make_unique<Exp>(AST::newObjectExp{id, W[0]});
-    }
-
-    ptr<Exp> bangExp() {
-        return std::make_unique<Exp>(
-            AST::bangExp{id, std::move(E[0])});
-    }
-    ptr<Exp> parenExp() {
-        return std::make_unique<Exp>(
-            AST::parenExp{id, std::move(E[0])});
-    }
 };
 } // namespace AST
 #endif
