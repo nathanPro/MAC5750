@@ -325,10 +325,7 @@ struct lessExp : __detail::BinaryRule<lessExp, ptr<Exp>> {};
 struct sumExp : __detail::BinaryRule<sumExp, ptr<Exp>> {};
 struct minusExp : __detail::BinaryRule<minusExp, ptr<Exp>> {};
 struct prodExp : __detail::BinaryRule<prodExp, ptr<Exp>> {};
-struct indexingExp : __detail::BinaryRule<indexingExp, ptr<Exp>> {
-    ptr& array = lhs;
-    ptr& index = rhs;
-};
+struct indexingExp : __detail::BinaryRule<indexingExp, ptr<Exp>> {};
 struct lengthExp : __detail::UnaryRule<lengthExp, ptr<Exp>> {};
 
 struct methodCallExp {
