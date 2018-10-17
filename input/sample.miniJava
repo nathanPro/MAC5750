@@ -6,10 +6,12 @@ class Factorial {
 class Fac {
     public int ComputeFac(int num) {
         int num_aux;
-        if (num < 1)
+        int throwaway;
+        if (!(num < 1))
             num_aux = 1;
         else num_aux = num * (this.ComputeFac(num - 1));
         // Does this comment screw things?
+        throwaway = x[5 + 5];
         return num_aux;
     }
 }
