@@ -186,8 +186,8 @@ template <typename target, typename ntPtr> struct BinaryRule {
 
     template <typename istream>
     static ptr build(Builder<istream>&& data) {
-        return std::make_unique<elm>(target{
-            data.id, std::move(data.E[0]), std::move(data.E[1])});
+        return std::make_unique<elm>(
+            target{data.id, data.get(ptr{}, 0), data.get(ptr{}, 1)});
     }
 };
 } // namespace __detail

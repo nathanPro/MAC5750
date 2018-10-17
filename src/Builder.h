@@ -42,6 +42,9 @@ template <typename istream> class Builder {
     int32_t                      value;
     bool                         pop = false;
 
+    // Hooks for BinaryRule
+    ptr<Exp> get(ptr<Exp>, size_t i) { return std::move(E[i]); }
+
   public:
     Builder(Parser<istream>& __parser)
         : parser(__parser), id(parser.idx++) {
