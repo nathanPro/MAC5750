@@ -26,6 +26,64 @@ struct ExpList;
 template <typename istream> class Builder;
 using Node = Entity<struct NodeTag>;
 
+namespace __detail {
+template <typename target, typename ntPtr> struct TagRule {
+    using ptr = typename std::pointer_traits<ntPtr>::pointer;
+    using elm = typename std::pointer_traits<ntPtr>::element_type;
+
+    Node id;
+
+    template <typename istream>
+    static ptr build(Builder<istream>&& data) {
+        return std::make_unique<elm>(target{data.id});
+    }
+};
+
+template <typename target, typename ntPtr> struct BinaryRule {
+    using ptr = typename std::pointer_traits<ntPtr>::pointer;
+    using elm = typename std::pointer_traits<ntPtr>::element_type;
+
+    Node id;
+    ptr  lhs = nullptr;
+    ptr  rhs = nullptr;
+
+    template <typename istream>
+    static ptr build(Builder<istream>&& data) {
+        return std::make_unique<elm>(
+            target{data.id, data.get(ptr{}, 0), data.get(ptr{}, 1)});
+    }
+};
+
+template <typename target, typename ntPtr> struct UnaryRule {
+    using ptr = typename std::pointer_traits<ntPtr>::pointer;
+    using elm = typename std::pointer_traits<ntPtr>::element_type;
+
+    Node id;
+    ptr  inner = nullptr;
+
+    template <typename istream>
+    static ptr build(Builder<istream>&& data) {
+        return std::make_unique<elm>(
+            target{data.id, data.get(ptr{}, 0)});
+    }
+};
+
+template <typename target, typename T, typename ntPtr>
+struct ValueWrapper {
+    using ptr = typename std::pointer_traits<ntPtr>::pointer;
+    using elm = typename std::pointer_traits<ntPtr>::element_type;
+
+    Node id;
+    T    value;
+
+    template <typename istream>
+    static ptr build(Builder<istream>&& data) {
+        return std::make_unique<elm>(
+            target{data.id, data.get(T{}, 0)});
+    }
+};
+} // namespace __detail
+
 struct ProgramRule {
     Node                        id;
     ptr<MainClass>              main = nullptr;
@@ -163,63 +221,12 @@ struct FormalList
     using Grammar::Nonterminal<FormalList::variant_t>::Nonterminal;
 };
 
-namespace __detail {
-template <typename target, typename ntPtr> struct TagRule {
-    using ptr = typename std::pointer_traits<ntPtr>::pointer;
-    using elm = typename std::pointer_traits<ntPtr>::element_type;
-
-    Node id;
-
-    template <typename istream>
-    static ptr build(Builder<istream>&& data) {
-        return std::make_unique<elm>(target{data.id});
-    }
-};
-
-template <typename target, typename ntPtr> struct BinaryRule {
-    using ptr = typename std::pointer_traits<ntPtr>::pointer;
-    using elm = typename std::pointer_traits<ntPtr>::element_type;
-
-    Node id;
-    ptr  lhs = nullptr;
-    ptr  rhs = nullptr;
-
-    template <typename istream>
-    static ptr build(Builder<istream>&& data) {
-        return std::make_unique<elm>(
-            target{data.id, data.get(ptr{}, 0), data.get(ptr{}, 1)});
-    }
-};
-
-template <typename target, typename ntPtr> struct UnaryRule {
-    using ptr = typename std::pointer_traits<ntPtr>::pointer;
-    using elm = typename std::pointer_traits<ntPtr>::element_type;
-
-    Node id;
-    ptr  inner = nullptr;
-
-    template <typename istream>
-    static ptr build(Builder<istream>&& data) {
-        return std::make_unique<elm>(
-            target{data.id, data.get(ptr{}, 0)});
-    }
-};
-} // namespace __detail
-
 struct integerArrayType
     : __detail::TagRule<integerArrayType, ptr<Type>> {};
 struct booleanType : __detail::TagRule<booleanType, ptr<Type>> {};
 struct integerType : __detail::TagRule<integerType, ptr<Type>> {};
-
-struct classType {
-    Node        id;
-    std::string name;
-
-    template <typename istream>
-    static ptr<Type> build(Builder<istream>&& data) {
-        return std::make_unique<Type>(classType{data.id, data.W[1]});
-    }
-};
+struct classType
+    : __detail::ValueWrapper<classType, std::string, ptr<Type>> {};
 
 // clang-format off
 struct Type : Grammar::Nonterminal<std::variant<
@@ -342,43 +349,18 @@ struct methodCallExp {
     }
 };
 
-struct integerExp {
-    Node    id;
-    int32_t value;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(integerExp{data.id, data.value});
-    }
-};
+struct integerExp
+    : __detail::ValueWrapper<integerExp, int32_t, ptr<Exp>> {};
+struct identifierExp
+    : __detail::ValueWrapper<identifierExp, std::string, ptr<Exp>> {};
+struct newObjectExp
+    : __detail::ValueWrapper<newObjectExp, std::string, ptr<Exp>> {};
 
 struct trueExp : __detail::TagRule<trueExp, ptr<Exp>> {};
 struct falseExp : __detail::TagRule<falseExp, ptr<Exp>> {};
 struct thisExp : __detail::TagRule<thisExp, ptr<Exp>> {};
 
-struct identifierExp {
-    Node        id;
-    std::string name;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(
-            identifierExp{data.id, data.W[0]});
-    }
-};
-
 struct newArrayExp : __detail::UnaryRule<newArrayExp, ptr<Exp>> {};
-
-struct newObjectExp {
-    Node        id;
-    std::string name;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(
-            newObjectExp{data.id, data.W[0]});
-    }
-};
 
 struct bangExp : __detail::UnaryRule<bangExp, ptr<Exp>> {};
 struct parenExp : __detail::UnaryRule<parenExp, ptr<Exp>> {};

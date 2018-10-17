@@ -42,8 +42,10 @@ template <typename istream> class Builder {
     int32_t                      value;
     bool                         pop = false;
 
-    // Hooks for BinaryRule
-    ptr<Exp> get(ptr<Exp>, size_t i) { return std::move(E[i]); }
+    // Hooks
+    ptr<Exp>    get(ptr<Exp>, size_t i) { return std::move(E[i]); }
+    std::string get(std::string, size_t i) { return std::move(W[i]); }
+    int32_t     get(int32_t, size_t i) { return value; }
 
   public:
     Builder(Parser<istream>& __parser)
@@ -159,6 +161,8 @@ template <typename istream> class Builder {
     friend struct AST::__detail::BinaryRule;
     template <typename target, typename ntPtr>
     friend struct AST::__detail::UnaryRule;
+    template <typename target, typename T, typename ntPtr>
+    friend struct AST::__detail::ValueWrapper;
     friend struct ProgramRule;
     friend struct MainClassRule;
     friend struct ClassDeclNoInheritance;
@@ -166,7 +170,6 @@ template <typename istream> class Builder {
     friend struct MethodDeclRule;
     friend struct VarDeclRule;
     friend struct FormalListRule;
-    friend struct classType;
     friend struct blockStm;
     friend struct ifStm;
     friend struct whileStm;
@@ -175,9 +178,6 @@ template <typename istream> class Builder {
     friend struct indexAssignStm;
     friend struct ExpListRule;
     friend struct methodCallExp;
-    friend struct integerExp;
-    friend struct identifierExp;
-    friend struct newObjectExp;
 
     ptr<Exp> lhs() { return std::move(E[0]); }
 };
