@@ -163,32 +163,24 @@ struct FormalList
     using Grammar::Nonterminal<FormalList::variant_t>::Nonterminal;
 };
 
-struct integerArrayType {
+namespace __detail {
+template <typename target, typename ntPtr> struct TagRule {
+    using ptr = typename std::pointer_traits<ntPtr>::pointer;
+    using elm = typename std::pointer_traits<ntPtr>::element_type;
+
     Node id;
 
     template <typename istream>
-    static ptr<Type> build(Builder<istream>&& data) {
-        return std::make_unique<Type>(integerArrayType{data.id});
+    static ptr build(Builder<istream>&& data) {
+        return std::make_unique<elm>(target{data.id});
     }
 };
+} // namespace __detail
 
-struct booleanType {
-    Node id;
-
-    template <typename istream>
-    static ptr<Type> build(Builder<istream>&& data) {
-        return std::make_unique<Type>(booleanType{data.id});
-    }
-};
-
-struct integerType {
-    Node id;
-
-    template <typename istream>
-    static ptr<Type> build(Builder<istream>&& data) {
-        return std::make_unique<Type>(integerType{data.id});
-    }
-};
+struct integerArrayType
+    : __detail::TagRule<integerArrayType, ptr<Type>> {};
+struct booleanType : __detail::TagRule<booleanType, ptr<Type>> {};
+struct integerType : __detail::TagRule<integerType, ptr<Type>> {};
 
 struct classType {
     Node        id;
@@ -407,32 +399,9 @@ struct integerExp {
     }
 };
 
-struct trueExp {
-    Node id;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(trueExp{data.id});
-    }
-};
-
-struct falseExp {
-    Node id;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(falseExp{data.id});
-    }
-};
-
-struct thisExp {
-    Node id;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(thisExp{data.id});
-    }
-};
+struct trueExp : __detail::TagRule<trueExp, ptr<Exp>> {};
+struct falseExp : __detail::TagRule<falseExp, ptr<Exp>> {};
+struct thisExp : __detail::TagRule<thisExp, ptr<Exp>> {};
 
 struct identifierExp {
     Node        id;

@@ -42,8 +42,6 @@ template <typename istream> class Builder {
     int32_t                      value;
     bool                         pop = false;
 
-    friend class ProgramRule;
-
   public:
     Builder(Parser<istream>& __parser)
         : parser(__parser), id(parser.idx++) {
@@ -152,15 +150,15 @@ template <typename istream> class Builder {
         return *this;
     }
 
+    template <typename target, typename ntPtr>
+    friend struct AST::__detail::TagRule;
+    friend struct ProgramRule;
     friend struct MainClassRule;
     friend struct ClassDeclNoInheritance;
     friend struct ClassDeclInheritance;
     friend struct MethodDeclRule;
     friend struct VarDeclRule;
     friend struct FormalListRule;
-    friend struct integerArrayType;
-    friend struct booleanType;
-    friend struct integerType;
     friend struct classType;
     friend struct blockStm;
     friend struct ifStm;
@@ -178,9 +176,6 @@ template <typename istream> class Builder {
     friend struct lengthExp;
     friend struct methodCallExp;
     friend struct integerExp;
-    friend struct trueExp;
-    friend struct falseExp;
-    friend struct thisExp;
     friend struct identifierExp;
     friend struct newArrayExp;
     friend struct newObjectExp;
