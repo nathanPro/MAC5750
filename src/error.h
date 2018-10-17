@@ -9,36 +9,36 @@ template <typename ostream> class OstreamReporter {
   public:
     OstreamReporter(ostream& __out) : out(__out) {}
 
-    void operator()(const ParsingError& err) {
+    void operator()(const AST::ParsingError& err) {
         out << "Context:\n";
         for (auto& c : err.ctx) out << c << '\n';
         out << '\n';
         std::visit(*this, err.inner);
     }
 
-    void operator()(const Unexpected& err) {
+    void operator()(const AST::Unexpected& err) {
         out << "Unexpected lexeme: '" << err.lex << "'\n";
     }
 
-    void operator()(const Mismatch& err) {
+    void operator()(const AST::Mismatch& err) {
         out << "Mismatch: expected '" << err.expected << "', found '"
             << err.found << "'\n";
     }
 
-    void operator()(const WrongIdentifier& err) {
+    void operator()(const AST::WrongIdentifier& err) {
         out << "Identifier mismatch: expected '" << err.expected
             << "', found '" << err.found << "'\n";
     }
 };
 
 template <typename ostream> class Reporter {
-    ostream& out;
-    OstreamReporter<ostream> logger;
-    std::vector<ASTErrorData>& E;
-    bool ok;
+    ostream&                     out;
+    OstreamReporter<ostream>     logger;
+    std::vector<AST::ErrorData>& E;
+    bool                         ok;
 
   public:
-    Reporter(ostream& __out, std::vector<ASTErrorData>& err)
+    Reporter(ostream& __out, std::vector<AST::ErrorData>& err)
         : out(__out), logger(out), E(err), ok(true) {}
 
     operator bool() const { return ok; }

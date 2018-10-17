@@ -3,8 +3,8 @@
 #include "AST.h"
 #include "lexer.h"
 
-template <typename T> class ASTBuilder;
-
+template <typename istream> class Parser;
+namespace AST {
 struct Unexpected {
     Lexeme lex;
 };
@@ -24,32 +24,31 @@ struct ParsingError {
     std::variant<Unexpected, Mismatch, WrongIdentifier> inner;
 };
 
-using ASTErrorData = std::vector<std::unique_ptr<ParsingError>>;
+using ErrorData = std::vector<std::unique_ptr<ParsingError>>;
 
-template <typename istream> class Parser;
-template <typename istream> class ASTBuilder {
-    Parser<istream>&                       parser;
-    AST::Node                              id;
-    AST::ptr<AST::MainClass>               main;
-    std::vector<std::string>               W;
-    std::vector<AST::ptr<AST::ClassDecl>>  C;
-    std::vector<AST::ptr<AST::VarDecl>>    V;
-    std::vector<AST::ptr<AST::MethodDecl>> M;
-    std::vector<AST::ptr<AST::Type>>       T;
-    std::vector<AST::ptr<AST::Exp>>        E;
-    std::vector<AST::ptr<AST::Stm>>        S;
-    AST::ptr<AST::FormalList>              list;
-    AST::ptr<AST::ExpList>                 arguments;
-    int32_t                                value;
-    bool                                   pop = false;
+template <typename istream> class Builder {
+    Parser<istream>&             parser;
+    Node                         id;
+    ptr<MainClass>               main;
+    std::vector<std::string>     W;
+    std::vector<ptr<ClassDecl>>  C;
+    std::vector<ptr<VarDecl>>    V;
+    std::vector<ptr<MethodDecl>> M;
+    std::vector<ptr<Type>>       T;
+    std::vector<ptr<Exp>>        E;
+    std::vector<ptr<Stm>>        S;
+    ptr<FormalList>              list;
+    ptr<ExpList>                 arguments;
+    int32_t                      value;
+    bool                         pop = false;
 
   public:
-    ASTBuilder(Parser<istream>& __parser)
+    Builder(Parser<istream>& __parser)
         : parser(__parser), id(parser.idx++) {
         parser.errors.push_back({});
     }
 
-    ASTBuilder(Parser<istream>& __parser, std::string label)
+    Builder(Parser<istream>& __parser, std::string label)
         : parser(__parser), id(parser.idx++) {
         parser.errors.push_back({});
         parser.context.push_back(label);
@@ -57,14 +56,14 @@ template <typename istream> class ASTBuilder {
         pop = true;
     }
 
-    ~ASTBuilder() {
+    ~Builder() {
         if (pop) {
             parser.context.pop_back();
             parser.lines.pop_back();
         }
     }
 
-    ASTBuilder& operator<<(Lexeme lex) {
+    Builder& operator<<(Lexeme lex) {
         if (Lexeme(parser[0]) != lex) {
             auto err   = std::make_unique<ParsingError>();
             err->inner = Mismatch{lex, Lexeme(parser[0])};
@@ -82,7 +81,7 @@ template <typename istream> class ASTBuilder {
         return *this;
     }
 
-    ASTBuilder& operator<<(std::string in) {
+    Builder& operator<<(std::string in) {
         if (parser[0].second != in) {
             auto err   = std::make_unique<ParsingError>();
             err->inner = WrongIdentifier{in, parser[0].second};
@@ -106,225 +105,222 @@ template <typename istream> class ASTBuilder {
         ++parser.tokens;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::MainClass>&& in) {
+    Builder& operator<<(ptr<MainClass>&& in) {
         main.reset(in.release());
         return *this;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::ClassDecl>&& in) {
+    Builder& operator<<(ptr<ClassDecl>&& in) {
         C.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::VarDecl>&& in) {
+    Builder& operator<<(ptr<VarDecl>&& in) {
         V.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::MethodDecl>&& in) {
+    Builder& operator<<(ptr<MethodDecl>&& in) {
         M.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::Type>&& in) {
+    Builder& operator<<(ptr<Type>&& in) {
         T.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::Exp>&& in) {
+    Builder& operator<<(ptr<Exp>&& in) {
         E.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::Stm>&& in) {
+    Builder& operator<<(ptr<Stm>&& in) {
         S.push_back(std::move(in));
         return *this;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::ExpList>&& in) {
+    Builder& operator<<(ptr<ExpList>&& in) {
         arguments.reset(in.release());
         return *this;
     }
 
-    ASTBuilder& operator<<(AST::ptr<AST::FormalList>&& in) {
+    Builder& operator<<(ptr<FormalList>&& in) {
         list.reset(in.release());
         return *this;
     }
 
-    AST::ptr<AST::Program> ProgramRule() {
-        return std::make_unique<AST::Program>(
+    ptr<Program> ProgramRule() {
+        return std::make_unique<Program>(
             AST::ProgramRule{id, std::move(main), std::move(C)});
     }
 
-    AST::ptr<AST::MainClass> MainClassRule() {
-        return std::make_unique<AST::MainClass>(
+    ptr<MainClass> MainClassRule() {
+        return std::make_unique<MainClass>(
             AST::MainClassRule{id, W[0], W[1], std::move(S[0])});
     }
 
-    AST::ptr<AST::ClassDecl> ClassDeclNoInheritance() {
-        return std::make_unique<AST::ClassDecl>(
+    ptr<ClassDecl> ClassDeclNoInheritance() {
+        return std::make_unique<ClassDecl>(
             AST::ClassDeclNoInheritance{id, W[0], std::move(V),
                                         std::move(M)});
     }
 
-    AST::ptr<AST::ClassDecl> ClassDeclInheritance() {
-        return std::make_unique<AST::ClassDecl>(
-            AST::ClassDeclInheritance{id, W[0], W[1], std::move(V),
-                                      std::move(M)});
+    ptr<ClassDecl> ClassDeclInheritance() {
+        return std::make_unique<ClassDecl>(AST::ClassDeclInheritance{
+            id, W[0], W[1], std::move(V), std::move(M)});
     }
 
-    AST::ptr<AST::MethodDecl> MethodDeclRule() {
-        return std::make_unique<AST::MethodDecl>(AST::MethodDeclRule{
+    ptr<MethodDecl> MethodDeclRule() {
+        return std::make_unique<MethodDecl>(AST::MethodDeclRule{
             id, std::move(T[0]), W[0], std::move(list), std::move(V),
             std::move(S), std::move(E[0])});
     }
 
-    AST::ptr<AST::VarDecl> VarDeclRule() {
-        return std::make_unique<AST::VarDecl>(
+    ptr<VarDecl> VarDeclRule() {
+        return std::make_unique<VarDecl>(
             AST::VarDeclRule{id, std::move(T[0]), W[0]});
     }
 
-    AST::ptr<AST::FormalList> FormalListRule() {
-        std::vector<AST::FormalDecl> D;
+    ptr<FormalList> FormalListRule() {
+        std::vector<FormalDecl> D;
         int s = T.size() < W.size() ? T.size() : W.size();
         for (int i = 0; i < s; i++)
             D.push_back(AST::FormalDecl{std::move(T[i]), W[i]});
 
-        return std::make_unique<AST::FormalList>(
+        return std::make_unique<FormalList>(
             AST::FormalListRule{id, std::move(D)});
     }
 
-    AST::ptr<AST::Type> integerArrayType() {
-        return std::make_unique<AST::Type>(AST::integerArrayType{id});
+    ptr<Type> integerArrayType() {
+        return std::make_unique<Type>(AST::integerArrayType{id});
     }
 
-    AST::ptr<AST::Type> booleanType() {
-        return std::make_unique<AST::Type>(AST::booleanType{id});
+    ptr<Type> booleanType() {
+        return std::make_unique<Type>(AST::booleanType{id});
     }
 
-    AST::ptr<AST::Type> integerType() {
-        return std::make_unique<AST::Type>(AST::integerType{id});
+    ptr<Type> integerType() {
+        return std::make_unique<Type>(AST::integerType{id});
     }
 
-    AST::ptr<AST::Type> classType() {
-        return std::make_unique<AST::Type>(AST::classType{id, W[0]});
+    ptr<Type> classType() {
+        return std::make_unique<Type>(AST::classType{id, W[0]});
     }
 
-    AST::ptr<AST::ExpList> ExpListRule() {
-        return std::make_unique<AST::ExpList>(
+    ptr<ExpList> ExpListRule() {
+        return std::make_unique<ExpList>(
             AST::ExpListRule{id, std::move(E)});
     }
 
-    AST::ptr<AST::Stm> blockStm() {
-        return std::make_unique<AST::Stm>(
-            AST::blockStm{id, std::move(S)});
+    ptr<Stm> blockStm() {
+        return std::make_unique<Stm>(AST::blockStm{id, std::move(S)});
     }
 
-    AST::ptr<AST::Stm> ifStm() {
-        return std::make_unique<AST::Stm>(AST::ifStm{
+    ptr<Stm> ifStm() {
+        return std::make_unique<Stm>(AST::ifStm{
             id, std::move(E[0]), std::move(S[0]), std::move(S[1])});
     }
 
-    AST::ptr<AST::Stm> whileStm() {
-        return std::make_unique<AST::Stm>(
+    ptr<Stm> whileStm() {
+        return std::make_unique<Stm>(
             AST::whileStm{id, std::move(E[0]), std::move(S[0])});
     }
 
-    AST::ptr<AST::Stm> printStm() {
-        return std::make_unique<AST::Stm>(
+    ptr<Stm> printStm() {
+        return std::make_unique<Stm>(
             AST::printStm{id, std::move(E[0])});
     }
 
-    AST::ptr<AST::Stm> assignStm() {
-        return std::make_unique<AST::Stm>(
+    ptr<Stm> assignStm() {
+        return std::make_unique<Stm>(
             AST::assignStm{id, W[0], std::move(E[0])});
     }
 
-    AST::ptr<AST::Stm> indexAssignStm() {
-        return std::make_unique<AST::Stm>(AST::indexAssignStm{
+    ptr<Stm> indexAssignStm() {
+        return std::make_unique<Stm>(AST::indexAssignStm{
             id, W[0], std::move(E[0]), std::move(E[1])});
     }
 
-    AST::ptr<AST::Exp> lhs() { return std::move(E[0]); }
+    ptr<Exp> lhs() { return std::move(E[0]); }
 
-    AST::ptr<AST::Exp> andExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> andExp() {
+        return std::make_unique<Exp>(
             AST::andExp{id, std::move(E[0]), std::move(E[1])});
     }
 
-    AST::ptr<AST::Exp> lessExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> lessExp() {
+        return std::make_unique<Exp>(
             AST::lessExp{id, std::move(E[0]), std::move(E[1])});
     }
 
-    AST::ptr<AST::Exp> sumExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> sumExp() {
+        return std::make_unique<Exp>(
             AST::sumExp{id, std::move(E[0]), std::move(E[1])});
     }
 
-    AST::ptr<AST::Exp> minusExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> minusExp() {
+        return std::make_unique<Exp>(
             AST::minusExp{id, std::move(E[0]), std::move(E[1])});
     }
 
-    AST::ptr<AST::Exp> prodExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> prodExp() {
+        return std::make_unique<Exp>(
             AST::lessExp{id, std::move(E[0]), std::move(E[1])});
     }
 
-    AST::ptr<AST::Exp> indexingExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> indexingExp() {
+        return std::make_unique<Exp>(
             AST::indexingExp{id, std::move(E[0]), std::move(E[1])});
     }
 
-    AST::ptr<AST::Exp> lengthExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> lengthExp() {
+        return std::make_unique<Exp>(
             AST::lengthExp{id, std::move(E[0])});
     }
 
-    AST::ptr<AST::Exp> methodCallExp() {
-        return std::make_unique<AST::Exp>(AST::methodCallExp{
+    ptr<Exp> methodCallExp() {
+        return std::make_unique<Exp>(AST::methodCallExp{
             id, std::move(E[0]), W[0], std::move(arguments)});
     }
 
-    AST::ptr<AST::Exp> integerExp() {
-        return std::make_unique<AST::Exp>(AST::integerExp{id, value});
+    ptr<Exp> integerExp() {
+        return std::make_unique<Exp>(AST::integerExp{id, value});
     }
 
-    AST::ptr<AST::Exp> trueExp() {
-        return std::make_unique<AST::Exp>(AST::trueExp{id});
+    ptr<Exp> trueExp() {
+        return std::make_unique<Exp>(AST::trueExp{id});
     }
 
-    AST::ptr<AST::Exp> falseExp() {
-        return std::make_unique<AST::Exp>(AST::falseExp{id});
+    ptr<Exp> falseExp() {
+        return std::make_unique<Exp>(AST::falseExp{id});
     }
 
-    AST::ptr<AST::Exp> thisExp() {
-        return std::make_unique<AST::Exp>(AST::thisExp{id});
+    ptr<Exp> thisExp() {
+        return std::make_unique<Exp>(AST::thisExp{id});
     }
 
-    AST::ptr<AST::Exp> identifierExp() {
-        return std::make_unique<AST::Exp>(
-            AST::identifierExp{id, W[0]});
+    ptr<Exp> identifierExp() {
+        return std::make_unique<Exp>(AST::identifierExp{id, W[0]});
     }
 
-    AST::ptr<AST::Exp> newArrayExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> newArrayExp() {
+        return std::make_unique<Exp>(
             AST::newArrayExp{id, std::move(E[0])});
     }
 
-    AST::ptr<AST::Exp> newObjectExp() {
-        return std::make_unique<AST::Exp>(
-            AST::newObjectExp{id, W[0]});
+    ptr<Exp> newObjectExp() {
+        return std::make_unique<Exp>(AST::newObjectExp{id, W[0]});
     }
 
-    AST::ptr<AST::Exp> bangExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> bangExp() {
+        return std::make_unique<Exp>(
             AST::bangExp{id, std::move(E[0])});
     }
-    AST::ptr<AST::Exp> parenExp() {
-        return std::make_unique<AST::Exp>(
+    ptr<Exp> parenExp() {
+        return std::make_unique<Exp>(
             AST::parenExp{id, std::move(E[0])});
     }
 };
+} // namespace AST
 #endif

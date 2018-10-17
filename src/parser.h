@@ -12,7 +12,7 @@ template <typename istream> class Parser {
     int                      idx;
 
     AST::ptr<AST::Exp> _Exp(AST::ptr<AST::Exp>&& lhs) {
-        ASTBuilder builder(*this);
+        AST::Builder builder(*this);
         builder << std::move(lhs);
         switch (Lexeme(tokens[0])) {
         case Lexeme::and_operator:
@@ -48,13 +48,13 @@ template <typename istream> class Parser {
     }
 
   public:
-    std::vector<ASTErrorData> errors;
+    std::vector<AST::ErrorData> errors;
     Parser(istream& stream) : tokens(stream, 2), idx(0) {}
     LexState operator[](int i) { return tokens[i]; }
-    friend class ASTBuilder<istream>;
+    friend class AST::Builder<istream>;
 
     AST::ptr<AST::Exp> Exp() {
-        ASTBuilder builder(*this, "Expression");
+        AST::Builder builder(*this, "Expression");
         switch (Lexeme(tokens[0])) {
         case Lexeme::integer_literal:
             builder << Lexeme::integer_literal;
@@ -95,7 +95,7 @@ template <typename istream> class Parser {
     }
 
     AST::ptr<AST::ExpList> ExpList() {
-        ASTBuilder builder(*this, "Method Call List");
+        AST::Builder builder(*this, "Method Call List");
         builder << Lexeme::open_paren;
         bool first = true;
         while (Lexeme(tokens[0]) != Lexeme::close_paren) {
@@ -108,7 +108,7 @@ template <typename istream> class Parser {
     }
 
     AST::ptr<AST::Stm> Stm() {
-        ASTBuilder builder(*this, "Statement");
+        AST::Builder builder(*this, "Statement");
         switch (Lexeme(tokens[0])) {
         case Lexeme::open_brace:
             builder << Lexeme::open_brace;
@@ -148,7 +148,7 @@ template <typename istream> class Parser {
     }
 
     AST::ptr<AST::Type> Type() {
-        ASTBuilder builder(*this, "Type");
+        AST::Builder builder(*this, "Type");
         switch (Lexeme(tokens[0])) {
         case Lexeme::boolean_keyword:
             builder << Lexeme::boolean_keyword;
@@ -171,7 +171,7 @@ template <typename istream> class Parser {
     }
 
     AST::ptr<AST::FormalList> FormalList() {
-        ASTBuilder builder(*this, "Method Argument List");
+        AST::Builder builder(*this, "Method Argument List");
         builder << Lexeme::open_paren;
         bool first = true;
         while (Lexeme(tokens[0]) != Lexeme::close_paren) {
@@ -184,13 +184,13 @@ template <typename istream> class Parser {
     }
 
     AST::ptr<AST::VarDecl> VarDecl() {
-        ASTBuilder builder(*this, "Variable Declaration");
+        AST::Builder builder(*this, "Variable Declaration");
         builder << Type() << Lexeme::identifier << Lexeme::semicolon;
         return builder.VarDeclRule();
     }
 
     AST::ptr<AST::MethodDecl> MethodDecl() {
-        ASTBuilder builder(*this, "Method Declaration");
+        AST::Builder builder(*this, "Method Declaration");
         builder << Lexeme::public_keyword << Type()
                 << Lexeme::identifier << FormalList()
                 << Lexeme::open_brace;
@@ -210,7 +210,7 @@ template <typename istream> class Parser {
     }
 
     AST::ptr<AST::ClassDecl> ClassDecl() {
-        ASTBuilder builder(*this, "Class Declaration");
+        AST::Builder builder(*this, "Class Declaration");
         builder << Lexeme::class_keyword << Lexeme::identifier;
 
         bool has_superclass =
@@ -235,7 +235,7 @@ template <typename istream> class Parser {
     }
 
     AST::ptr<AST::MainClass> MainClass() {
-        ASTBuilder builder(*this, "Main Class");
+        AST::Builder builder(*this, "Main Class");
         builder << Lexeme::class_keyword << Lexeme::identifier
                 << Lexeme::open_brace << Lexeme::public_keyword
                 << Lexeme::static_keyword << Lexeme::void_keyword
@@ -248,7 +248,7 @@ template <typename istream> class Parser {
     }
 
     AST::ptr<AST::Program> Program() {
-        ASTBuilder builder(*this);
+        AST::Builder builder(*this);
         builder << MainClass();
         while (Lexeme(tokens[0]) != Lexeme::eof)
             builder << ClassDecl();
