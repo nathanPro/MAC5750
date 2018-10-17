@@ -152,6 +152,8 @@ template <typename istream> class Builder {
 
     template <typename target, typename ntPtr>
     friend struct AST::__detail::TagRule;
+    template <typename target, typename ntPtr>
+    friend struct AST::__detail::BinaryRule;
     friend struct ProgramRule;
     friend struct MainClassRule;
     friend struct ClassDeclNoInheritance;
@@ -167,12 +169,6 @@ template <typename istream> class Builder {
     friend struct assignStm;
     friend struct indexAssignStm;
     friend struct ExpListRule;
-    friend struct andExp;
-    friend struct lessExp;
-    friend struct sumExp;
-    friend struct minusExp;
-    friend struct prodExp;
-    friend struct indexingExp;
     friend struct lengthExp;
     friend struct methodCallExp;
     friend struct integerExp;

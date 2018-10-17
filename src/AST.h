@@ -175,6 +175,21 @@ template <typename target, typename ntPtr> struct TagRule {
         return std::make_unique<elm>(target{data.id});
     }
 };
+
+template <typename target, typename ntPtr> struct BinaryRule {
+    using ptr = typename std::pointer_traits<ntPtr>::pointer;
+    using elm = typename std::pointer_traits<ntPtr>::element_type;
+
+    Node id;
+    ptr  lhs = nullptr;
+    ptr  rhs = nullptr;
+
+    template <typename istream>
+    static ptr build(Builder<istream>&& data) {
+        return std::make_unique<elm>(target{
+            data.id, std::move(data.E[0]), std::move(data.E[1])});
+    }
+};
 } // namespace __detail
 
 struct integerArrayType
@@ -291,87 +306,24 @@ struct Stm : Grammar::Nonterminal<std::variant<
 };
 // clang-format on
 
-struct andExp {
-    Node     id;
-    ptr<Exp> lhs = nullptr;
-    ptr<Exp> rhs = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(andExp{
-            data.id, std::move(data.E[0]), std::move(data.E[1])});
-    }
-};
-
-struct lessExp {
-    Node     id;
-    ptr<Exp> lhs = nullptr;
-    ptr<Exp> rhs = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(andExp{
-            data.id, std::move(data.E[0]), std::move(data.E[1])});
-    }
-};
-
-struct sumExp {
-    Node     id;
-    ptr<Exp> lhs = nullptr;
-    ptr<Exp> rhs = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(andExp{
-            data.id, std::move(data.E[0]), std::move(data.E[1])});
-    }
-};
-
-struct minusExp {
-    Node     id;
-    ptr<Exp> lhs = nullptr;
-    ptr<Exp> rhs = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(andExp{
-            data.id, std::move(data.E[0]), std::move(data.E[1])});
-    }
-};
-
-struct prodExp {
-    Node     id;
-    ptr<Exp> lhs = nullptr;
-    ptr<Exp> rhs = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(andExp{
-            data.id, std::move(data.E[0]), std::move(data.E[1])});
-    }
-};
-
-struct indexingExp {
-    Node     id;
-    ptr<Exp> array = nullptr;
-    ptr<Exp> index = nullptr;
-
-    template <typename istream>
-    static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(indexingExp{
-            data.id, std::move(data.E[0]), std::move(data.E[1])});
-    }
+struct andExp : __detail::BinaryRule<andExp, ptr<Exp>> {};
+struct lessExp : __detail::BinaryRule<lessExp, ptr<Exp>> {};
+struct sumExp : __detail::BinaryRule<sumExp, ptr<Exp>> {};
+struct minusExp : __detail::BinaryRule<minusExp, ptr<Exp>> {};
+struct prodExp : __detail::BinaryRule<prodExp, ptr<Exp>> {};
+struct indexingExp : __detail::BinaryRule<indexingExp, ptr<Exp>> {
+    ptr& array = lhs;
+    ptr& index = rhs;
 };
 
 struct lengthExp {
     Node     id;
-    ptr<Exp> lhs = nullptr;
-    ptr<Exp> rhs = nullptr;
+    ptr<Exp> inner = nullptr;
 
     template <typename istream>
     static ptr<Exp> build(Builder<istream>&& data) {
-        return std::make_unique<Exp>(andExp{
-            data.id, std::move(data.E[0]), std::move(data.E[1])});
+        return std::make_unique<Exp>(
+            lengthExp{data.id, std::move(data.E[0])});
     }
 };
 
