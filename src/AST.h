@@ -24,6 +24,9 @@ struct Exp;
 struct ExpList;
 
 template <typename istream> class Builder;
+template <typename T, typename istream>
+std::vector<T> claim(Builder<istream>&);
+
 using Node = Entity<struct NodeTag>;
 
 namespace __detail {
@@ -49,8 +52,9 @@ template <typename target, typename ntPtr> struct BinaryRule {
 
     template <typename istream>
     static ptr build(Builder<istream>&& data) {
-        return std::make_unique<elm>(
-            target{data.id, data.get(ptr{}, 0), data.get(ptr{}, 1)});
+        auto tmp = claim<ptr>(data);
+        return std::make_unique<elm>(target{
+            data.id, std::move(tmp.at(0)), std::move(tmp.at(1))});
     }
 };
 
@@ -63,8 +67,9 @@ template <typename target, typename ntPtr> struct UnaryRule {
 
     template <typename istream>
     static ptr build(Builder<istream>&& data) {
+        auto tmp = claim<ptr>(data);
         return std::make_unique<elm>(
-            target{data.id, data.get(ptr{}, 0)});
+            target{data.id, std::move(tmp.at(0))});
     }
 };
 
@@ -78,8 +83,9 @@ struct ValueWrapper {
 
     template <typename istream>
     static ptr build(Builder<istream>&& data) {
+        auto tmp = claim<T>(data);
         return std::make_unique<elm>(
-            target{data.id, data.get(T{}, 0)});
+            target{data.id, std::move(tmp.at(0))});
     }
 };
 } // namespace __detail
@@ -91,8 +97,10 @@ struct ProgramRule {
 
     template <typename istream>
     static ptr<Program> build(Builder<istream>&& data) {
-        return std::make_unique<Program>(ProgramRule{
-            data.id, std::move(data.main), std::move(data.C)});
+        auto main = claim<ptr<MainClass>>(data);
+        return std::make_unique<Program>(
+            ProgramRule{data.id, std::move(main.at(0)),
+                        claim<ptr<ClassDecl>>(data)});
     }
 };
 
@@ -108,8 +116,11 @@ struct MainClassRule {
 
     template <typename istream>
     static ptr<MainClass> build(Builder<istream>&& data) {
-        return std::make_unique<MainClass>(MainClassRule{
-            data.id, data.W[0], data.W[1], std::move(data.S[0])});
+        auto words = claim<std::string>(data);
+        auto stms  = claim<ptr<Stm>>(data);
+        return std::make_unique<MainClass>(
+            MainClassRule{data.id, words.at(0), words.at(1),
+                          std::move(stms.at(0))});
     }
 };
 
@@ -125,9 +136,10 @@ struct ClassDeclNoInheritance {
 
     template <typename istream>
     static ptr<ClassDecl> build(Builder<istream>&& data) {
+        auto w = claim<std::string>(data);
         return std::make_unique<ClassDecl>(ClassDeclNoInheritance{
-            data.id, data.W[0], std::move(data.V),
-            std::move(data.M)});
+            data.id, w.at(0), claim<ptr<VarDecl>>(data),
+            claim<ptr<MethodDecl>>(data)});
     }
 };
 
@@ -140,9 +152,10 @@ struct ClassDeclInheritance {
 
     template <typename istream>
     static ptr<ClassDecl> build(Builder<istream>&& data) {
+        auto W = claim<std::string>(data);
         return std::make_unique<ClassDecl>(ClassDeclInheritance{
-            data.id, data.W[0], data.W[1], std::move(data.V),
-            std::move(data.M)});
+            data.id, W.at(0), W.at(1), claim<ptr<VarDecl>>(data),
+            claim<ptr<MethodDecl>>(data)});
     }
 };
 
@@ -162,8 +175,10 @@ struct VarDeclRule {
 
     template <typename istream>
     static ptr<VarDecl> build(Builder<istream>&& data) {
-        return std::make_unique<VarDecl>(
-            VarDeclRule{data.id, std::move(data.T[0]), data.W[0]});
+        auto T = claim<ptr<Type>>(data);
+        auto W = claim<std::string>(data);
+        return std::make_unique<VarDecl>(VarDeclRule{
+            data.id, std::move(T.at(0)), std::move(W.at(0))});
     }
 };
 
@@ -182,10 +197,14 @@ struct MethodDeclRule {
 
     template <typename istream>
     static ptr<MethodDecl> build(Builder<istream>&& data) {
-        return std::make_unique<MethodDecl>(
-            MethodDeclRule{data.id, std::move(data.T[0]), data.W[0],
-                           std::move(data.list), std::move(data.V),
-                           std::move(data.S), std::move(data.E[0])});
+        auto E    = claim<ptr<Exp>>(data);
+        auto T    = claim<ptr<Type>>(data);
+        auto W    = claim<std::string>(data);
+        auto list = claim<ptr<FormalList>>(data);
+        return std::make_unique<MethodDecl>(MethodDeclRule{
+            data.id, std::move(T.at(0)), W.at(0),
+            std::move(list.at(0)), claim<ptr<VarDecl>>(data),
+            claim<ptr<Stm>>(data), std::move(E.at(0))});
     }
 };
 
@@ -207,9 +226,12 @@ struct FormalListRule {
     static ptr<FormalList> build(Builder<istream>&& data) {
         std::vector<FormalDecl> D;
 
-        int s = std::min(data.T.size(), data.W.size());
+        auto T = claim<ptr<Type>>(data);
+        auto W = claim<std::string>(data);
+
+        int s = std::min(T.size(), W.size());
         for (int i = 0; i < s; i++)
-            D.push_back(FormalDecl{std::move(data.T[i]), data.W[i]});
+            D.push_back(FormalDecl{std::move(T.at(i)), W.at(i)});
 
         return std::make_unique<FormalList>(
             FormalListRule{data.id, std::move(D)});
@@ -247,7 +269,7 @@ struct blockStm {
     template <typename istream>
     static ptr<Stm> build(Builder<istream>&& data) {
         return std::make_unique<Stm>(
-            blockStm{data.id, std::move(data.S)});
+            blockStm{data.id, claim<ptr<Stm>>(data)});
     }
 };
 
@@ -259,9 +281,11 @@ struct ifStm {
 
     template <typename istream>
     static ptr<Stm> build(Builder<istream>&& data) {
+        auto E = claim<ptr<Exp>>(data);
+        auto S = claim<ptr<Stm>>(data);
         return std::make_unique<Stm>(
-            ifStm{data.id, std::move(data.E[0]), std::move(data.S[0]),
-                  std::move(data.S[1])});
+            ifStm{data.id, std::move(E.at(0)), std::move(S.at(0)),
+                  std::move(S.at(1))});
     }
 };
 
@@ -272,8 +296,10 @@ struct whileStm {
 
     template <typename istream>
     static ptr<Stm> build(Builder<istream>&& data) {
+        auto E = claim<ptr<Exp>>(data);
+        auto S = claim<ptr<Stm>>(data);
         return std::make_unique<Stm>(whileStm{
-            data.id, std::move(data.E[0]), std::move(data.S[0])});
+            data.id, std::move(E.at(0)), std::move(S.at(0))});
     }
 };
 
@@ -283,8 +309,9 @@ struct printStm {
 
     template <typename istream>
     static ptr<Stm> build(Builder<istream>&& data) {
+        auto E = claim<ptr<Exp>>(data);
         return std::make_unique<Stm>(
-            printStm{data.id, std::move(data.E[0])});
+            printStm{data.id, std::move(E.at(0))});
     };
 };
 
@@ -295,8 +322,10 @@ struct assignStm {
 
     template <typename istream>
     static ptr<Stm> build(Builder<istream>&& data) {
+        auto W = claim<std::string>(data);
+        auto E = claim<ptr<Exp>>(data);
         return std::make_unique<Stm>(
-            assignStm{data.id, data.W[0], std::move(data.E[0])});
+            assignStm{data.id, W.at(0), std::move(E.at(0))});
     }
 };
 
@@ -308,9 +337,11 @@ struct indexAssignStm {
 
     template <typename istream>
     static ptr<Stm> build(Builder<istream>&& data) {
+        auto W = claim<std::string>(data);
+        auto E = claim<ptr<Exp>>(data);
         return std::make_unique<Stm>(
-            indexAssignStm{data.id, data.W[0], std::move(data.E[0]),
-                           std::move(data.E[1])});
+            indexAssignStm{data.id, W.at(0), std::move(E.at(0)),
+                           std::move(E.at(1))});
     }
 };
 
@@ -343,9 +374,12 @@ struct methodCallExp {
 
     template <typename istream>
     static ptr<Exp> build(Builder<istream>&& data) {
+        auto E  = claim<ptr<Exp>>(data);
+        auto W  = claim<std::string>(data);
+        auto El = claim<ptr<ExpList>>(data);
         return std::make_unique<Exp>(
-            AST::methodCallExp{data.id, std::move(data.E[0]),
-                               data.W[0], std::move(data.arguments)});
+            AST::methodCallExp{data.id, std::move(E.at(0)), W.at(0),
+                               std::move(El.at(0))});
     }
 };
 
@@ -396,7 +430,7 @@ struct ExpListRule {
     template <typename istream>
     static ptr<ExpList> build(Builder<istream>&& data) {
         return std::make_unique<ExpList>(
-            ExpListRule{data.id, std::move(data.E)});
+            ExpListRule{data.id, claim<ptr<Exp>>(data)});
     }
 };
 

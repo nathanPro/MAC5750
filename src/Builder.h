@@ -27,27 +27,26 @@ struct ParsingError {
 using ErrorData = std::vector<std::unique_ptr<ParsingError>>;
 
 template <typename istream> class Builder {
-    Parser<istream>&             parser;
-    Node                         id;
-    ptr<MainClass>               main;
-    std::vector<std::string>     W;
-    std::vector<ptr<ClassDecl>>  C;
-    std::vector<ptr<VarDecl>>    V;
-    std::vector<ptr<MethodDecl>> M;
-    std::vector<ptr<Type>>       T;
-    std::vector<ptr<Exp>>        E;
-    std::vector<ptr<Stm>>        S;
-    ptr<FormalList>              list;
-    ptr<ExpList>                 arguments;
-    int32_t                      value;
-    bool                         pop = false;
+    using inner_t = std::tuple<
+        std::vector<ptr<MainClass>>, std::vector<std::string>,
+        std::vector<ptr<ClassDecl>>, std::vector<ptr<VarDecl>>,
+        std::vector<ptr<MethodDecl>>, std::vector<ptr<Type>>,
+        std::vector<ptr<Exp>>, std::vector<ptr<Stm>>,
+        std::vector<ptr<FormalList>>, std::vector<ptr<ExpList>>,
+        std::vector<int32_t>>;
 
-    // Hooks
-    ptr<Exp>    get(ptr<Exp>, size_t i) { return std::move(E[i]); }
-    std::string get(std::string, size_t i) { return std::move(W[i]); }
-    int32_t     get(int32_t, size_t i) { return value; }
+    Parser<istream>& parser;
+    bool             pop = false;
+
+    template <typename T> void _keep(T&& in) {
+        using U = std::vector<std::decay_t<T>>;
+        std::get<U>(inner).push_back(std::forward<T>(in));
+    }
 
   public:
+    Node    id;
+    inner_t inner;
+
     Builder(Parser<istream>& __parser)
         : parser(__parser), id(parser.idx++) {
         parser.errors.push_back({});
@@ -79,9 +78,9 @@ template <typename istream> class Builder {
                 ++parser.tokens;
         }
         if (Lexeme::identifier == lex)
-            W.push_back(parser[0].second);
+            _keep(parser[0].second);
         else if (Lexeme::integer_literal == lex)
-            value = std::stoi(parser[0].second);
+            _keep(std::stoi(parser[0].second));
         ++parser.tokens;
         return *this;
     }
@@ -110,76 +109,25 @@ template <typename istream> class Builder {
         ++parser.tokens;
     }
 
-    Builder& operator<<(ptr<MainClass>&& in) {
-        main.reset(in.release());
+    template <typename T> Builder& operator<<(T&& in) {
+        _keep(std::forward<T>(in));
         return *this;
     }
 
-    Builder& operator<<(ptr<ClassDecl>&& in) {
-        C.push_back(std::move(in));
-        return *this;
-    }
+    template <typename T> friend std::vector<T> claim();
 
-    Builder& operator<<(ptr<VarDecl>&& in) {
-        V.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& operator<<(ptr<MethodDecl>&& in) {
-        M.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& operator<<(ptr<Type>&& in) {
-        T.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& operator<<(ptr<Exp>&& in) {
-        E.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& operator<<(ptr<Stm>&& in) {
-        S.push_back(std::move(in));
-        return *this;
-    }
-
-    Builder& operator<<(ptr<ExpList>&& in) {
-        arguments.reset(in.release());
-        return *this;
-    }
-
-    Builder& operator<<(ptr<FormalList>&& in) {
-        list.reset(in.release());
-        return *this;
-    }
-
-    template <typename target, typename ntPtr>
-    friend struct AST::__detail::TagRule;
-    template <typename target, typename ntPtr>
-    friend struct AST::__detail::BinaryRule;
-    template <typename target, typename ntPtr>
-    friend struct AST::__detail::UnaryRule;
-    template <typename target, typename T, typename ntPtr>
-    friend struct AST::__detail::ValueWrapper;
-    friend struct ProgramRule;
-    friend struct MainClassRule;
-    friend struct ClassDeclNoInheritance;
-    friend struct ClassDeclInheritance;
-    friend struct MethodDeclRule;
-    friend struct VarDeclRule;
-    friend struct FormalListRule;
-    friend struct blockStm;
-    friend struct ifStm;
-    friend struct whileStm;
-    friend struct printStm;
-    friend struct assignStm;
-    friend struct indexAssignStm;
-    friend struct ExpListRule;
-    friend struct methodCallExp;
-
-    ptr<Exp> lhs() { return std::move(E[0]); }
+    ptr<Exp> lhs();
 };
+
+template <typename T, typename istream>
+std::vector<T> claim(Builder<istream>& data) {
+    using U = std::vector<std::decay_t<T>>;
+    return std::move(std::get<U>(data.inner));
+}
+
+template <typename istream> ptr<Exp> Builder<istream>::lhs() {
+    return std::move(claim<ptr<Exp>>(*this).at(0));
+}
+
 } // namespace AST
 #endif
