@@ -96,11 +96,14 @@ struct ProgramRule {
     std::vector<ptr<ClassDecl>> classes;
 
     template <typename istream>
+    ProgramRule(Builder<istream>&& data)
+        : id(data.id), main(claim<ptr<MainClass>>(data, 0)),
+          classes(claim<ptr<ClassDecl>>(data)) {}
+
+    template <typename istream>
     static ptr<Program> build(Builder<istream>&& data) {
-        auto main = claim<ptr<MainClass>>(data);
         return std::make_unique<Program>(
-            ProgramRule{data.id, std::move(main.at(0)),
-                        claim<ptr<ClassDecl>>(data)});
+            ProgramRule(std::move(data)));
     }
 };
 

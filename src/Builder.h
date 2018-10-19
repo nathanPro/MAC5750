@@ -114,8 +114,6 @@ template <typename istream> class Builder {
         return *this;
     }
 
-    template <typename T> friend std::vector<T> claim();
-
     ptr<Exp> lhs();
 };
 
@@ -123,6 +121,12 @@ template <typename T, typename istream>
 std::vector<T> claim(Builder<istream>& data) {
     using U = std::vector<std::decay_t<T>>;
     return std::move(std::get<U>(data.inner));
+}
+
+template <typename T, typename istream>
+T claim(Builder<istream>& data, size_t i) {
+    using U = std::vector<std::decay_t<T>>;
+    return std::move(std::get<U>(data.inner).at(i));
 }
 
 template <typename istream> ptr<Exp> Builder<istream>::lhs() {
