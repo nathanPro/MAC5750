@@ -11,27 +11,10 @@ template <typename T> class Entity {
   public:
     explicit Entity(uint32_t val) : tag(val) {}
     uint32_t get() const { return tag; }
-    Entity operator++() { return Entity(1 + tag); }
+    Entity   operator++() { return Entity(1 + tag); }
 };
 
 namespace Grammar {
-template <typename TAG, typename Entity, typename PtrL,
-          typename PtrR = PtrL>
-struct BinaryRule {
-    using E = typename std::pointer_traits<PtrL>::pointer;
-    using F = typename std::pointer_traits<PtrR>::pointer;
-    Entity id;
-    E lhs = nullptr;
-    F rhs = nullptr;
-};
-
-template <typename TAG, typename Entity, typename Ptr>
-struct UnaryRule {
-    using E = typename std::pointer_traits<Ptr>::pointer;
-    Entity id;
-    E inner = nullptr;
-};
-
 template <typename variant> struct Nonterminal {
     using variant_t = variant;
 
