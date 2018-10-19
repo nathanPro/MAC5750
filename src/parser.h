@@ -48,6 +48,46 @@ template <typename istream> class Parser {
         }
     }
 
+    void record_context(std::string label) {
+        context.push_back(label);
+        lines.push_back(tokens[0].third);
+    }
+
+    void drop_context() {
+        context.pop_back();
+        lines.pop_back();
+    }
+
+    void mismatch(Lexeme lex, AST::Node id) {
+        auto err   = std::make_unique<AST::ParsingError>();
+        err->inner = AST::Mismatch{Lexeme(tokens[0]), lex};
+        err->ctx   = context;
+        errors[id.get()].push_back(std::move(err));
+        while (Lexeme(tokens[0]) != Lexeme::eof &&
+               Lexeme(tokens[0]) != lex)
+            ++tokens;
+    }
+
+    void mismatch(std::string in, AST::Node id) {
+        auto err   = std::make_unique<AST::ParsingError>();
+        err->inner = AST::WrongIdentifier{in, tokens[0].second};
+        err->ctx   = context;
+        errors[id.get()].push_back(std::move(err));
+        while (Lexeme(tokens[0]) != Lexeme::eof &&
+               !(Lexeme(tokens[0]) == Lexeme::identifier &&
+                 tokens[0].second == in))
+            ++tokens;
+    }
+
+    void unexpected(Lexeme un, AST::Node id) {
+        if (un == Lexeme::eof) return;
+        auto err   = std::make_unique<AST::ParsingError>();
+        err->inner = AST::Unexpected{un};
+        err->ctx   = context;
+        errors[id.get()].push_back(std::move(err));
+        ++tokens;
+    }
+
   public:
     std::vector<AST::ErrorData> errors;
     Parser(istream& stream) : tokens(stream, 2), idx(0) {}

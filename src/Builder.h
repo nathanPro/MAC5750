@@ -5,26 +5,6 @@
 
 template <typename istream> class Parser;
 namespace AST {
-struct Unexpected {
-    Lexeme lex;
-};
-
-struct Mismatch {
-    Lexeme expected;
-    Lexeme found;
-};
-
-struct WrongIdentifier {
-    std::string expected;
-    std::string found;
-};
-
-struct ParsingError {
-    std::vector<std::string>                            ctx;
-    std::variant<Unexpected, Mismatch, WrongIdentifier> inner;
-};
-
-using ErrorData = std::vector<std::unique_ptr<ParsingError>>;
 
 template <typename istream> class Builder {
     using inner_t = std::tuple<
@@ -55,28 +35,16 @@ template <typename istream> class Builder {
     Builder(Parser<istream>& __parser, std::string label)
         : parser(__parser), id(parser.idx++) {
         parser.errors.push_back({});
-        parser.context.push_back(label);
-        parser.lines.push_back(parser[0].third);
+        parser.record_context(label);
         pop = true;
     }
 
     ~Builder() {
-        if (pop) {
-            parser.context.pop_back();
-            parser.lines.pop_back();
-        }
+        if (pop) parser.drop_context();
     }
 
     Builder& operator<<(Lexeme lex) {
-        if (Lexeme(parser[0]) != lex) {
-            auto err   = std::make_unique<ParsingError>();
-            err->inner = Mismatch{lex, Lexeme(parser[0])};
-            err->ctx   = parser.context;
-            parser.errors[id.get()].push_back(std::move(err));
-            while (Lexeme(parser[0]) != Lexeme::eof &&
-                   Lexeme(parser[0]) != lex)
-                ++parser.tokens;
-        }
+        if (Lexeme(parser[0]) != lex) parser.mismatch(lex, id);
         if (Lexeme::identifier == lex)
             _keep(parser[0].second);
         else if (Lexeme::integer_literal == lex)
@@ -86,28 +54,12 @@ template <typename istream> class Builder {
     }
 
     Builder& operator<<(std::string in) {
-        if (parser[0].second != in) {
-            auto err   = std::make_unique<ParsingError>();
-            err->inner = WrongIdentifier{in, parser[0].second};
-            err->ctx   = parser.context;
-            parser.errors[id.get()].push_back(std::move(err));
-            while (Lexeme(parser[0]) != Lexeme::eof &&
-                   !(Lexeme(parser[0]) == Lexeme::identifier &&
-                     parser[0].second == in))
-                ++parser.tokens;
-        }
+        if (parser[0].second != in) parser.mismatch(in, id);
         ++parser.tokens;
         return *this;
     }
 
-    void unexpected(Lexeme un) {
-        if (un == Lexeme::eof) return;
-        auto err   = std::make_unique<ParsingError>();
-        err->inner = Unexpected{un};
-        err->ctx   = parser.context;
-        parser.errors[id.get()].push_back(std::move(err));
-        ++parser.tokens;
-    }
+    void unexpected(Lexeme un) { parser.unexpected(un, id); }
 
     template <typename T> Builder& operator<<(T&& in) {
         _keep(std::forward<T>(in));

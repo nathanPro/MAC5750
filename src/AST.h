@@ -2,6 +2,7 @@
 #define AST_H
 
 #include "grammar.h"
+#include "lexer.h"
 #include "string"
 #include "util.h"
 #include <algorithm>
@@ -441,5 +442,25 @@ struct ExpList : Grammar::Nonterminal<std::variant<ExpListRule>> {
     using Grammar::Nonterminal<ExpList::variant_t>::Nonterminal;
 };
 
+struct Unexpected {
+    Lexeme lex;
+};
+
+struct Mismatch {
+    Lexeme expected;
+    Lexeme found;
+};
+
+struct WrongIdentifier {
+    std::string expected;
+    std::string found;
+};
+
+struct ParsingError {
+    std::vector<std::string>                            ctx;
+    std::variant<Unexpected, Mismatch, WrongIdentifier> inner;
+};
+
+using ErrorData = std::vector<std::unique_ptr<ParsingError>>;
 } // namespace AST
 #endif
