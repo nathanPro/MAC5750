@@ -19,11 +19,13 @@ class Builder {
         return *this;
     }
 
-    template <typename T> std::vector<T> claim() {
-        using U = std::vector<std::decay_t<T>>;
-        return std::move(std::get<U>(inner));
-    }
+    template <typename T> friend std::vector<T> claim(Builder& data);
 };
+
+template <typename T> std::vector<T> claim(Builder& data) {
+    using U = std::vector<std::decay_t<T>>;
+    return std::move(std::get<U>(data.inner));
+}
 
 class Exp {
     int sum;
@@ -31,8 +33,8 @@ class Exp {
   public:
     Exp() {}
     Exp(Builder&& data) : sum(0) {
-        auto tmp = data.claim<int>();
-        sum      = std::accumulate(begin(tmp), end(tmp), 0);
+        auto tmp = claim<int>(data);
+        sum      = std::accumulate(std::begin(tmp), std::end(tmp), 0);
     }
 
     operator int() { return sum; }
@@ -44,7 +46,7 @@ class Stm {
   public:
     Stm() {}
     Stm(Builder&& data) {
-        auto tmp = data.claim<std::string>();
+        auto tmp = claim<std::string>(data);
         sum      = tmp.at(0) + tmp.at(0);
     }
 
