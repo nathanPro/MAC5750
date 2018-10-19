@@ -2,15 +2,11 @@
 #define BCC_PARSER
 #include "AST.h"
 #include "Builder.h"
+#include "logger.h"
 #include "util.h"
 #include <fstream>
 
 template <typename istream> class Parser {
-    Lexer<istream>           tokens;
-    std::vector<std::string> context;
-    std::vector<int32_t>     lines;
-    int                      idx;
-
     AST::ptr<AST::Exp> _Exp(AST::ptr<AST::Exp>&& lhs) {
         using std::move;
         AST::Builder builder(*this);
@@ -49,30 +45,20 @@ template <typename istream> class Parser {
     }
 
     void record_context(std::string label) {
-        context.push_back(label);
-        lines.push_back(tokens[0].third);
+        logger.push(label, tokens[0].third);
     }
 
-    void drop_context() {
-        context.pop_back();
-        lines.pop_back();
-    }
+    void drop_context() { logger.pop(); }
 
     void mismatch(Lexeme lex, AST::Node id) {
-        auto err   = std::make_unique<AST::ParsingError>();
-        err->inner = AST::Mismatch{Lexeme(tokens[0]), lex};
-        err->ctx   = context;
-        errors[id.get()].push_back(std::move(err));
+        logger.mismatch(lex, Lexeme(tokens[0]), id);
         while (Lexeme(tokens[0]) != Lexeme::eof &&
                Lexeme(tokens[0]) != lex)
             ++tokens;
     }
 
     void mismatch(std::string in, AST::Node id) {
-        auto err   = std::make_unique<AST::ParsingError>();
-        err->inner = AST::WrongIdentifier{in, tokens[0].second};
-        err->ctx   = context;
-        errors[id.get()].push_back(std::move(err));
+        logger.mismatch(in, tokens[0].second, id);
         while (Lexeme(tokens[0]) != Lexeme::eof &&
                !(Lexeme(tokens[0]) == Lexeme::identifier &&
                  tokens[0].second == in))
@@ -80,17 +66,13 @@ template <typename istream> class Parser {
     }
 
     void unexpected(Lexeme un, AST::Node id) {
-        if (un == Lexeme::eof) return;
-        auto err   = std::make_unique<AST::ParsingError>();
-        err->inner = AST::Unexpected{un};
-        err->ctx   = context;
-        errors[id.get()].push_back(std::move(err));
+        logger.unexpected(un, id);
         ++tokens;
     }
 
   public:
-    std::vector<AST::ErrorData> errors;
-    Parser(istream& stream) : tokens(stream, 2), idx(0) {}
+    Parser(istream& stream)
+        : tokens(stream, 2), idx(0), logger(errors) {}
     LexState operator[](int i) { return tokens[i]; }
     friend class AST::Builder<istream>;
 
@@ -300,6 +282,14 @@ template <typename istream> class Parser {
             builder << ClassDecl();
         return AST::ProgramRule::build(std::move(builder));
     }
+
+  public:
+    std::vector<AST::ErrorData> errors;
+
+  private:
+    Lexer<istream> tokens;
+    int            idx;
+    Logger         logger;
 };
 
 class TranslationUnit {

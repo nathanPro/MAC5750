@@ -5,11 +5,14 @@ export CXXFLAGS = --std=c++17 -Wall -Wextra -g -ggdb -O0 -DDEBUG -I ../src
 
 OBJSDEP = $(BIN_DIR)/IR.o \
           $(BIN_DIR)/IRBuilder.o \
+	  $(BIN_DIR)/logger.o \
           $(BIN_DIR)/lexer.o
 
 export OBJS = ../$(BIN_DIR)/IR.o \
               ../$(BIN_DIR)/IRBuilder.o \
+              ../$(BIN_DIR)/logger.o \
               ../$(BIN_DIR)/lexer.o
+
 test: $(OBJSDEP)
 	$(MAKE) -C test
 bcc: $(OBJSDEP) src/error.h src/AST.h src/parser.h \
@@ -23,6 +26,8 @@ $(BIN_DIR)/IRBuilder.o: src/IRBuilder.cpp src/IRBuilder.cpp
 	$(MAKE) IRBuilder.o -C bin
 $(BIN_DIR)/lexer.o: src/lexer.cpp src/lexer.h
 	$(MAKE) lexer.o -C bin
+$(BIN_DIR)/logger.o: src/logger.cpp src/logger.h
+	$(MAKE) logger.o -C bin
 
 .PHONY: clean, test
 clean:
