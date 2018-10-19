@@ -53,9 +53,8 @@ template <typename target, typename ntPtr> struct BinaryRule {
 
     template <typename istream>
     static ptr build(Builder<istream>&& data) {
-        auto tmp = claim<ptr>(data);
         return std::make_unique<elm>(target{
-            data.id, std::move(tmp.at(0)), std::move(tmp.at(1))});
+            data.id, claim<ptr>(data, 0), claim<ptr>(data, 1)});
     }
 };
 
@@ -68,9 +67,8 @@ template <typename target, typename ntPtr> struct UnaryRule {
 
     template <typename istream>
     static ptr build(Builder<istream>&& data) {
-        auto tmp = claim<ptr>(data);
         return std::make_unique<elm>(
-            target{data.id, std::move(tmp.at(0))});
+            target{data.id, claim<ptr>(data, 0)});
     }
 };
 
@@ -84,9 +82,8 @@ struct ValueWrapper {
 
     template <typename istream>
     static ptr build(Builder<istream>&& data) {
-        auto tmp = claim<T>(data);
         return std::make_unique<elm>(
-            target{data.id, std::move(tmp.at(0))});
+            target{data.id, claim<T>(data, 0)});
     }
 };
 } // namespace __detail
