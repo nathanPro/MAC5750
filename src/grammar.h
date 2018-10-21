@@ -30,6 +30,10 @@ template <typename Alternative, class Nonterminal>
 constexpr const Alternative& get(Nonterminal&& nt) {
     return std::get<Alternative>(*nt._self);
 }
+
+struct Indexable {
+    int id;
+};
 }; // namespace Grammar
 
 #endif
