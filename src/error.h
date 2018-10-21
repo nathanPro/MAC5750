@@ -44,14 +44,14 @@ template <typename ostream> class Reporter {
     operator bool() const { return ok; }
 
     void operator()(const AST::ProgramRule& prog) {
-        Grammar::visit(*this, *prog.main);
-        for (auto& c : prog.classes) Grammar::visit(*this, *c);
+        Grammar::visit(*this, prog.main);
+        for (auto& c : prog.classes) Grammar::visit(*this, c);
         for (auto& err : E[prog.id.get()]) logger(*err);
         if (E[prog.id.get()].size()) ok = false;
     }
 
     void operator()(const AST::MainClassRule& main) {
-        Grammar::visit(*this, *main.body);
+        Grammar::visit(*this, main.body);
         for (auto& err : E[main.id.get()]) {
             out << "At main class\n";
             logger(*err);
@@ -60,8 +60,8 @@ template <typename ostream> class Reporter {
     }
 
     void operator()(const AST::ClassDeclNoInheritance& cls) {
-        for (auto& v : cls.variables) Grammar::visit(*this, *v);
-        for (auto& m : cls.methods) Grammar::visit(*this, *m);
+        for (auto& v : cls.variables) Grammar::visit(*this, v);
+        for (auto& m : cls.methods) Grammar::visit(*this, m);
         for (auto& err : E[cls.id.get()]) {
             out << "At class " << cls.name << "\n";
             logger(*err);
@@ -70,8 +70,8 @@ template <typename ostream> class Reporter {
     }
 
     void operator()(const AST::ClassDeclInheritance& cls) {
-        for (auto& v : cls.variables) Grammar::visit(*this, *v);
-        for (auto& m : cls.methods) Grammar::visit(*this, *m);
+        for (auto& v : cls.variables) Grammar::visit(*this, v);
+        for (auto& m : cls.methods) Grammar::visit(*this, m);
         for (auto& err : E[cls.id.get()]) {
             out << "At class " << cls.name << "\n";
             logger(*err);
@@ -80,57 +80,57 @@ template <typename ostream> class Reporter {
     }
 
     void operator()(const AST::VarDeclRule& vd) {
-        Grammar::visit(*this, *vd.type);
+        Grammar::visit(*this, vd.type);
         for (auto& err : E[vd.id.get()]) logger(*err);
         if (E[vd.id.get()].size()) ok = false;
     }
 
     void operator()(const AST::MethodDeclRule& mtd) {
-        Grammar::visit(*this, *mtd.type);
-        Grammar::visit(*this, *mtd.arguments);
-        for (auto& v : mtd.variables) Grammar::visit(*this, *v);
-        for (auto& s : mtd.body) Grammar::visit(*this, *s);
-        Grammar::visit(*this, *mtd.return_exp);
+        Grammar::visit(*this, mtd.type);
+        Grammar::visit(*this, mtd.arguments);
+        for (auto& v : mtd.variables) Grammar::visit(*this, v);
+        for (auto& s : mtd.body) Grammar::visit(*this, s);
+        Grammar::visit(*this, mtd.return_exp);
         for (auto& err : E[mtd.id.get()]) logger(*err);
         if (E[mtd.id.get()].size()) ok = false;
     }
 
     void operator()(const AST::blockStm& blk) {
-        for (auto& s : blk.statements) Grammar::visit(*this, *s);
+        for (auto& s : blk.statements) Grammar::visit(*this, s);
         for (auto& err : E[blk.id.get()]) logger(*err);
         if (E[blk.id.get()].size()) ok = false;
     }
 
     void operator()(const AST::ifStm& ifs) {
-        Grammar::visit(*this, *ifs.condition);
-        Grammar::visit(*this, *ifs.if_clause);
-        Grammar::visit(*this, *ifs.else_clause);
+        Grammar::visit(*this, ifs.condition);
+        Grammar::visit(*this, ifs.if_clause);
+        Grammar::visit(*this, ifs.else_clause);
         for (auto& err : E[ifs.id.get()]) logger(*err);
         if (E[ifs.id.get()].size()) ok = false;
     }
 
     void operator()(const AST::whileStm& stm) {
-        Grammar::visit(*this, *stm.condition);
-        Grammar::visit(*this, *stm.body);
+        Grammar::visit(*this, stm.condition);
+        Grammar::visit(*this, stm.body);
         for (auto& err : E[stm.id.get()]) logger(*err);
         if (E[stm.id.get()].size()) ok = false;
     }
 
     void operator()(const AST::printStm& stm) {
-        Grammar::visit(*this, *stm.exp);
+        Grammar::visit(*this, stm.exp);
         for (auto& err : E[stm.id.get()]) logger(*err);
         if (E[stm.id.get()].size()) ok = false;
     }
 
     void operator()(const AST::assignStm& stm) {
-        Grammar::visit(*this, *stm.value);
+        Grammar::visit(*this, stm.value);
         for (auto& err : E[stm.id.get()]) logger(*err);
         if (E[stm.id.get()].size()) ok = false;
     }
 
     void operator()(const AST::indexAssignStm& stm) {
-        Grammar::visit(*this, *stm.index);
-        Grammar::visit(*this, *stm.value);
+        Grammar::visit(*this, stm.index);
+        Grammar::visit(*this, stm.value);
         for (auto& err : E[stm.id.get()]) logger(*err);
         if (E[stm.id.get()].size()) ok = false;
     }

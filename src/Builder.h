@@ -7,13 +7,13 @@ template <typename istream> class Parser;
 namespace AST {
 
 template <typename istream> class Builder {
-    using inner_t = std::tuple<
-        std::vector<ptr<MainClass>>, std::vector<std::string>,
-        std::vector<ptr<ClassDecl>>, std::vector<ptr<VarDecl>>,
-        std::vector<ptr<MethodDecl>>, std::vector<ptr<Type>>,
-        std::vector<ptr<Exp>>, std::vector<ptr<Stm>>,
-        std::vector<ptr<FormalList>>, std::vector<ptr<ExpList>>,
-        std::vector<int32_t>>;
+    using inner_t =
+        std::tuple<std::vector<MainClass>, std::vector<std::string>,
+                   std::vector<ClassDecl>, std::vector<VarDecl>,
+                   std::vector<MethodDecl>, std::vector<Type>,
+                   std::vector<Exp>, std::vector<Stm>,
+                   std::vector<FormalList>, std::vector<ExpList>,
+                   std::vector<int32_t>>;
 
     Parser<istream>& parser;
     bool             pop = false;
@@ -66,7 +66,7 @@ template <typename istream> class Builder {
         return *this;
     }
 
-    ptr<Exp> lhs();
+    Exp lhs();
 };
 
 template <typename T, typename istream>
@@ -81,8 +81,8 @@ T claim(Builder<istream>& data, size_t i) {
     return std::move(std::get<U>(data.inner).at(i));
 }
 
-template <typename istream> ptr<Exp> Builder<istream>::lhs() {
-    return std::move(claim<ptr<Exp>>(*this).at(0));
+template <typename istream> Exp Builder<istream>::lhs() {
+    return std::move(claim<Exp>(*this).at(0));
 }
 
 } // namespace AST
