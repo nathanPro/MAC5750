@@ -5,15 +5,6 @@
 #include <utility>
 #include <variant>
 
-template <typename T> class Entity {
-    uint32_t tag;
-
-  public:
-    explicit Entity(uint32_t val) : tag(val) {}
-    uint32_t get() const { return tag; }
-    Entity   operator++() { return Entity(1 + tag); }
-};
-
 namespace Grammar {
 template <typename variant> struct Nonterminal {
     using variant_t = variant;
