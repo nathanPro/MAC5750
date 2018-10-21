@@ -12,7 +12,7 @@ void Logger::pop() {
     lines.pop_back();
 }
 
-void Logger::mismatch(Lexeme expected, Lexeme found, AST::Node id) {
+void Logger::mismatch(Lexeme expected, Lexeme found, int id) {
     auto err   = std::make_unique<AST::ParsingError>();
     err->inner = AST::Mismatch{found, expected};
     err->ctx   = context;
@@ -20,14 +20,14 @@ void Logger::mismatch(Lexeme expected, Lexeme found, AST::Node id) {
 }
 
 void Logger::mismatch(std::string expected, std::string found,
-                      AST::Node id) {
+                      int id) {
     auto err   = std::make_unique<AST::ParsingError>();
     err->inner = AST::WrongIdentifier{expected, found};
     err->ctx   = context;
     errors[id].push_back(std::move(err));
 };
 
-void Logger::unexpected(Lexeme un, AST::Node id) {
+void Logger::unexpected(Lexeme un, int id) {
     if (un == Lexeme::eof) return;
     auto err   = std::make_unique<AST::ParsingError>();
     err->inner = AST::Unexpected{un};

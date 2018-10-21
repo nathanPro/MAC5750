@@ -50,14 +50,14 @@ template <typename istream> class Parser {
 
     void drop_context() { logger.pop(); }
 
-    void mismatch(Lexeme lex, AST::Node id) {
+    void mismatch(Lexeme lex, int id) {
         logger.mismatch(lex, Lexeme(tokens[0]), id);
         while (Lexeme(tokens[0]) != Lexeme::eof &&
                Lexeme(tokens[0]) != lex)
             ++tokens;
     }
 
-    void mismatch(std::string in, AST::Node id) {
+    void mismatch(std::string in, int id) {
         logger.mismatch(in, tokens[0].second, id);
         while (Lexeme(tokens[0]) != Lexeme::eof &&
                !(Lexeme(tokens[0]) == Lexeme::identifier &&
@@ -65,7 +65,7 @@ template <typename istream> class Parser {
             ++tokens;
     }
 
-    void unexpected(Lexeme un, AST::Node id) {
+    void unexpected(Lexeme un, int id) {
         logger.unexpected(un, id);
         ++tokens;
     }

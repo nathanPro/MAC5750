@@ -24,7 +24,7 @@ template <typename istream> class Builder {
     }
 
   public:
-    Node    id;
+    int     id;
     inner_t inner;
 
     Builder(Parser<istream>& __parser)

@@ -11,9 +11,8 @@ class Logger {
     Logger(std::vector<AST::ErrorData>&);
     void push(std::string label, int line);
     void pop();
-    void mismatch(Lexeme expected, Lexeme found, AST::Node id);
-    void mismatch(std::string expected, std::string found,
-                  AST::Node id);
-    void unexpected(Lexeme un, AST::Node id);
+    void mismatch(Lexeme expected, Lexeme found, int id);
+    void mismatch(std::string expected, std::string found, int id);
+    void unexpected(Lexeme un, int id);
 };
 #endif
