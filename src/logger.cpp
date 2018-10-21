@@ -16,7 +16,7 @@ void Logger::mismatch(Lexeme expected, Lexeme found, AST::Node id) {
     auto err   = std::make_unique<AST::ParsingError>();
     err->inner = AST::Mismatch{found, expected};
     err->ctx   = context;
-    errors[id.get()].push_back(std::move(err));
+    errors[id].push_back(std::move(err));
 }
 
 void Logger::mismatch(std::string expected, std::string found,
@@ -24,7 +24,7 @@ void Logger::mismatch(std::string expected, std::string found,
     auto err   = std::make_unique<AST::ParsingError>();
     err->inner = AST::WrongIdentifier{expected, found};
     err->ctx   = context;
-    errors[id.get()].push_back(std::move(err));
+    errors[id].push_back(std::move(err));
 };
 
 void Logger::unexpected(Lexeme un, AST::Node id) {
@@ -32,5 +32,5 @@ void Logger::unexpected(Lexeme un, AST::Node id) {
     auto err   = std::make_unique<AST::ParsingError>();
     err->inner = AST::Unexpected{un};
     err->ctx   = context;
-    errors[id.get()].push_back(std::move(err));
+    errors[id].push_back(std::move(err));
 }

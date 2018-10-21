@@ -16,7 +16,7 @@ template <typename istream> class Builder;
 template <typename T, typename istream>
 std::vector<T> claim(Builder<istream>&);
 
-using Node = Entity<struct NodeTag>;
+using Node = int;
 
 namespace __detail {
 struct TagRule {
