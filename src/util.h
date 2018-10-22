@@ -20,10 +20,10 @@ template <typename... Args> void debug(Args... args) {
 #endif
 }
 
-template <class... Ts> struct overloaded : Ts... {
+template <class... Ts> struct type_switch : Ts... {
     using Ts::operator()...;
 };
-template <class... Ts> overloaded(Ts...)->overloaded<Ts...>;
+template <class... Ts> type_switch(Ts...)->type_switch<Ts...>;
 
 } // namespace Util
 #endif

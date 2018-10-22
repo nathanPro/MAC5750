@@ -20,18 +20,33 @@ class translatorTest : public ::testing::Test {
 
 TEST_F(translatorTest, tuActuallyParses) { EXPECT_TRUE(no_err); }
 
+TEST_F(translatorTest, tuRootIsProgram) {
+    bool is_prog           = false;
+    bool visited_something = false;
+    Grammar::visit(
+        Util::type_switch{
+            [&](const AST::ProgramRule& prog) {
+                is_prog           = true;
+                visited_something = true;
+            },
+            [&](const auto& n) { visited_something = true; }},
+        tu.syntax_tree);
+    EXPECT_TRUE(is_prog);
+    EXPECT_TRUE(visited_something);
+}
+
 TEST_F(translatorTest, translateSumExp) {
     auto root              = Parser(std::stringstream("3 + 4")).Exp();
     bool is_sumExp         = false;
     bool visited_something = false;
 
-    Grammar::visit(Util::overloaded{[&](const AST::sumExp& exp) {
-                                        is_sumExp         = true;
-                                        visited_something = true;
-                                    },
-                                    [&](const auto& n) {
-                                        visited_something = true;
-                                    }},
+    Grammar::visit(Util::type_switch{[&](const AST::sumExp& exp) {
+                                         is_sumExp         = true;
+                                         visited_something = true;
+                                     },
+                                     [&](const auto& n) {
+                                         visited_something = true;
+                                     }},
                    root);
     EXPECT_TRUE(is_sumExp);
     EXPECT_TRUE(visited_something);
