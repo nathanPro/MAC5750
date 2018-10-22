@@ -5,7 +5,7 @@
 #include "IR.h"
 
 namespace AST {
-int translate(IR::Tree& dst, AST::ptr<AST::Exp> exp) {}
+int translate(IR::Tree& dst, const AST::Exp& exp);
 } // namespace AST
 
 #endif

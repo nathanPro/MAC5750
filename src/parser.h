@@ -71,6 +71,8 @@ template <typename istream> class Parser {
     }
 
   public:
+    Parser(istream&& stream)
+        : tokens(stream, 2), idx(0), logger(errors) {}
     Parser(istream& stream)
         : tokens(stream, 2), idx(0), logger(errors) {}
     LexState operator[](int i) { return tokens[i]; }

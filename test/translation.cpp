@@ -4,6 +4,9 @@
 #include "gtest/gtest.h"
 #include <sstream>
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic push
+
 class translatorTest : public ::testing::Test {
   protected:
     translatorTest() : tu("../input/sample.miniJava") {
@@ -18,11 +21,20 @@ class translatorTest : public ::testing::Test {
 TEST_F(translatorTest, tuActuallyParses) { EXPECT_TRUE(no_err); }
 
 TEST_F(translatorTest, translateSumExp) {
-    std::stringstream exp_stream("3 + 4");
-    auto              ctx  = ParserContext(exp_stream);
-    auto              root = AST::translate(tree, Parser::Exp(ctx));
-    EXPECT_EQ(tree.get_type(root),
-              static_cast<int>(IR::ExpId::BINOP));
+    auto root              = Parser(std::stringstream("3 + 4")).Exp();
+    bool is_sumExp         = false;
+    bool visited_something = false;
+
+    Grammar::visit(Util::overloaded{[&](const AST::sumExp& exp) {
+                                        is_sumExp         = true;
+                                        visited_something = true;
+                                    },
+                                    [&](const auto& n) {
+                                        visited_something = true;
+                                    }},
+                   root);
+    EXPECT_TRUE(is_sumExp);
+    EXPECT_TRUE(visited_something);
 }
 
 int main(int argc, char** argv) {

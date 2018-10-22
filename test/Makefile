@@ -2,7 +2,7 @@ GTEST_DIR = googletest/googletest
 GTESTFLAGS = -isystem $(GTEST_DIR)/include -I $(GTEST_DIR) -pthread
 
 .PHONY: test catamorphism IRtest translation
-test: IRtest catamorphism
+test: translation
 
 catamorphism: catamorphism.cpp libgtest.a
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
