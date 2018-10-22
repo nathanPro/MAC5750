@@ -295,9 +295,10 @@ class TranslationUnit {
     std::string           filename;
     std::ifstream         stream;
     Parser<std::ifstream> parser;
-    AST::Program          syntax_tree;
 
   public:
+    AST::Program syntax_tree;
+
     TranslationUnit(std::string name)
         : filename(name), stream(filename, std::ios::in),
           parser(stream), syntax_tree(parser.Program()) {}
