@@ -35,11 +35,12 @@ TEST_F(translatorTest, tuRootIsProgram) {
     EXPECT_TRUE(visited_something);
 }
 
-TEST_F(translatorTest, translateSumExp) {
-    auto root              = Parser(std::stringstream("3 + 4")).Exp();
+TEST_F(translatorTest, translateSumExpWithFile) {
+    auto root =
+        Parser(std::ifstream("../input/sumExp.miniJava")).Exp();
+
     bool is_sumExp         = false;
     bool visited_something = false;
-
     Grammar::visit(Util::type_switch{[&](const AST::sumExp& exp) {
                                          is_sumExp         = true;
                                          visited_something = true;
@@ -52,6 +53,22 @@ TEST_F(translatorTest, translateSumExp) {
     EXPECT_TRUE(visited_something);
 }
 
+TEST_F(translatorTest, translateSumExpWithString) {
+    auto root = Parser(std::stringstream(std::string("3 + 4"))).Exp();
+
+    bool is_sumExp         = false;
+    bool visited_something = false;
+    Grammar::visit(Util::type_switch{[&](const AST::sumExp& exp) {
+                                         is_sumExp         = true;
+                                         visited_something = true;
+                                     },
+                                     [&](const auto& n) {
+                                         visited_something = true;
+                                     }},
+                   root);
+    EXPECT_TRUE(is_sumExp);
+    EXPECT_TRUE(visited_something);
+}
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
