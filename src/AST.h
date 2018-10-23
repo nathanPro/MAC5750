@@ -12,41 +12,27 @@
 #define UNREACHABLE() (__builtin_unreachable())
 
 namespace AST {
-template <typename istream> class Builder;
-template <typename T, typename istream>
-std::vector<T> claim(Builder<istream>&);
-
+class Builder;
 namespace __detail {
 
 struct TagRule : Grammar::Indexable {
-    template <typename istream>
-    TagRule(Builder<istream>&& data) : Grammar::Indexable{data.id} {}
+    TagRule(Builder&& data);
 };
 
 template <typename nt_t> struct BinaryRule : Grammar::Indexable {
     nt_t lhs;
     nt_t rhs;
-
-    template <typename istream>
-    BinaryRule(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, lhs(claim<nt_t>(data, 0)),
-          rhs(claim<nt_t>(data, 1)) {}
+    BinaryRule(Builder&&);
 };
 
 template <typename nt_t> struct UnaryRule : Grammar::Indexable {
     nt_t inner;
-
-    template <typename istream>
-    UnaryRule(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, inner(claim<nt_t>(data, 0)) {}
+    UnaryRule(Builder&&);
 };
 
 template <typename T> struct ValueWrapper : Grammar::Indexable {
     T value;
-
-    template <typename istream>
-    ValueWrapper(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, value(claim<T>(data, 0)) {}
+    ValueWrapper(Builder&&);
 };
 } // namespace __detail
 
@@ -95,9 +81,7 @@ struct Exp : Grammar::Nonterminal<std::variant<
 struct ExpListRule : Grammar::Indexable {
     std::vector<Exp> exps;
 
-    template <typename istream>
-    ExpListRule(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, exps(claim<Exp>(data)) {}
+    ExpListRule(Builder&&);
 };
 
 struct ExpList : Grammar::Nonterminal<std::variant<ExpListRule>> {
@@ -131,11 +115,7 @@ struct methodCallExp : Grammar::Indexable {
     std::string name;
     ExpList     arguments;
 
-    template <typename istream>
-    methodCallExp(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, object(claim<Exp>(data, 0)),
-          name(claim<std::string>(data, 0)),
-          arguments(claim<ExpList>(data, 0)) {}
+    methodCallExp(Builder&&);
 };
 
 struct integerExp : __detail::ValueWrapper<int32_t> {
@@ -192,9 +172,7 @@ struct Stm : Grammar::Nonterminal<std::variant<
 struct blockStm : Grammar::Indexable {
     std::vector<Stm> statements;
 
-    template <typename istream>
-    blockStm(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, statements(claim<Stm>(data)) {}
+    blockStm(Builder&&);
 };
 
 struct ifStm : Grammar::Indexable {
@@ -202,40 +180,27 @@ struct ifStm : Grammar::Indexable {
     Stm if_clause;
     Stm else_clause;
 
-    template <typename istream>
-    ifStm(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, condition(claim<Exp>(data, 0)),
-          if_clause(claim<Stm>(data, 0)),
-          else_clause(claim<Stm>(data, 1)) {}
+    ifStm(Builder&&);
 };
 
 struct whileStm : Grammar::Indexable {
     Exp condition;
     Stm body;
 
-    template <typename istream>
-    whileStm(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, condition(claim<Exp>(data, 0)),
-          body(claim<Stm>(data, 0)) {}
+    whileStm(Builder&&);
 };
 
 struct printStm : Grammar::Indexable {
     Exp exp;
 
-    template <typename istream>
-    printStm(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, exp(claim<Exp>(data, 0)) {}
+    printStm(Builder&&);
 };
 
 struct assignStm : Grammar::Indexable {
     std::string name;
     Exp         value;
 
-    template <typename istream>
-    assignStm(Builder<istream>&& data)
-        : Grammar::Indexable{data.id},
-          name(claim<std::string>(data, 0)),
-          value(claim<Exp>(data, 0)) {}
+    assignStm(Builder&&);
 };
 
 struct indexAssignStm : Grammar::Indexable {
@@ -243,11 +208,7 @@ struct indexAssignStm : Grammar::Indexable {
     Exp         index;
     Exp         value;
 
-    template <typename istream>
-    indexAssignStm(Builder<istream>&& data)
-        : Grammar::Indexable{data.id},
-          array(claim<std::string>(data, 0)),
-          index(claim<Exp>(data, 0)), value(claim<Exp>(data, 1)) {}
+    indexAssignStm(Builder&&);
 };
 
 struct integerArrayType : __detail::TagRule {
@@ -283,21 +244,7 @@ struct FormalDecl {
 struct FormalListRule : Grammar::Indexable {
     std::vector<FormalDecl> decls;
 
-    template <typename istream>
-    FormalListRule(Builder<istream>&& data)
-        : Grammar::Indexable{data.id} {
-        std::vector<FormalDecl> D;
-
-        auto T = claim<Type>(data);
-        auto W = claim<std::string>(data);
-
-        int s = std::min(T.size(), W.size());
-        for (int i = 0; i < s; i++)
-            D.push_back(FormalDecl{std::move(T.at(i)), W.at(i)});
-
-        id    = data.id;
-        decls = std::move(D);
-    }
+    FormalListRule(Builder&&);
 };
 
 struct FormalList
@@ -309,10 +256,7 @@ struct VarDeclRule : Grammar::Indexable {
     Type        type;
     std::string name;
 
-    template <typename istream>
-    VarDeclRule(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, type(claim<Type>(data, 0)),
-          name(claim<std::string>(data, 0)) {}
+    VarDeclRule(Builder&&);
 };
 
 struct VarDecl : Grammar::Nonterminal<std::variant<VarDeclRule>> {
@@ -327,13 +271,7 @@ struct MethodDeclRule : Grammar::Indexable {
     std::vector<Stm>     body;
     Exp                  return_exp;
 
-    template <typename istream>
-    MethodDeclRule(Builder<istream>&& data)
-        : Grammar::Indexable{data.id}, type(claim<Type>(data, 0)),
-          name(claim<std::string>(data, 0)),
-          arguments(claim<FormalList>(data, 0)),
-          variables(claim<VarDecl>(data)), body(claim<Stm>(data)),
-          return_exp(claim<Exp>(data, 0)) {}
+    MethodDeclRule(Builder&&);
 };
 
 struct MethodDecl
@@ -346,12 +284,7 @@ struct ClassDeclNoInheritance : Grammar::Indexable {
     std::vector<VarDecl>    variables;
     std::vector<MethodDecl> methods;
 
-    template <typename istream>
-    ClassDeclNoInheritance(Builder<istream>&& data)
-        : Grammar::Indexable{data.id},
-          name(claim<std::string>(data, 0)),
-          variables(claim<VarDecl>(data)),
-          methods(claim<MethodDecl>(data)) {}
+    ClassDeclNoInheritance(Builder&&);
 };
 
 struct ClassDeclInheritance : Grammar::Indexable {
@@ -360,13 +293,7 @@ struct ClassDeclInheritance : Grammar::Indexable {
     std::vector<VarDecl>    variables;
     std::vector<MethodDecl> methods;
 
-    template <typename istream>
-    ClassDeclInheritance(Builder<istream>&& data)
-        : Grammar::Indexable{data.id},
-          name(claim<std::string>(data, 0)),
-          superclass(claim<std::string>(data, 1)),
-          variables(claim<VarDecl>(data)),
-          methods(claim<MethodDecl>(data)) {}
+    ClassDeclInheritance(Builder&&);
 };
 
 // clang-format off
@@ -383,12 +310,7 @@ struct MainClassRule : Grammar::Indexable {
     std::string argument;
     Stm         body;
 
-    template <typename istream>
-    MainClassRule(Builder<istream>&& data)
-        : Grammar::Indexable{data.id},
-          name(claim<std::string>(data, 0)),
-          argument(claim<std::string>(data, 1)),
-          body(claim<Stm>(data, 0)) {}
+    MainClassRule(Builder&&);
 };
 
 struct MainClass : Grammar::Nonterminal<std::variant<MainClassRule>> {
@@ -399,11 +321,7 @@ struct ProgramRule : Grammar::Indexable {
     MainClass              main;
     std::vector<ClassDecl> classes;
 
-    template <typename istream>
-    ProgramRule(Builder<istream>&& data)
-        : Grammar::Indexable{data.id},
-          main(claim<MainClass>(data, 0)),
-          classes(claim<ClassDecl>(data)) {}
+    ProgramRule(Builder&&);
 };
 
 struct Program : Grammar::Nonterminal<std::variant<ProgramRule>> {

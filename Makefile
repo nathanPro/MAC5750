@@ -6,12 +6,16 @@ export CXXFLAGS = --std=c++17 -Wall -Wextra -g -ggdb -O0 -DDEBUG -I ../src
 OBJSDEP = $(BIN_DIR)/IR.o \
           $(BIN_DIR)/IRBuilder.o \
 	  $(BIN_DIR)/logger.o \
-          $(BIN_DIR)/lexer.o
+          $(BIN_DIR)/lexer.o \
+          $(BIN_DIR)/parser.o \
+	  $(BIN_DIR)/Builder.o
 
 export OBJS = ../$(BIN_DIR)/IR.o \
               ../$(BIN_DIR)/IRBuilder.o \
               ../$(BIN_DIR)/logger.o \
-              ../$(BIN_DIR)/lexer.o
+              ../$(BIN_DIR)/lexer.o \
+              ../$(BIN_DIR)/parser.o \
+	      ../$(BIN_DIR)/Builder.o
 
 test: $(OBJSDEP)
 	$(MAKE) -C test
@@ -28,6 +32,10 @@ $(BIN_DIR)/lexer.o: src/lexer.cpp src/lexer.h
 	$(MAKE) lexer.o -C bin
 $(BIN_DIR)/logger.o: src/logger.cpp src/logger.h
 	$(MAKE) logger.o -C bin
+$(BIN_DIR)/Builder.o: src/Builder.cpp src/Builder.h $(BIN_DIR)/logger.o
+	$(MAKE) Builder.o -C bin
+$(BIN_DIR)/parser.o: src/parser.cpp src/parser.h $(BIN_DIR)/lexer.o $(BIN_DIR)/logger.o $(BIN_DIR)/Builder.o
+	$(MAKE) parser.o -C bin
 
 .PHONY: clean, test
 clean:

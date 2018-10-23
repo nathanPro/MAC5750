@@ -36,8 +36,8 @@ TEST_F(translatorTest, tuRootIsProgram) {
 }
 
 TEST_F(translatorTest, translateSumExpWithFile) {
-    auto root =
-        Parser(std::ifstream("../input/sumExp.miniJava")).Exp();
+    auto stream = std::ifstream("../input/sumExp.miniJava");
+    auto root   = Parser(&stream).Exp();
 
     bool is_sumExp         = false;
     bool visited_something = false;
@@ -54,7 +54,8 @@ TEST_F(translatorTest, translateSumExpWithFile) {
 }
 
 TEST_F(translatorTest, translateSumExpWithString) {
-    auto root = Parser(std::stringstream(std::string("3 + 4"))).Exp();
+    auto stream = std::stringstream(std::string("3 + 4"));
+    auto root   = Parser(&stream).Exp();
 
     bool is_sumExp         = false;
     bool visited_something = false;

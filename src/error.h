@@ -1,6 +1,6 @@
 #ifndef BCC_ASTERROR
 #define BCC_ASTERROR
-#include "Builder.h"
+#include "AST.h"
 #include "grammar.h"
 
 template <typename ostream> class OstreamReporter {
