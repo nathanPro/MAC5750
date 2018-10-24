@@ -54,7 +54,7 @@ TEST_F(translatorTest, translateSumExpWithFile) {
 }
 
 TEST_F(translatorTest, translateSumExpWithString) {
-    auto stream = std::stringstream(std::string("3 + 4"));
+    auto stream = std::stringstream(std::string("3 + 4\n"));
     auto root   = Parser(&stream).Exp();
 
     bool is_sumExp         = false;
