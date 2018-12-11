@@ -4,6 +4,10 @@ GTESTFLAGS = -isystem $(GTEST_DIR)/include -I $(GTEST_DIR) -pthread
 .PHONY: test catamorphism IRtest translation
 test: translation IRtest catamorphism
 
+helper_test: helper.cpp libgtest.a
+	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
+	    helper.cpp libgtest.a -o helper_test
+	./helper_test
 catamorphism: catamorphism.cpp libgtest.a
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
 	catamorphism.cpp libgtest.a -o catamorphism
