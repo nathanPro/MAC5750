@@ -10,7 +10,7 @@
 namespace helper
 {
 
-enum class kind_t { var, instance, method };
+enum class kind_t { notfound, var, instance, method };
 class meta_data;
 
 class class_spec
@@ -19,12 +19,14 @@ class class_spec
     int                           method_cnt;
     std::map<std::string, kind_t> kind;
     int                           __size;
-    meta_data&                    data;
+    meta_data const&              data;
+
+    void init_vars(std::vector<AST::VarDecl> const& vars);
 
   public:
-    class_spec(meta_data&, const AST::MainClassRule&);
-    class_spec(meta_data&, const AST::ClassDeclNoInheritance&);
-    class_spec(meta_data&, const AST::ClassDeclInheritance&);
+    class_spec(meta_data const&, const AST::MainClassRule&);
+    class_spec(meta_data const&, const AST::ClassDeclNoInheritance&);
+    class_spec(meta_data const&, const AST::ClassDeclInheritance&);
 
     int       size() const;
     kind_t    operator[](const std::string&) const;

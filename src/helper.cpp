@@ -3,46 +3,41 @@
 namespace helper
 {
 
-class_spec::class_spec(meta_data& d, const AST::MainClassRule&)
+class_spec::class_spec(meta_data const& d, const AST::MainClassRule&)
     : layout_cnt(0), method_cnt(0), data(d), base(-1)
 {
     kind["main"]   = kind_t::method;
     method["main"] = method_cnt++;
+    __size         = 0;
 }
 
-class_spec::class_spec(meta_data&                         d,
+void class_spec::init_vars(std::vector<AST::VarDecl> const& vars)
+{
+    int tot = 0;
+    for (const auto& var : vars) {
+        auto const& vdr  = Grammar::get<AST::VarDeclRule>(var);
+        kind[vdr.name]   = kind_t::var;
+        layout[vdr.name] = tot;
+        tot += data.type_size(vdr.type);
+    }
+    __size = tot;
+}
+
+class_spec::class_spec(meta_data const&                   d,
                        const AST::ClassDeclNoInheritance& cls)
     : layout_cnt(cls.variables.size()),
       method_cnt(cls.methods.size()), data(d), base(-1)
 {
-    {
-        int tot = 0;
-        for (const auto& var : cls.variables) {
-            auto const& vdr  = Grammar::get<AST::VarDeclRule>(var);
-            kind[vdr.name]   = kind_t::var;
-            layout[vdr.name] = tot;
-            tot += data.type_size(vdr.type);
-        }
-        __size = tot;
-    }
+    init_vars(cls.variables);
 }
 
-class_spec::class_spec(meta_data&                       d,
+class_spec::class_spec(meta_data const&                 d,
                        const AST::ClassDeclInheritance& cls)
     : layout_cnt(cls.variables.size()),
       method_cnt(cls.methods.size()), data(d),
       base(data.c_id.at(cls.superclass))
 {
-    {
-        int tot = 0;
-        for (const auto& var : cls.variables) {
-            auto const& vdr  = Grammar::get<AST::VarDeclRule>(var);
-            kind[vdr.name]   = kind_t::var;
-            layout[vdr.name] = tot;
-            tot += data.type_size(vdr.type);
-        }
-        __size = tot;
-    }
+    init_vars(cls.variables);
 }
 
 kind_t class_spec::operator[](std::string const& name) const

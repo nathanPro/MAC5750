@@ -34,6 +34,7 @@ TEST_F(HelperTest, MetaDataRecordClasses)
 TEST_F(HelperTest, MetaDataDistinguishesMethodFromVariable)
 {
     EXPECT_EQ(data["Fac"]["t1"], helper::kind_t::var);
+    EXPECT_EQ(data["Fac"]["Compute"], helper::kind_t::notfound);
     EXPECT_EQ(data["Fac"]["ComputeFac"], helper::kind_t::method);
 }
 
@@ -41,6 +42,8 @@ TEST_F(HelperTest, MetaDataRecordLayout)
 {
     EXPECT_EQ(data["Fac"].layout["t1"], 0);
     EXPECT_EQ(data["Fac"].layout["t2"], 8);
+    EXPECT_EQ(data["Factorial"].size(), 0);
+    EXPECT_EQ(data["Fac"].size(), 16);
 }
 
 int main(int argc, char** argv)
