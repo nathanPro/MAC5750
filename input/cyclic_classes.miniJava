@@ -6,8 +6,9 @@ class Factorial {
 class Fac {
     IntegerWrapper input;
     public int Compute(int num) {
-        this.input.set(num)
-        return ComputeFac(this.input.get());
+        int tmp;
+        tmp = input.set(num);
+        return this.ComputeFac(input.get());
     }
     public int ComputeFac(int num) {
         int num_aux;

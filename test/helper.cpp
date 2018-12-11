@@ -51,6 +51,14 @@ TEST_F(HelperTest, MetaDataHandlesInheritance)
     EXPECT_EQ(data["Child"]["ComputeFac"], helper::kind_t::method);
 }
 
+TEST_F(HelperTest, MetaDataDetectsCyclicDepdendencies)
+{
+    TranslationUnit cycle("../input/cyclic_classes.miniJava");
+    EXPECT_TRUE(cycle.check());
+    EXPECT_THROW(helper::meta_data(cycle.syntax_tree),
+                 helper::cyclic_classes);
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

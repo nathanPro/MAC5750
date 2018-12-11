@@ -10,6 +10,9 @@
 namespace helper
 {
 
+struct cyclic_classes {
+};
+
 enum class kind_t { notfound, var, instance, method };
 class meta_data;
 
