@@ -52,6 +52,7 @@ class_spec::class_spec(meta_data const&                 d,
 kind_t class_spec::operator[](std::string const& name) const
 {
     if (kind.count(name)) return kind.at(name);
+    if (base != -1) return data.c_info[base][name];
     return kind_t::notfound;
 }
 

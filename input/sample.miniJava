@@ -11,7 +11,8 @@ class Fac {
         if (num < 1)
             num_aux = 1;
         else num_aux = num * (this.ComputeFac(num - 1));
-        // Does this comment screw things?
         return num_aux;
     }
+}
+class Child extends Fac {
 }

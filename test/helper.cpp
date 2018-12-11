@@ -46,6 +46,11 @@ TEST_F(HelperTest, MetaDataRecordLayout)
     EXPECT_EQ(data["Fac"].size(), 16);
 }
 
+TEST_F(HelperTest, MetaDataHandlesInheritance)
+{
+    EXPECT_EQ(data["Child"]["ComputeFac"], helper::kind_t::method);
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
