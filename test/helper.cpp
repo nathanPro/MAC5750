@@ -26,9 +26,21 @@ TEST_F(HelperTest, MetaDataRecordClasses)
     std::string const help_class("Fac");
     std::string const fake_class("Fake");
 
-    EXPECT_EQ(data.classes.count(main_class), 1);
-    EXPECT_EQ(data.classes.count(help_class), 1);
-    EXPECT_EQ(data.classes.count(fake_class), 0);
+    EXPECT_EQ(data.count(main_class), 1);
+    EXPECT_EQ(data.count(help_class), 1);
+    EXPECT_EQ(data.count(fake_class), 0);
+}
+
+TEST_F(HelperTest, MetaDataDistinguishesMethodFromVariable)
+{
+    EXPECT_EQ(data["Fac"]["t1"], helper::kind_t::var);
+    EXPECT_EQ(data["Fac"]["ComputeFac"], helper::kind_t::method);
+}
+
+TEST_F(HelperTest, MetaDataRecordLayout)
+{
+    EXPECT_EQ(data["Fac"].layout["t1"], 0);
+    EXPECT_EQ(data["Fac"].layout["t2"], 8);
 }
 
 int main(int argc, char** argv)

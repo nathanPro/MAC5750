@@ -4,9 +4,10 @@ class Factorial {
     }
 }
 class Fac {
+    int t1;
+    int t2;
     public int ComputeFac(int num) {
         int num_aux;
-        int throwaway;
         if (num < 1)
             num_aux = 1;
         else num_aux = num * (this.ComputeFac(num - 1));
