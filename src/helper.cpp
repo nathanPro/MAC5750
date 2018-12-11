@@ -4,7 +4,7 @@ namespace helper
 {
 
 class_spec::class_spec(meta_data const& d, const AST::MainClassRule&)
-    : layout_cnt(0), method_cnt(0), data(d), base(-1)
+    : method_cnt(0), data(d), base(-1)
 {
     kind["main"]   = kind_t::method;
     method["main"] = method_cnt++;
@@ -23,26 +23,36 @@ void class_spec::init_vars(std::vector<AST::VarDecl> const& vars)
     __size = tot;
 }
 
+void class_spec::init_methods(
+    std::vector<AST::MethodDecl> const& mtds)
+{
+    for (auto const& mtd : mtds) {
+        auto const& mdr  = Grammar::get<AST::MethodDeclRule>(mtd);
+        kind[mdr.name]   = kind_t::method;
+        method[mdr.name] = method_cnt++;
+    }
+}
+
 class_spec::class_spec(meta_data const&                   d,
                        const AST::ClassDeclNoInheritance& cls)
-    : layout_cnt(cls.variables.size()),
-      method_cnt(cls.methods.size()), data(d), base(-1)
+    : method_cnt(0), data(d), base(-1)
 {
     init_vars(cls.variables);
+    init_methods(cls.methods);
 }
 
 class_spec::class_spec(meta_data const&                 d,
                        const AST::ClassDeclInheritance& cls)
-    : layout_cnt(cls.variables.size()),
-      method_cnt(cls.methods.size()), data(d),
-      base(data.c_id.at(cls.superclass))
+    : method_cnt(0), data(d), base(data.c_id.at(cls.superclass))
 {
     init_vars(cls.variables);
+    init_methods(cls.methods);
 }
 
 kind_t class_spec::operator[](std::string const& name) const
 {
-    return kind.at(name);
+    if (kind.count(name)) return kind.at(name);
+    return kind_t::notfound;
 }
 
 int class_spec::size() const { return __size; }

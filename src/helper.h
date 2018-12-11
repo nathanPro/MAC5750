@@ -15,13 +15,13 @@ class meta_data;
 
 class class_spec
 {
-    int                           layout_cnt;
     int                           method_cnt;
     std::map<std::string, kind_t> kind;
     int                           __size;
     meta_data const&              data;
 
-    void init_vars(std::vector<AST::VarDecl> const& vars);
+    void init_vars(std::vector<AST::VarDecl> const&);
+    void init_methods(std::vector<AST::MethodDecl> const&);
 
   public:
     class_spec(meta_data const&, const AST::MainClassRule&);
