@@ -1,7 +1,8 @@
 #include "parser.h"
 #include "Builder.h"
 
-AST::Exp Parser::_Exp(AST::Exp&& lhs) {
+AST::Exp Parser::_Exp(AST::Exp&& lhs)
+{
     using std::move;
     AST::Builder builder(*this);
     builder << std::move(lhs);
@@ -38,20 +39,23 @@ AST::Exp Parser::_Exp(AST::Exp&& lhs) {
     }
 }
 
-void Parser::record_context(std::string label) {
+void Parser::record_context(std::string label)
+{
     logger.push(label, tokens[0].third);
 }
 
 void Parser::drop_context() { logger.pop(); }
 
-void Parser::mismatch(Lexeme lex, int id) {
+void Parser::mismatch(Lexeme lex, int id)
+{
     logger.mismatch(lex, Lexeme(tokens[0]), id);
     while (Lexeme(tokens[0]) != Lexeme::eof &&
            Lexeme(tokens[0]) != lex)
         ++tokens;
 }
 
-void Parser::mismatch(std::string in, int id) {
+void Parser::mismatch(std::string in, int id)
+{
     logger.mismatch(in, tokens[0].second, id);
     while (Lexeme(tokens[0]) != Lexeme::eof &&
            !(Lexeme(tokens[0]) == Lexeme::identifier &&
@@ -59,16 +63,20 @@ void Parser::mismatch(std::string in, int id) {
         ++tokens;
 }
 
-void Parser::unexpected(Lexeme un, int id) {
+void Parser::unexpected(Lexeme un, int id)
+{
     logger.unexpected(un, id);
     ++tokens;
 }
 
 Parser::Parser(std::istream* stream)
-    : tokens(stream, 2), idx(0), logger(errors) {}
+    : tokens(stream, 2), idx(0), logger(errors)
+{
+}
 LexState Parser::operator[](int i) { return tokens[i]; }
 
-AST::Exp Parser::Exp() {
+AST::Exp Parser::Exp()
+{
     using std::move;
     AST::Builder builder(*this, "Expression");
     switch (Lexeme(tokens[0])) {
@@ -109,7 +117,8 @@ AST::Exp Parser::Exp() {
     }
 }
 
-AST::ExpList Parser::ExpList() {
+AST::ExpList Parser::ExpList()
+{
     AST::Builder builder(*this, "Method Call List");
     builder << Lexeme::open_paren;
     bool first = true;
@@ -122,7 +131,8 @@ AST::ExpList Parser::ExpList() {
     return AST::ExpListRule(std::move(builder));
 }
 
-AST::Stm Parser::Stm() {
+AST::Stm Parser::Stm()
+{
     using std::move;
     AST::Builder builder(*this, "Statement");
     switch (Lexeme(tokens[0])) {
@@ -162,7 +172,8 @@ AST::Stm Parser::Stm() {
     }
 }
 
-AST::Type Parser::Type() {
+AST::Type Parser::Type()
+{
     AST::Builder builder(*this, "Type");
     switch (Lexeme(tokens[0])) {
     case Lexeme::boolean_keyword:
@@ -184,7 +195,8 @@ AST::Type Parser::Type() {
     }
 }
 
-AST::FormalList Parser::FormalList() {
+AST::FormalList Parser::FormalList()
+{
     AST::Builder builder(*this, "Method Argument List");
     builder << Lexeme::open_paren;
     bool first = true;
@@ -197,13 +209,15 @@ AST::FormalList Parser::FormalList() {
     return AST::FormalListRule(std::move(builder));
 }
 
-AST::VarDecl Parser::VarDecl() {
+AST::VarDecl Parser::VarDecl()
+{
     AST::Builder builder(*this, "Variable Declaration");
     builder << Type() << Lexeme::identifier << Lexeme::semicolon;
     return AST::VarDeclRule(std::move(builder));
 }
 
-AST::MethodDecl Parser::MethodDecl() {
+AST::MethodDecl Parser::MethodDecl()
+{
     AST::Builder builder(*this, "Method Declaration");
     builder << Lexeme::public_keyword << Type() << Lexeme::identifier
             << FormalList() << Lexeme::open_brace;
@@ -222,7 +236,8 @@ AST::MethodDecl Parser::MethodDecl() {
     return AST::MethodDeclRule(std::move(builder));
 }
 
-AST::ClassDecl Parser::ClassDecl() {
+AST::ClassDecl Parser::ClassDecl()
+{
     AST::Builder builder(*this, "Class Declaration");
     builder << Lexeme::class_keyword << Lexeme::identifier;
 
@@ -234,10 +249,12 @@ AST::ClassDecl Parser::ClassDecl() {
 
     builder << Lexeme::open_brace;
     while (Lexeme(tokens[0]) != Lexeme::close_brace &&
-           Lexeme(tokens[0]) != Lexeme::public_keyword)
+           Lexeme(tokens[0]) != Lexeme::public_keyword &&
+           Lexeme(tokens[0]) != Lexeme::eof)
         builder << VarDecl();
 
-    while (Lexeme(tokens[0]) != Lexeme::close_brace)
+    while (Lexeme(tokens[0]) != Lexeme::close_brace &&
+           Lexeme(tokens[0]) != Lexeme::eof)
         builder << MethodDecl();
     builder << Lexeme::close_brace;
 
@@ -247,7 +264,8 @@ AST::ClassDecl Parser::ClassDecl() {
         return AST::ClassDeclNoInheritance(std::move(builder));
 }
 
-AST::MainClass Parser::MainClass() {
+AST::MainClass Parser::MainClass()
+{
     AST::Builder builder(*this, "Main Class");
     builder << Lexeme::class_keyword << Lexeme::identifier
             << Lexeme::open_brace << Lexeme::public_keyword
@@ -260,7 +278,8 @@ AST::MainClass Parser::MainClass() {
     return AST::MainClassRule(std::move(builder));
 }
 
-AST::Program Parser::Program() {
+AST::Program Parser::Program()
+{
     AST::Builder builder(*this);
     builder << MainClass();
     while (Lexeme(tokens[0]) != Lexeme::eof) builder << ClassDecl();
@@ -269,9 +288,12 @@ AST::Program Parser::Program() {
 
 TranslationUnit::TranslationUnit(std::string name)
     : filename(name), stream(filename, std::ios::in), parser(&stream),
-      syntax_tree(parser.Program()) {}
+      syntax_tree(parser.Program())
+{
+}
 
-bool TranslationUnit::check() {
+bool TranslationUnit::check()
+{
     Reporter rep(std::cout, parser.errors);
     Grammar::visit(rep, syntax_tree);
     return rep;
