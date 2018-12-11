@@ -11,9 +11,11 @@
 #include <vector>
 #define UNREACHABLE() (__builtin_unreachable())
 
-namespace AST {
+namespace AST
+{
 class Builder;
-namespace __detail {
+namespace __detail
+{
 
 struct TagRule : Grammar::Indexable {
     TagRule(Builder&& data);
@@ -344,6 +346,7 @@ struct WrongIdentifier {
 
 struct ParsingError {
     std::vector<std::string>                            ctx;
+    std::vector<int>                                    lines;
     std::variant<Unexpected, Mismatch, WrongIdentifier> inner;
 };
 
