@@ -14,3 +14,5 @@ Builder.o: ../src/Builder.h ../src/Builder.cpp lexer.o logger.o
 	$(CXX) $(CXXFLAGS) -c ../src/Builder.cpp lexer.o logger.o -o Builder.o
 parser.o: ../src/parser.h ../src/parser.cpp lexer.o logger.o Builder.o
 	$(CXX) $(CXXFLAGS) -c ../src/parser.cpp lexer.o logger.o Builder.o -o parser.o
+helper.o: ../src/helper.h ../src/helper.cpp parser.o lexer.o logger.o Builder.o
+	$(CXX) $(CXXFLAGS) -c ../src/helper.cpp lexer.o logger.o Builder.o parser.o -o helper.o
