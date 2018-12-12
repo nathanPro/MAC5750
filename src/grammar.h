@@ -22,7 +22,7 @@ template <typename variant> struct Nonterminal {
     template <typename Alternative, class Nonterminal>
     friend constexpr bool holds(Nonterminal&&);
 
-  private:
+  protected:
     std::unique_ptr<variant_t> _self;
 };
 

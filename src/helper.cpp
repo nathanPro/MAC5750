@@ -3,25 +3,38 @@
 namespace helper
 {
 
+std::vector<AST::FormalDecl>
+memory_layout::smooth(std::vector<AST::VarDecl> const& vars)
+{
+    std::vector<AST::FormalDecl> ans;
+    for (auto const& var : vars) {
+        auto const& vdr = Grammar::get<AST::VarDeclRule>(var);
+        ans.push_back({vdr.type, vdr.name});
+    }
+    return ans;
+}
+
 memory_layout::memory_layout(meta_data const&               data,
                              std::map<std::string, kind_t>& kind,
                              std::string const&             base_type,
                              std::vector<AST::VarDecl> const& vars)
     : size(0)
 {
-    if (base_type.size()) {
-        kind["__base"]  = kind_t::var;
-        value["__base"] = size;
-        size += data.type_size(base_type);
-    }
+    std::vector<AST::FormalDecl> aux;
 
-    for (auto const& var : vars) {
-        auto const& vdr = Grammar::get<AST::VarDeclRule>(var);
-        kind[vdr.name]  = kind_t::var;
-        value[vdr.name] = size;
-        size += data.type_size(vdr.type);
+    if (base_type.size())
+        aux.push_back(
+            {AST::Type{AST::classType{base_type}}, "__base"});
+
+    auto tmp = smooth(vars);
+    aux.insert(end(aux), begin(tmp), end(tmp));
+
+    for (auto const& var : aux) {
+        kind[var.name]  = kind_t::var;
+        value[var.name] = size;
+        size += data.type_size(var.type);
     }
-}
+} // namespace helper
 
 int memory_layout::operator[](std::string const& name) const
 {

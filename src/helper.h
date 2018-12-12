@@ -20,6 +20,10 @@ struct memory_layout {
                   std::string const&,
                   std::vector<AST::VarDecl> const&);
     int operator[](std::string const&) const;
+
+  private:
+    std::vector<AST::FormalDecl>
+    smooth(std::vector<AST::VarDecl> const&);
 };
 
 class class_spec

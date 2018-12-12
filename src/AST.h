@@ -19,6 +19,7 @@ namespace __detail
 
 struct TagRule : Grammar::Indexable {
     TagRule(Builder&& data);
+    TagRule() : Grammar::Indexable{0} {}
 };
 
 template <typename nt_t> struct BinaryRule : Grammar::Indexable {
@@ -35,6 +36,7 @@ template <typename nt_t> struct UnaryRule : Grammar::Indexable {
 template <typename T> struct ValueWrapper : Grammar::Indexable {
     T value;
     ValueWrapper(Builder&&);
+    ValueWrapper(T const& rhs) : Grammar::Indexable{0}, value{rhs} {}
 };
 } // namespace __detail
 
@@ -233,10 +235,20 @@ struct Type : Grammar::Nonterminal<std::variant<
     integerType,
     classType
 >>
+// clang-format on
 {
     using Grammar::Nonterminal<Type::variant_t>::Nonterminal;
+    Type(Type const& rhs)
+        : Grammar::Nonterminal<Type::variant_t>(*rhs._self)
+    {
+    }
+    Type& operator=(Type const& rhs)
+    {
+        Type tmp(rhs);
+        *this = std::move(tmp);
+        return *this;
+    }
 };
-// clang-format on
 
 struct FormalDecl {
     Type        type;
