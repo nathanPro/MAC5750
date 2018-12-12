@@ -1,18 +1,13 @@
 #ifndef HELPER_BCC
 #define HELPER_BCC
 #include "AST.h"
-#include "grammar.h"
+#include "class_graph.h"
 #include "parser.h"
-#include "util.h"
-#include <algorithm>
 #include <map>
 #include <string>
 
 namespace helper
 {
-
-struct cyclic_classes {
-};
 
 enum class kind_t { notfound, var, instance, method };
 class meta_data;
@@ -28,9 +23,9 @@ class class_spec
     void init_methods(std::vector<AST::MethodDecl> const&);
 
   public:
-    class_spec(meta_data const&, const AST::MainClassRule&);
-    class_spec(meta_data const&, const AST::ClassDeclNoInheritance&);
-    class_spec(meta_data const&, const AST::ClassDeclInheritance&);
+    class_spec(meta_data const&, AST::MainClassRule const&);
+    class_spec(meta_data const&, AST::ClassDeclNoInheritance const&);
+    class_spec(meta_data const&, AST::ClassDeclInheritance const&);
 
     int       size() const;
     kind_t    operator[](const std::string&) const;
@@ -38,43 +33,6 @@ class class_spec
 
     std::map<std::string, int> layout;
     std::map<std::string, int> method;
-};
-
-class class_graph
-{
-    int                           cnt;
-    int                           n;
-    std::vector<std::vector<int>> G;
-    std::vector<bool>             seen;
-    std::vector<bool>             finished;
-
-    struct name_collector {
-        class_graph& cg;
-
-        void operator()(AST::ProgramRule const&);
-        template <typename T> void operator()(T const& cls)
-        {
-            cg.names[cls.name] = cg.cnt++;
-        }
-    };
-
-    struct edge_collector {
-        class_graph& cg;
-
-        void init_vars(int i, std::vector<AST::VarDecl> const&);
-
-        void operator()(AST::ClassDeclNoInheritance const&);
-        void operator()(AST::ClassDeclInheritance const&);
-        void operator()(AST::ProgramRule const&);
-    };
-
-    void dfs(int);
-
-  public:
-    std::map<std::string, int> names;
-    std::vector<int>           ans;
-
-    class_graph(AST::ProgramRule const&);
 };
 
 class meta_data

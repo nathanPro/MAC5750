@@ -12,5 +12,7 @@ Builder.o:
 	$(CXX) $(CXXFLAGS) -c ../src/Builder.cpp -o Builder.o
 parser.o: 
 	$(CXX) $(CXXFLAGS) -c ../src/parser.cpp -o parser.o
+class_graph.o: ../src/class_graph.h ../src/class_graph.cpp
+	$(CXX) $(CXXFLAGS) -c ../src/class_graph.cpp -o class_graph.o
 helper.o: ../src/helper.h ../src/helper.cpp
 	$(CXX) $(CXXFLAGS) -c ../src/helper.cpp -o helper.o

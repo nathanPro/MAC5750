@@ -9,6 +9,7 @@ OBJSDEP = $(BIN_DIR)/IR.o \
           $(BIN_DIR)/lexer.o \
           $(BIN_DIR)/parser.o \
 	  $(BIN_DIR)/Builder.o \
+	  $(BIN_DIR)/class_graph.o \
 	  $(BIN_DIR)/helper.o
 
 export OBJS = ../$(BIN_DIR)/IR.o \
@@ -17,6 +18,7 @@ export OBJS = ../$(BIN_DIR)/IR.o \
               ../$(BIN_DIR)/lexer.o \
               ../$(BIN_DIR)/parser.o \
 	      ../$(BIN_DIR)/Builder.o \
+	      ../$(BIN_DIR)/class_graph.o \
 	      ../$(BIN_DIR)/helper.o \
 
 test: $(OBJSDEP)
@@ -38,6 +40,8 @@ $(BIN_DIR)/Builder.o: src/Builder.cpp src/Builder.h
 	$(MAKE) Builder.o -C bin
 $(BIN_DIR)/parser.o: src/parser.cpp src/parser.h
 	$(MAKE) parser.o -C bin
+$(BIN_DIR)/class_graph.o: src/class_graph.h src/class_graph.cpp
+	$(MAKE) class_graph.o -C bin
 $(BIN_DIR)/helper.o: src/helper.h src/helper.cpp
 	$(MAKE) helper.o -C bin
 
