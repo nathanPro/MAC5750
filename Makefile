@@ -22,9 +22,6 @@ export OBJS = ../$(BIN_DIR)/IR.o \
 test: $(OBJSDEP)
 	$(MAKE) -C test
 
-helper_test: $(OBJSDEP)
-	$(MAKE) helper_test -C test
-
 bcc: $(OBJSDEP) src/error.h src/AST.h src/parser.h src/lexer.h src/main.cpp
 	$(MAKE) -C bin
 all: test bcc
