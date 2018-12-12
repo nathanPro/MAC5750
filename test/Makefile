@@ -21,7 +21,7 @@ IR: IR.cpp libgtest.a ../src/IR.h ../src/IR.cpp
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
 	IR.cpp libgtest.a -o IR
 	./IR
-translation: translation.cpp libgtest.a
+translation: translation.cpp libgtest.a ../src/translate.h ../src/translate.cpp
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
 	translation.cpp libgtest.a -o translation
 	./translation
