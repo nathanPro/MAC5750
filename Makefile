@@ -47,8 +47,6 @@ $(BIN_DIR)/helper.o: src/helper.h src/helper.cpp
 
 .PHONY: clean, test
 clean:
-	-rm $(TEST_DIR)/*.a
-	-rm $(TEST_DIR)/*.o
 	-rm $(BIN_DIR)/*.o
 	-rm $(BIN_DIR)/bcc
 	-rm $(TEST_DIR)/helper
