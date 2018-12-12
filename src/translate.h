@@ -3,9 +3,11 @@
 
 #include "AST.h"
 #include "IR.h"
+#include "IRBuilder.h"
 
-namespace AST {
-int translate(IR::Tree& dst, const AST::Exp& exp);
-} // namespace AST
+namespace IR
+{
+int translate(Tree& dst, AST::Exp const& exp);
+} // namespace IR
 
 #endif

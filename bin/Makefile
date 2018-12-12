@@ -16,3 +16,5 @@ class_graph.o: ../src/class_graph.h ../src/class_graph.cpp
 	$(CXX) $(CXXFLAGS) -c ../src/class_graph.cpp -o class_graph.o
 helper.o: ../src/helper.h ../src/helper.cpp
 	$(CXX) $(CXXFLAGS) -c ../src/helper.cpp -o helper.o
+translate.o: ../src/translate.h ../src/translate.cpp
+	$(CXX) $(CXXFLAGS) -c ../src/translate.cpp -o translate.o

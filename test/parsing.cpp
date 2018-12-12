@@ -35,6 +35,18 @@ TEST(parsingTest, stringParsing)
     EXPECT_TRUE(rep);
 }
 
+TEST(parsingTest, bad)
+{
+    TranslationUnit tu("../input/bad.miniJava");
+    EXPECT_FALSE(tu.check());
+}
+
+TEST(parsingTest, bad2)
+{
+    TranslationUnit tu("../input/bad2.miniJava");
+    EXPECT_FALSE(tu.check());
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
