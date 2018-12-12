@@ -73,6 +73,13 @@ Parser::Parser(std::istream* stream)
     : tokens(stream, 2), idx(0), logger(errors)
 {
 }
+
+Parser::Parser(std::string const& filename, std::istream* stream)
+    : tokens(stream, 2), idx(0), logger(errors)
+{
+    logger.push(filename, -1);
+}
+
 LexState Parser::operator[](int i) { return tokens[i]; }
 
 AST::Exp Parser::Exp()
@@ -287,8 +294,8 @@ AST::Program Parser::Program()
 }
 
 TranslationUnit::TranslationUnit(std::string name)
-    : filename(name), stream(filename, std::ios::in), parser(&stream),
-      syntax_tree(parser.Program())
+    : filename(name), stream(filename, std::ios::in),
+      parser(filename, &stream), syntax_tree(parser.Program())
 {
 }
 

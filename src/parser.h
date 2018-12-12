@@ -6,7 +6,8 @@
 #include "util.h"
 #include <fstream>
 
-class Parser {
+class Parser
+{
     AST::Exp _Exp(AST::Exp&& lhs);
 
     void record_context(std::string label);
@@ -16,7 +17,8 @@ class Parser {
     void unexpected(Lexeme un, int id);
 
   public:
-    Parser(std::istream* stream);
+    Parser(std::istream*);
+    Parser(std::string const&, std::istream*);
     LexState operator[](int i);
     friend class AST::Builder;
 
@@ -40,7 +42,8 @@ class Parser {
     Logger logger;
 };
 
-class TranslationUnit {
+class TranslationUnit
+{
     std::string   filename;
     std::ifstream stream;
     Parser        parser;

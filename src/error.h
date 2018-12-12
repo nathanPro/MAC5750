@@ -14,8 +14,17 @@ template <typename ostream> class OstreamReporter
     void operator()(const AST::ParsingError& err)
     {
         Util::write(out, "Context:");
-        for (size_t i = 0; i < err.ctx.size(); i++)
-            Util::write(out, "[", err.lines[i], "]", err.ctx[i]);
+        {
+            size_t i = 0;
+            if (err.ctx.size() && err.lines[0] == -1) {
+                Util::write(out,
+                            err.ctx[0] + std::string(":") +
+                                std::to_string(err.lines.back()));
+                i++;
+            }
+            for (; i < err.ctx.size(); i++)
+                Util::write(out, "[", err.lines[i], "]", err.ctx[i]);
+        }
         std::visit(*this, err.inner);
     }
 
