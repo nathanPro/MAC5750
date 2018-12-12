@@ -28,7 +28,10 @@ int translate(Tree& tree, AST::Exp const& exp)
                     << Grammar::visit(*this, exp.rhs);
             return builder.build();
         }
-        int operator()(AST::parenExp const&) { return -1; }
+        int operator()(AST::parenExp const& exp)
+        {
+            return Grammar::visit(*this, exp.inner);
+        }
         int operator()(AST::andExp const&) { return -1; }
         int operator()(AST::lessExp const&) { return -1; }
         int operator()(AST::minusExp const&) { return -1; }
