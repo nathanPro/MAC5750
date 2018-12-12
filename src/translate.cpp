@@ -20,10 +20,18 @@ int translate(Tree& tree, AST::Exp const& exp)
             builder << IRTag::CONST << exp.value;
             return builder.build();
         }
+        int operator()(AST::prodExp const& exp)
+        {
+            IRBuilder builder(t);
+            builder << IRTag::BINOP << IR::BinopId::MUL
+                    << Grammar::visit(*this, exp.lhs)
+                    << Grammar::visit(*this, exp.rhs);
+            return builder.build();
+        }
+        int operator()(AST::parenExp const&) { return -1; }
         int operator()(AST::andExp const&) { return -1; }
         int operator()(AST::lessExp const&) { return -1; }
         int operator()(AST::minusExp const&) { return -1; }
-        int operator()(AST::prodExp const&) { return -1; }
         int operator()(AST::indexingExp const&) { return -1; }
         int operator()(AST::lengthExp const&) { return -1; }
         int operator()(AST::methodCallExp const&) { return -1; }
@@ -34,7 +42,6 @@ int translate(Tree& tree, AST::Exp const& exp)
         int operator()(AST::newArrayExp const&) { return -1; }
         int operator()(AST::newObjectExp const&) { return -1; }
         int operator()(AST::bangExp const&) { return -1; }
-        int operator()(AST::parenExp const&) { return -1; }
         int operator()(AST::ExpListRule const&) { return -1; }
     };
     return Grammar::visit(Visitor{tree}, exp);
