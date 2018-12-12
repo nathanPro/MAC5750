@@ -13,17 +13,19 @@ enum class kind_t { notfound, var, instance, method };
 class meta_data;
 
 struct memory_layout {
+    using common_t = std::vector<AST::FormalDecl>;
     std::map<std::string, int> value;
     int                        size;
 
     memory_layout(meta_data const&, std::map<std::string, kind_t>&,
-                  std::string const&,
-                  std::vector<AST::VarDecl> const&);
+                  common_t const&);
     int operator[](std::string const&) const;
 
-  private:
-    std::vector<AST::FormalDecl>
-    smooth(std::vector<AST::VarDecl> const&);
+    static common_t smooth(std::vector<AST::VarDecl> const&);
+    static common_t smooth(AST::FormalList const&);
+    static common_t smooth(AST::ClassDeclNoInheritance const&);
+    static common_t smooth(AST::ClassDeclInheritance const&);
+    static common_t smooth(AST::MainClassRule const&);
 };
 
 class class_spec
@@ -41,8 +43,8 @@ class class_spec
 
     int    size() const;
     kind_t operator[](const std::string&) const;
-    int    base;
 
+    int                        base;
     memory_layout const        layout;
     std::map<std::string, int> method;
 };

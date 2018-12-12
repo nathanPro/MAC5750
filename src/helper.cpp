@@ -2,8 +2,7 @@
 
 namespace helper
 {
-
-std::vector<AST::FormalDecl>
+memory_layout::common_t
 memory_layout::smooth(std::vector<AST::VarDecl> const& vars)
 {
     std::vector<AST::FormalDecl> ans;
@@ -14,22 +13,40 @@ memory_layout::smooth(std::vector<AST::VarDecl> const& vars)
     return ans;
 }
 
+memory_layout::common_t
+memory_layout::smooth(AST::FormalList const& lst)
+{
+    auto flr = Grammar::get<AST::FormalListRule>(lst);
+    return flr.decls;
+}
+
+memory_layout::common_t
+memory_layout::smooth(AST::ClassDeclNoInheritance const& cls)
+{
+    return memory_layout::smooth(cls.variables);
+}
+
+memory_layout::common_t
+memory_layout::smooth(AST::ClassDeclInheritance const& cls)
+{
+    auto aux = memory_layout::smooth(cls.variables);
+    aux.push_back({AST::classType{cls.superclass}, "__base"});
+    std::rotate(begin(aux), prev(end(aux)), end(aux));
+    return aux;
+}
+
+memory_layout::common_t
+memory_layout::smooth(AST::MainClassRule const&)
+{
+    return {};
+}
+
 memory_layout::memory_layout(meta_data const&               data,
                              std::map<std::string, kind_t>& kind,
-                             std::string const&             base_type,
-                             std::vector<AST::VarDecl> const& vars)
+                             memory_layout::common_t const& vars)
     : size(0)
 {
-    std::vector<AST::FormalDecl> aux;
-
-    if (base_type.size())
-        aux.push_back(
-            {AST::Type{AST::classType{base_type}}, "__base"});
-
-    auto tmp = smooth(vars);
-    aux.insert(end(aux), begin(tmp), end(tmp));
-
-    for (auto const& var : aux) {
+    for (auto const& var : vars) {
         kind[var.name]  = kind_t::var;
         value[var.name] = size;
         size += data.type_size(var.type);
@@ -51,8 +68,10 @@ void class_spec::init_methods(
     }
 }
 
-class_spec::class_spec(meta_data const& d, AST::MainClassRule const&)
-    : method_cnt(0), data(d), base(-1), layout(data, kind, {}, {})
+class_spec::class_spec(meta_data const&          d,
+                       AST::MainClassRule const& cls)
+    : method_cnt(0), data(d), base(-1),
+      layout(data, kind, memory_layout::smooth(cls))
 {
     kind["main"]   = kind_t::method;
     method["main"] = method_cnt++;
@@ -61,7 +80,7 @@ class_spec::class_spec(meta_data const& d, AST::MainClassRule const&)
 class_spec::class_spec(meta_data const&                   d,
                        AST::ClassDeclNoInheritance const& cls)
     : method_cnt(0), data(d), base(-1),
-      layout(data, kind, {}, cls.variables)
+      layout(data, kind, memory_layout::smooth(cls))
 {
     init_methods(cls.methods);
 }
@@ -69,7 +88,7 @@ class_spec::class_spec(meta_data const&                   d,
 class_spec::class_spec(meta_data const&                 d,
                        AST::ClassDeclInheritance const& cls)
     : method_cnt(0), data(d), base(data.c_id.at(cls.superclass)),
-      layout(data, kind, cls.superclass, cls.variables)
+      layout(data, kind, memory_layout::smooth(cls))
 {
     init_methods(cls.methods);
 }
