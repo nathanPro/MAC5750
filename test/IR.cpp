@@ -95,19 +95,6 @@ TEST_F(IRBuilderTest, jumpBuiltWithBuilder)
     EXPECT_EQ(tree.get_jump(ref).targets, 2);
 }
 
-TEST_F(IRBuilderTest, cjumpBuiltWithBuilder)
-{
-    IRBuilder builder(tree);
-    builder << IR::IRTag::CJUMP << IR::RelopId::LE << 2 << 3 << 32
-            << 36;
-    auto ref = builder.build();
-    EXPECT_EQ(tree.get_cjump(ref).op, IR::RelopId::LE);
-    EXPECT_EQ(tree.get_cjump(ref).lhs, 2);
-    EXPECT_EQ(tree.get_cjump(ref).rhs, 3);
-    EXPECT_EQ(tree.get_cjump(ref).iftrue, 32);
-    EXPECT_EQ(tree.get_cjump(ref).iffalse, 36);
-}
-
 TEST_F(IRBuilderTest, labelBuiltWithBuilder)
 {
     IRBuilder builder(tree);

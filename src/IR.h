@@ -40,7 +40,6 @@ enum class IRTag {
     MOVE,
     EXP,
     JUMP,
-    CJUMP,
     LABEL
 };
 
@@ -117,7 +116,6 @@ class Tree
     std::vector<Move>  _move;
     std::vector<Exp>   _exp;
     std::vector<Jump>  _jump;
-    std::vector<Cjump> _cjump;
     std::vector<Label> _label;
 
   public:
@@ -134,7 +132,6 @@ class Tree
     Move&  get_move(int ref);
     Exp&   get_exp(int ref);
     Jump&  get_jump(int ref);
-    Cjump& get_cjump(int ref);
     Label& get_label(int ref);
 
     // generic functinality
@@ -179,8 +176,6 @@ struct Catamorphism {
             return f(tree.get_exp(ref));
         case IRTag::JUMP:
             return f(tree.get_jump(ref));
-        case IRTag::CJUMP:
-            return f(tree.get_cjump(ref));
         case IRTag::LABEL:
             return f(tree.get_label(ref));
         }
