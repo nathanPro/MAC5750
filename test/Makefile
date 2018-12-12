@@ -2,7 +2,12 @@ GTEST_DIR = googletest/googletest
 GTESTFLAGS = -isystem $(GTEST_DIR)/include -I $(GTEST_DIR) -pthread
 
 .PHONY: test
-test: helper translation IR catamorphism
+test: parsing helper translation IR catamorphism
+
+parsing: parsing.cpp ../src/parser.h ../src/parser.cpp libgtest.a
+	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
+	    parsing.cpp libgtest.a -o parsing
+	./parsing
 
 helper: helper.cpp ../src/helper.cpp ../src/helper.h libgtest.a
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
