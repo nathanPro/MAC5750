@@ -108,15 +108,6 @@ TEST_F(IRBuilderTest, cjumpBuiltWithBuilder)
     EXPECT_EQ(tree.get_cjump(ref).iffalse, 36);
 }
 
-TEST_F(IRBuilderTest, seqBuiltWithBuilder)
-{
-    IRBuilder builder(tree);
-    builder << IR::IRTag::SEQ << 13 << 15;
-    auto ref = builder.build();
-    EXPECT_EQ(tree.get_seq(ref).lhs, 13);
-    EXPECT_EQ(tree.get_seq(ref).rhs, 15);
-}
-
 TEST_F(IRBuilderTest, labelBuiltWithBuilder)
 {
     IRBuilder builder(tree);

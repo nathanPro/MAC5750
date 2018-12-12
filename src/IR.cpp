@@ -24,7 +24,6 @@ IR_GETTER(_move, IRTag::MOVE, Move);
 IR_GETTER(_exp, IRTag::EXP, Exp);
 IR_GETTER(_jump, IRTag::JUMP, Jump);
 IR_GETTER(_cjump, IRTag::CJUMP, Cjump);
-IR_GETTER(_seq, IRTag::SEQ, Seq);
 IR_GETTER(_label, IRTag::LABEL, Label);
 
 #undef IR_GETTER

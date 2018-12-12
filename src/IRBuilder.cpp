@@ -60,10 +60,6 @@ int IRBuilder::build()
         base._cjump.push_back(
             IR::Cjump{data[0], data[1], data[2], data[3], data[4]});
         break;
-    case IR::IRTag::SEQ:
-        base.pos.push_back(base._seq.size());
-        base._seq.push_back(IR::Seq{data[0], data[1]});
-        break;
     case IR::IRTag::LABEL:
         base.pos.push_back(base._label.size());
         base._label.push_back(IR::Label{data[0]});
