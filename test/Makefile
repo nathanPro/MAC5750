@@ -12,7 +12,7 @@ catamorphism: catamorphism.cpp libgtest.a
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
 	catamorphism.cpp libgtest.a -o catamorphism
 	./catamorphism
-IR: IR.cpp libgtest.a
+IR: IR.cpp libgtest.a ../src/IR.h ../src/IR.cpp
 	$(CXX) $(CXXFLAGS) $(GTESTFLAGS) $(OBJS) \
 	IR.cpp libgtest.a -o IR
 	./IR
