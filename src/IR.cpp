@@ -1,12 +1,15 @@
 #include "IR.h"
 
-static void check_id(int found, int expected) {
+static void check_id(int found, int expected)
+{
     if (found != expected) throw IR::BadAccess{found, expected};
 }
 
-namespace IR {
+namespace IR
+{
 #define IR_GETTER(name, ID, ret)                                     \
-    ret& Tree::get##name(int ref) {                                  \
+    ret& Tree::get##name(int ref)                                    \
+    {                                                                \
         check_id(kind[ref], static_cast<int>(ID));                   \
         return name[pos[ref]];                                       \
     }
@@ -17,7 +20,6 @@ IR_GETTER(_temp, IRTag::TEMP, Temp)
 IR_GETTER(_binop, IRTag::BINOP, Binop)
 IR_GETTER(_mem, IRTag::MEM, Mem)
 IR_GETTER(_call, IRTag::CALL, Call)
-IR_GETTER(_eseq, IRTag::ESEQ, Eseq)
 IR_GETTER(_move, IRTag::MOVE, Move);
 IR_GETTER(_exp, IRTag::EXP, Exp);
 IR_GETTER(_jump, IRTag::JUMP, Jump);

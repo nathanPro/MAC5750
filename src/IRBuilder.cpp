@@ -2,17 +2,20 @@
 
 IRBuilder::IRBuilder(IR::Tree& tree) : base(tree), ds(0) {}
 
-IRBuilder& IRBuilder::operator<<(IR::IRTag in) {
+IRBuilder& IRBuilder::operator<<(IR::IRTag in)
+{
     kind = static_cast<int>(in);
     return *this;
 }
 
-IRBuilder& IRBuilder::operator<<(int in) {
+IRBuilder& IRBuilder::operator<<(int in)
+{
     data[ds++] = in;
     return *this;
 }
 
-int IRBuilder::build() {
+int IRBuilder::build()
+{
     base.kind.push_back(kind);
     ref = base.id++;
     switch (static_cast<IR::IRTag>(kind)) {
@@ -39,10 +42,6 @@ int IRBuilder::build() {
     case IR::IRTag::CALL:
         base.pos.push_back(base._call.size());
         base._call.push_back(IR::Call{data[0], data[1]});
-        break;
-    case IR::IRTag::ESEQ:
-        base.pos.push_back(base._eseq.size());
-        base._eseq.push_back(IR::Eseq{data[0], data[1]});
         break;
     case IR::IRTag::MOVE:
         base.pos.push_back(base._move.size());

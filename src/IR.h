@@ -7,7 +7,8 @@
 #include <vector>
 
 class IRBuilder;
-namespace IR {
+namespace IR
+{
 
 struct BadAccess {
     int found;
@@ -36,7 +37,6 @@ enum class IRTag {
     BINOP,
     MEM,
     CALL,
-    ESEQ,
     MOVE,
     EXP,
     JUMP,
@@ -72,11 +72,6 @@ struct Call {
     int explist;
 };
 
-struct Eseq {
-    int stm;
-    int exp;
-};
-
 struct Move {
     int dst;
     int src;
@@ -108,7 +103,8 @@ struct Label {
     int label;
 };
 
-class Tree {
+class Tree
+{
     friend class ::IRBuilder;
     // Type checking info
     size_t           id;
@@ -122,7 +118,6 @@ class Tree {
     std::vector<Binop> _binop;
     std::vector<Mem>   _mem;
     std::vector<Call>  _call;
-    std::vector<Eseq>  _eseq;
 
     // Stm types
     std::vector<Move>  _move;
@@ -141,7 +136,6 @@ class Tree {
     Binop& get_binop(int ref);
     Mem&   get_mem(int ref);
     Call&  get_call(int ref);
-    Eseq&  get_eseq(int ref);
 
     // Stm types
     Move&  get_move(int ref);
@@ -164,14 +158,16 @@ struct Catamorphism {
     F<rec_t>       f;
 
     Catamorphism(IR::Tree& _t)
-        : tree(_t), x(tree.size()), f([&](int i) { return x[i]; }) {
+        : tree(_t), x(tree.size()), f([&](int i) { return x[i]; })
+    {
         for (size_t i = 0; i < tree.size(); i++) x[i] = calculate(i);
     }
 
     R operator()(int ref) { return x[ref]; }
 
   private:
-    R calculate(int ref) {
+    R calculate(int ref)
+    {
         switch (static_cast<IRTag>(tree.get_type(ref))) {
         case IRTag::CONST:
             return f(tree.get_const(ref));
@@ -185,8 +181,6 @@ struct Catamorphism {
             return f(tree.get_mem(ref));
         case IRTag::CALL:
             return f(tree.get_call(ref));
-        case IRTag::ESEQ:
-            return f(tree.get_eseq(ref));
         case IRTag::MOVE:
             return f(tree.get_move(ref));
         case IRTag::EXP:

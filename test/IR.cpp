@@ -1,14 +1,16 @@
 #include "IRBuilder.h"
 #include "gtest/gtest.h"
 
-class IRBuilderTest : public ::testing::Test {
+class IRBuilderTest : public ::testing::Test
+{
   protected:
     IRBuilderTest() : tree() {}
 
     IR::Tree tree;
 };
 
-TEST_F(IRBuilderTest, buildMethodChangesTree) {
+TEST_F(IRBuilderTest, buildMethodChangesTree)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::CONST << 42;
     EXPECT_EQ(tree.size(), 0);
@@ -16,28 +18,32 @@ TEST_F(IRBuilderTest, buildMethodChangesTree) {
     EXPECT_EQ(tree.size(), 1);
 }
 
-TEST_F(IRBuilderTest, constBuiltWithBuilder) {
+TEST_F(IRBuilderTest, constBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::CONST << 42;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_const(ref).value, 42);
 }
 
-TEST_F(IRBuilderTest, nameBuiltWithBuilder) {
+TEST_F(IRBuilderTest, nameBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::NAME << 13;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_name(ref).label, 13);
 }
 
-TEST_F(IRBuilderTest, tempBuiltWithBuilder) {
+TEST_F(IRBuilderTest, tempBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::TEMP << 11;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_temp(ref).id, 11);
 }
 
-TEST_F(IRBuilderTest, binopBuiltWithBuilder) {
+TEST_F(IRBuilderTest, binopBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::BINOP << IR::BinopId::PLUS << 10 << 11;
     auto ref = builder.build();
@@ -46,14 +52,16 @@ TEST_F(IRBuilderTest, binopBuiltWithBuilder) {
     EXPECT_EQ(tree.get_binop(ref).rhs, 11);
 }
 
-TEST_F(IRBuilderTest, memBuiltWithBuilder) {
+TEST_F(IRBuilderTest, memBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::MEM << 32;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_mem(ref).exp, 32);
 }
 
-TEST_F(IRBuilderTest, callBuiltWithBuilder) {
+TEST_F(IRBuilderTest, callBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::CALL << 1 << 2;
     auto ref = builder.build();
@@ -61,15 +69,8 @@ TEST_F(IRBuilderTest, callBuiltWithBuilder) {
     EXPECT_EQ(tree.get_call(ref).explist, 2);
 }
 
-TEST_F(IRBuilderTest, eseqBuiltWithBuilder) {
-    IRBuilder builder(tree);
-    builder << IR::IRTag::ESEQ << 1 << 2;
-    auto ref = builder.build();
-    EXPECT_EQ(tree.get_eseq(ref).stm, 1);
-    EXPECT_EQ(tree.get_eseq(ref).exp, 2);
-}
-
-TEST_F(IRBuilderTest, moveBuiltWithBuilder) {
+TEST_F(IRBuilderTest, moveBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::MOVE << 1 << 2;
     auto ref = builder.build();
@@ -77,14 +78,16 @@ TEST_F(IRBuilderTest, moveBuiltWithBuilder) {
     EXPECT_EQ(tree.get_move(ref).src, 2);
 }
 
-TEST_F(IRBuilderTest, expBuiltWithBuilder) {
+TEST_F(IRBuilderTest, expBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::EXP << 1;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_exp(ref).exp, 1);
 }
 
-TEST_F(IRBuilderTest, jumpBuiltWithBuilder) {
+TEST_F(IRBuilderTest, jumpBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::JUMP << 1 << 2;
     auto ref = builder.build();
@@ -92,7 +95,8 @@ TEST_F(IRBuilderTest, jumpBuiltWithBuilder) {
     EXPECT_EQ(tree.get_jump(ref).targets, 2);
 }
 
-TEST_F(IRBuilderTest, cjumpBuiltWithBuilder) {
+TEST_F(IRBuilderTest, cjumpBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::CJUMP << IR::RelopId::LE << 2 << 3 << 32
             << 36;
@@ -104,7 +108,8 @@ TEST_F(IRBuilderTest, cjumpBuiltWithBuilder) {
     EXPECT_EQ(tree.get_cjump(ref).iffalse, 36);
 }
 
-TEST_F(IRBuilderTest, seqBuiltWithBuilder) {
+TEST_F(IRBuilderTest, seqBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::SEQ << 13 << 15;
     auto ref = builder.build();
@@ -112,14 +117,16 @@ TEST_F(IRBuilderTest, seqBuiltWithBuilder) {
     EXPECT_EQ(tree.get_seq(ref).rhs, 15);
 }
 
-TEST_F(IRBuilderTest, labelBuiltWithBuilder) {
+TEST_F(IRBuilderTest, labelBuiltWithBuilder)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::LABEL << 12;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_label(ref).label, 12);
 }
 
-TEST_F(IRBuilderTest, treeKeepsType) {
+TEST_F(IRBuilderTest, treeKeepsType)
+{
     int c, n;
     {
         IRBuilder builder(tree);
@@ -137,21 +144,24 @@ TEST_F(IRBuilderTest, treeKeepsType) {
     EXPECT_NE(tree.get_type(n), static_cast<int>(IR::IRTag::CONST));
 }
 
-TEST_F(IRBuilderTest, wrongGetNameThrows) {
+TEST_F(IRBuilderTest, wrongGetNameThrows)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::CONST << 42;
     auto c = builder.build();
     EXPECT_THROW(tree.get_name(c), IR::BadAccess);
 }
 
-TEST_F(IRBuilderTest, stmAccessedAsExpThrows) {
+TEST_F(IRBuilderTest, stmAccessedAsExpThrows)
+{
     IRBuilder builder(tree);
     builder << IR::IRTag::MOVE << 12 << 14;
     auto stm = builder.build();
     EXPECT_THROW(tree.get_const(stm), IR::BadAccess);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
