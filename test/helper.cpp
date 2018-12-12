@@ -51,6 +51,13 @@ TEST_F(HelperTest, MetaDataHandlesInheritance)
     EXPECT_EQ(data["Child"]["ComputeFac"], helper::kind_t::method);
 }
 
+TEST_F(HelperTest, MetaDataWorksOutOfOrder)
+{
+    TranslationUnit unordered("../input/unordered_classes.miniJava");
+    EXPECT_TRUE(unordered.check());
+    EXPECT_NO_THROW(helper::meta_data(unordered.syntax_tree));
+}
+
 TEST_F(HelperTest, MetaDataDetectsCyclicDepdendencies)
 {
     TranslationUnit cycle("../input/cyclic_classes.miniJava");
