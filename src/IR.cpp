@@ -28,5 +28,8 @@ IR_GETTER(_label, IRTag::LABEL, Label);
 #undef IR_GETTER
 size_t Tree::size() const { return id; }
 
-int Tree::get_type(int ref) { return kind[ref]; }
+IRTag Tree::get_type(int ref)
+{
+    return static_cast<IRTag>(kind[ref]);
+}
 } // namespace IR

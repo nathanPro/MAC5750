@@ -116,10 +116,10 @@ TEST_F(IRBuilderTest, treeKeepsType)
         builder << IR::IRTag::NAME << 13;
         n = builder.build();
     }
-    EXPECT_EQ(tree.get_type(c), static_cast<int>(IR::IRTag::CONST));
-    EXPECT_EQ(tree.get_type(n), static_cast<int>(IR::IRTag::NAME));
-    EXPECT_NE(tree.get_type(c), static_cast<int>(IR::IRTag::NAME));
-    EXPECT_NE(tree.get_type(n), static_cast<int>(IR::IRTag::CONST));
+    EXPECT_EQ(tree.get_type(c), IR::IRTag::CONST);
+    EXPECT_EQ(tree.get_type(n), IR::IRTag::NAME);
+    EXPECT_NE(tree.get_type(c), IR::IRTag::NAME);
+    EXPECT_NE(tree.get_type(n), IR::IRTag::CONST);
 }
 
 TEST_F(IRBuilderTest, wrongGetNameThrows)

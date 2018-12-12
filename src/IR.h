@@ -135,7 +135,7 @@ class Tree
     Label& get_label(int ref);
 
     // generic functinality
-    int    get_type(int ref);
+    IRTag  get_type(int ref);
     size_t size() const;
 };
 
