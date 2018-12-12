@@ -41,9 +41,9 @@ TEST_F(HelperTest, MetaDataDistinguishesMethodFromVariable)
 TEST_F(HelperTest, MetaDataRecordLayout)
 {
     EXPECT_EQ(data["Fac"].layout["t1"], 0);
-    EXPECT_EQ(data["Fac"].layout["t2"], 8);
+    EXPECT_EQ(data["Fac"].layout["t2"], 4);
     EXPECT_EQ(data["Factorial"].size(), 0);
-    EXPECT_EQ(data["Fac"].size(), 16);
+    EXPECT_EQ(data["Fac"].size(), 8);
 }
 
 TEST_F(HelperTest, MetaDataHandlesInheritance)

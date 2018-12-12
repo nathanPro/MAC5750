@@ -3,24 +3,22 @@
 namespace helper
 {
 
-class_spec::class_spec(meta_data const& d, const AST::MainClassRule&)
-    : method_cnt(0), data(d), base(-1)
+memory_layout::memory_layout(meta_data const&                 data,
+                             std::map<std::string, kind_t>&   kind,
+                             std::vector<AST::VarDecl> const& vars)
+    : size(0)
 {
-    kind["main"]   = kind_t::method;
-    method["main"] = method_cnt++;
-    __size         = 0;
+    for (auto const& var : vars) {
+        auto const& vdr = Grammar::get<AST::VarDeclRule>(var);
+        kind[vdr.name]  = kind_t::var;
+        value[vdr.name] = size;
+        size += data.type_size(vdr.type);
+    }
 }
 
-void class_spec::init_vars(std::vector<AST::VarDecl> const& vars)
+int memory_layout::operator[](std::string const& name) const
 {
-    int tot = 0;
-    for (auto const& var : vars) {
-        auto const& vdr  = Grammar::get<AST::VarDeclRule>(var);
-        kind[vdr.name]   = kind_t::var;
-        layout[vdr.name] = tot;
-        tot += data.type_size(vdr.type);
-    }
-    __size = tot;
+    return value.at(name);
 }
 
 void class_spec::init_methods(
@@ -33,21 +31,30 @@ void class_spec::init_methods(
     }
 }
 
-class_spec::class_spec(meta_data const&                   d,
-                       const AST::ClassDeclNoInheritance& cls)
-    : method_cnt(0), data(d), base(-1)
+class_spec::class_spec(meta_data const& d, AST::MainClassRule const&)
+    : method_cnt(0), data(d), base(-1), layout(data, kind, {})
 {
-    init_vars(cls.variables);
+    kind["main"]   = kind_t::method;
+    method["main"] = method_cnt++;
+}
+
+class_spec::class_spec(meta_data const&                   d,
+                       AST::ClassDeclNoInheritance const& cls)
+    : method_cnt(0), data(d), base(-1),
+      layout(data, kind, cls.variables)
+{
     init_methods(cls.methods);
 }
 
 class_spec::class_spec(meta_data const&                 d,
-                       const AST::ClassDeclInheritance& cls)
-    : method_cnt(0), data(d), base(data.c_id.at(cls.superclass))
+                       AST::ClassDeclInheritance const& cls)
+    : method_cnt(0), data(d), base(data.c_id.at(cls.superclass)),
+      layout(data, kind, cls.variables)
 {
-    init_vars(cls.variables);
     init_methods(cls.methods);
 }
+
+int class_spec::size() const { return layout.size; }
 
 kind_t class_spec::operator[](std::string const& name) const
 {
@@ -56,14 +63,12 @@ kind_t class_spec::operator[](std::string const& name) const
     return kind_t::notfound;
 }
 
-int class_spec::size() const { return __size; }
-
-meta_data::meta_data(const AST::Program& prog)
+meta_data::meta_data(AST::Program const& prog)
 {
     Grammar::visit(*this, prog);
 }
 
-void meta_data::operator()(const AST::ProgramRule& prog)
+void meta_data::operator()(AST::ProgramRule const& prog)
 {
     class_graph top_sort(prog);
     for (int i : top_sort.ans)
@@ -73,22 +78,27 @@ void meta_data::operator()(const AST::ProgramRule& prog)
             Grammar::visit(*this, prog.classes[i - 1]);
 }
 
-void meta_data::operator()(const AST::MainClassRule& cls)
+void meta_data::operator()(AST::MainClassRule const& cls)
 {
     c_id[cls.name] = static_cast<int>(c_info.size());
     c_info.emplace_back(*this, cls);
 }
 
-void meta_data::operator()(const AST::ClassDeclNoInheritance& cls)
+void meta_data::operator()(AST::ClassDeclNoInheritance const& cls)
 {
     c_id[cls.name] = static_cast<int>(c_info.size());
     c_info.emplace_back(*this, cls);
 }
 
-void meta_data::operator()(const AST::ClassDeclInheritance& cls)
+void meta_data::operator()(AST::ClassDeclInheritance const& cls)
 {
     c_id[cls.name] = static_cast<int>(c_info.size());
     c_info.emplace_back(*this, cls);
+}
+
+int meta_data::count(std::string const& name) const
+{
+    return c_id.count(name);
 }
 
 class_spec& meta_data::operator[](std::string const& name)
@@ -101,18 +111,13 @@ class_spec const& meta_data::operator[](std::string const& name) const
     return c_info.at(c_id.at(name));
 }
 
-int meta_data::count(std::string const& name) const
-{
-    return c_id.count(name);
-}
-
-int meta_data::type_size(const AST::Type& type) const
+int meta_data::type_size(AST::Type const& type) const
 {
     struct Visitor {
-        const meta_data& data;
+        meta_data const& data;
         int operator()(AST::integerArrayType const&) { return 8; }
         int operator()(AST::booleanType const&) { return 1; }
-        int operator()(AST::integerType const&) { return 8; }
+        int operator()(AST::integerType const&) { return 4; }
         int operator()(AST::classType const& ct)
         {
             return data[ct.value].size();

@@ -12,14 +12,21 @@ namespace helper
 enum class kind_t { notfound, var, instance, method };
 class meta_data;
 
+struct memory_layout {
+    std::map<std::string, int> value;
+    int                        size;
+
+    memory_layout(meta_data const&, std::map<std::string, kind_t>&,
+                  std::vector<AST::VarDecl> const&);
+    int operator[](std::string const&) const;
+};
+
 class class_spec
 {
     int                           method_cnt;
     std::map<std::string, kind_t> kind;
-    int                           __size;
     meta_data const&              data;
 
-    void init_vars(std::vector<AST::VarDecl> const&);
     void init_methods(std::vector<AST::MethodDecl> const&);
 
   public:
@@ -27,11 +34,11 @@ class class_spec
     class_spec(meta_data const&, AST::ClassDeclNoInheritance const&);
     class_spec(meta_data const&, AST::ClassDeclInheritance const&);
 
-    int       size() const;
-    kind_t    operator[](const std::string&) const;
-    int const base;
+    int    size() const;
+    kind_t operator[](const std::string&) const;
+    int    base;
 
-    std::map<std::string, int> layout;
+    memory_layout const        layout;
     std::map<std::string, int> method;
 };
 
