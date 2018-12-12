@@ -3,11 +3,18 @@
 namespace helper
 {
 
-memory_layout::memory_layout(meta_data const&                 data,
-                             std::map<std::string, kind_t>&   kind,
+memory_layout::memory_layout(meta_data const&               data,
+                             std::map<std::string, kind_t>& kind,
+                             std::string const&             base_type,
                              std::vector<AST::VarDecl> const& vars)
     : size(0)
 {
+    if (base_type.size()) {
+        kind["__base"]  = kind_t::var;
+        value["__base"] = size;
+        size += data.type_size(base_type);
+    }
+
     for (auto const& var : vars) {
         auto const& vdr = Grammar::get<AST::VarDeclRule>(var);
         kind[vdr.name]  = kind_t::var;
@@ -32,7 +39,7 @@ void class_spec::init_methods(
 }
 
 class_spec::class_spec(meta_data const& d, AST::MainClassRule const&)
-    : method_cnt(0), data(d), base(-1), layout(data, kind, {})
+    : method_cnt(0), data(d), base(-1), layout(data, kind, {}, {})
 {
     kind["main"]   = kind_t::method;
     method["main"] = method_cnt++;
@@ -41,7 +48,7 @@ class_spec::class_spec(meta_data const& d, AST::MainClassRule const&)
 class_spec::class_spec(meta_data const&                   d,
                        AST::ClassDeclNoInheritance const& cls)
     : method_cnt(0), data(d), base(-1),
-      layout(data, kind, cls.variables)
+      layout(data, kind, {}, cls.variables)
 {
     init_methods(cls.methods);
 }
@@ -49,7 +56,7 @@ class_spec::class_spec(meta_data const&                   d,
 class_spec::class_spec(meta_data const&                 d,
                        AST::ClassDeclInheritance const& cls)
     : method_cnt(0), data(d), base(data.c_id.at(cls.superclass)),
-      layout(data, kind, cls.variables)
+      layout(data, kind, cls.superclass, cls.variables)
 {
     init_methods(cls.methods);
 }
@@ -111,6 +118,11 @@ class_spec const& meta_data::operator[](std::string const& name) const
     return c_info.at(c_id.at(name));
 }
 
+int meta_data::type_size(std::string const& type) const
+{
+    return (*this)[type].size();
+}
+
 int meta_data::type_size(AST::Type const& type) const
 {
     struct Visitor {
@@ -120,7 +132,7 @@ int meta_data::type_size(AST::Type const& type) const
         int operator()(AST::integerType const&) { return 4; }
         int operator()(AST::classType const& ct)
         {
-            return data[ct.value].size();
+            return data.type_size(ct.value);
         }
     };
     return Grammar::visit(Visitor{*this}, type);

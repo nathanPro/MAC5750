@@ -17,6 +17,7 @@ struct memory_layout {
     int                        size;
 
     memory_layout(meta_data const&, std::map<std::string, kind_t>&,
+                  std::string const&,
                   std::vector<AST::VarDecl> const&);
     int operator[](std::string const&) const;
 };
@@ -65,7 +66,8 @@ class meta_data
     int               count(std::string const&) const;
     class_spec&       operator[](std::string const&);
     class_spec const& operator[](std::string const&) const;
-    int               type_size(const AST::Type&) const;
+    int               type_size(std::string const&) const;
+    int               type_size(AST::Type const&) const;
 };
 } // namespace helper
 
