@@ -44,6 +44,7 @@ TEST_F(HelperTest, MetaDataRecordLayout)
     EXPECT_EQ(data["Fac"].layout["t2"], 4);
     EXPECT_EQ(data["Factorial"].size(), 0);
     EXPECT_EQ(data["Fac"].size(), 8);
+    EXPECT_EQ(data["Child"].size(), data["Fac"].size());
 }
 
 TEST_F(HelperTest, MetaDataHandlesInheritance)
