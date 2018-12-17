@@ -1,4 +1,5 @@
 #include "error.h"
+#include "helper.h"
 #include "parser.h"
 #include "translate.h"
 #include "gtest/gtest.h"
@@ -40,6 +41,21 @@ TEST(translatorTest, translateProd)
     EXPECT_EQ(tree.get_const(lhs).value, 3);
 
     ASSERT_NE(rhs, -1);
+}
+
+TEST(translatorTest, translateMain)
+{
+    TranslationUnit tu("../input/calc.miniJava");
+    ASSERT_TRUE(tu.check());
+
+    IR::Tree tree;
+    EXPECT_NO_THROW(tree = IR::Tree(tu));
+
+    std::string const main_class = "Calculator";
+
+    EXPECT_EQ(tu.data.count(main_class), 1);
+    EXPECT_EQ(tu.data[main_class]["main"], helper::kind_t::method);
+    EXPECT_EQ(tu.entry_point, tu.data[main_class]["main"].label);
 }
 
 int main(int argc, char** argv)

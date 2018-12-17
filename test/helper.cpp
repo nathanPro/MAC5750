@@ -67,6 +67,17 @@ TEST_F(HelperTest, MetaDataDetectsCyclicDepdendencies)
                  helper::cyclic_classes);
 }
 
+TEST_F(HelperTest, MetaDataRecordsMethodNames)
+{
+    TranslationUnit calc("../input/calc.miniJava");
+    EXPECT_TRUE(cycle.check());
+
+    std::string const main_class = "Calculator";
+    helper::meta_data data(cycle.syntax_tree);
+
+    EXPECT_EQ(data[main_class]["main"].label, "main");
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
