@@ -6,42 +6,59 @@ int translate(Tree& tree, AST::Exp const& exp)
 {
     struct Visitor {
         Tree& t;
-        int   operator()(AST::sumExp const& sum)
+
+        int binop(IR::BinopId                                id,
+                  AST::__detail::BinaryRule<AST::Exp> const& exp)
         {
-            IRBuilder builder(t);
-            builder << IRTag::BINOP << IR::BinopId::PLUS
-                    << Grammar::visit(*this, sum.lhs)
-                    << Grammar::visit(*this, sum.rhs);
-            return builder.build();
+            IRBuilder ans(t);
+            ans << IRTag::BINOP << id
+                << Grammar::visit(*this, exp.lhs)
+                << Grammar::visit(*this, exp.rhs);
+            return ans.build();
         }
+
+        int operator()(AST::andExp const& exp)
+        {
+            return binop(IR::BinopId::AND, exp);
+        }
+
+        int operator()(AST::sumExp const& exp)
+        {
+            return binop(IR::BinopId::PLUS, exp);
+        }
+
+        int operator()(AST::minusExp const& exp)
+        {
+            return binop(IR::BinopId::MINUS, exp);
+        }
+
+        int operator()(AST::prodExp const& exp)
+        {
+            return binop(IR::BinopId::MUL, exp);
+        }
+
         int operator()(AST::integerExp const& exp)
         {
             IRBuilder builder(t);
             builder << IRTag::CONST << exp.value;
             return builder.build();
         }
-        int operator()(AST::prodExp const& exp)
-        {
-            IRBuilder builder(t);
-            builder << IRTag::BINOP << IR::BinopId::MUL
-                    << Grammar::visit(*this, exp.lhs)
-                    << Grammar::visit(*this, exp.rhs);
-            return builder.build();
-        }
         int operator()(AST::parenExp const& exp)
         {
             return Grammar::visit(*this, exp.inner);
         }
-        int operator()(AST::andExp const&) { return -1; }
+
         int operator()(AST::lessExp const&) { return -1; }
-        int operator()(AST::minusExp const&) { return -1; }
         int operator()(AST::indexingExp const&) { return -1; }
+
         int operator()(AST::lengthExp const&) { return -1; }
         int operator()(AST::methodCallExp const&) { return -1; }
+
         int operator()(AST::trueExp const&) { return -1; }
         int operator()(AST::falseExp const&) { return -1; }
         int operator()(AST::thisExp const&) { return -1; }
         int operator()(AST::identifierExp const&) { return -1; }
+
         int operator()(AST::newArrayExp const&) { return -1; }
         int operator()(AST::newObjectExp const&) { return -1; }
         int operator()(AST::bangExp const&) { return -1; }
