@@ -42,6 +42,22 @@ TEST(translatorTest, translateProd)
     ASSERT_NE(rhs, -1);
 }
 
+TEST(translatorTest, translatePrint)
+{
+    IR::Tree tree;
+    auto stream = std::stringstream("System.out.println(21 * 2);\n");
+    auto ir     = IR::translate(tree, Parser(&stream).Stm());
+    ASSERT_NE(ir, -1);
+    EXPECT_EQ(tree.get_type(ir), IR::IRTag::CALL);
+    auto [f, _es] = tree.get_call(ir);
+    EXPECT_EQ(f, 0);
+
+    auto es = tree.get_explist(_es);
+    EXPECT_EQ(es.size(), static_cast<size_t>(1));
+    EXPECT_EQ(tree.get_type(es[0]), IR::IRTag::BINOP);
+    EXPECT_EQ(tree.get_binop(es[0]).op, IR::BinopId::MUL);
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
