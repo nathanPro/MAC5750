@@ -32,4 +32,13 @@ IRTag Tree::get_type(int ref)
 {
     return static_cast<IRTag>(kind[ref]);
 }
+
+Explist Tree::get_explist(int ref) { return _explist[ref]; }
+
+int Tree::keep_explist(Explist&& els)
+{
+    int ans = _explist.size();
+    _explist.push_back(els);
+    return ans;
+}
 } // namespace IR

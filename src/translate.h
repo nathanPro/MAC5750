@@ -7,7 +7,8 @@
 
 namespace IR
 {
-int translate(Tree& dst, AST::Exp const& exp);
+int translate(Tree&, AST::Exp const&);
+int translate(Tree&, AST::Stm const&);
 } // namespace IR
 
 #endif

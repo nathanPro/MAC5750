@@ -96,13 +96,16 @@ struct Label {
     int label;
 };
 
+using Explist = std::vector<int>;
+
 class Tree
 {
     friend class ::IRBuilder;
     // Type checking info
-    size_t           id;
-    std::vector<int> kind;
-    std::vector<int> pos;
+    size_t               id;
+    std::vector<int>     kind;
+    std::vector<int>     pos;
+    std::vector<Explist> _explist;
 
     // Exp types
     std::vector<Const> _const;
@@ -135,8 +138,10 @@ class Tree
     Label& get_label(int ref);
 
     // generic functinality
-    IRTag  get_type(int ref);
-    size_t size() const;
+    IRTag   get_type(int ref);
+    size_t  size() const;
+    Explist get_explist(int);
+    int     keep_explist(Explist&&);
 };
 
 template <template <typename C> typename F, typename R>
