@@ -160,8 +160,8 @@ int meta_data::type_size(AST::Type const& type) const
     struct Visitor {
         meta_data const& data;
         int operator()(AST::integerArrayType const&) { return 8; }
-        int operator()(AST::booleanType const&) { return 1; }
-        int operator()(AST::integerType const&) { return 4; }
+        int operator()(AST::booleanType const&) { return 8; }
+        int operator()(AST::integerType const&) { return 8; }
         int operator()(AST::classType const& ct)
         {
             return data.type_size(ct.value);
