@@ -3,6 +3,7 @@
 #include "translate.h"
 #include "gtest/gtest.h"
 #include <sstream>
+#include <tuple>
 
 TEST(translatorTest, translateSum)
 {
@@ -56,6 +57,59 @@ TEST(translatorTest, translatePrint)
     EXPECT_EQ(es.size(), static_cast<size_t>(1));
     EXPECT_EQ(tree.get_type(es[0]), IR::IRTag::BINOP);
     EXPECT_EQ(tree.get_binop(es[0]).op, IR::BinopId::MUL);
+}
+
+TEST(translatorTest, IRPostOrdering)
+{
+    IR::Tree tree;
+    auto stream = std::stringstream("System.out.println(21 * 2);\n");
+    auto ir     = IR::translate(tree, Parser(&stream).Stm());
+    ASSERT_NE(ir, -1);
+
+    std::vector<int> st;
+    st.push_back(ir);
+    while (!st.empty()) {
+        int i = st.back();
+        st.pop_back();
+
+        int lhs = -1, rhs = -1;
+        switch (tree.get_type(i)) {
+        case IR::IRTag::BINOP:
+            lhs = tree.get_binop(i).lhs;
+            rhs = tree.get_binop(i).rhs;
+            break;
+        case IR::IRTag::MEM:
+            lhs = tree.get_mem(i).exp;
+            break;
+        case IR::IRTag::MOVE:
+            lhs = tree.get_move(i).dst;
+            rhs = tree.get_move(i).src;
+            break;
+        case IR::IRTag::EXP:
+            lhs = tree.get_exp(i).exp;
+            break;
+        case IR::IRTag::JUMP:
+            lhs = tree.get_jump(i).exp;
+            break;
+        case IR::IRTag::CALL:
+            for (auto j : tree.get_explist(tree.get_call(i).explist))
+                st.push_back(j);
+            break;
+        case IR::IRTag::NAME:
+        case IR::IRTag::TEMP:
+        case IR::IRTag::LABEL:
+        case IR::IRTag::CONST:
+            break;
+        }
+        if (lhs != -1) {
+            ASSERT_LT(lhs, i);
+            st.push_back(lhs);
+        }
+        if (rhs != -1) {
+            ASSERT_LT(rhs, i);
+            st.push_back(rhs);
+        }
+    }
 }
 
 int main(int argc, char** argv)
