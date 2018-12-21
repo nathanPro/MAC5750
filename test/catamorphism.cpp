@@ -5,9 +5,11 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic push
 
-class catamorphismTest : public ::testing::Test {
+class catamorphismTest : public ::testing::Test
+{
   protected:
-    catamorphismTest() {
+    catamorphismTest()
+    {
         root = [&] {
             IRBuilder builder(tree);
             builder << IR::IRTag::CONST << 0;
@@ -28,21 +30,31 @@ class catamorphismTest : public ::testing::Test {
 };
 
 template <typename C> struct Counter {
-    int operator()(const IR::Binop& binop) {
-        return 1 + fmap(binop.lhs) + fmap(binop.rhs);
+    int operator()(const IR::Binop& binop)
+    {
+        return w + fmap(binop.lhs) + fmap(binop.rhs);
     }
-    template <typename T> int operator()(const T& t) { return 1; }
+    template <typename T> int operator()(const T& t) { return w; }
 
-    Counter(C&& __fmap) : fmap(__fmap) {}
-    C fmap;
+    Counter(C&& __fmap, int _w = 1) : fmap(__fmap), w(_w) {}
+    C   fmap;
+    int w;
 };
 
-TEST_F(catamorphismTest, countNodesCata) {
+TEST_F(catamorphismTest, countNodesCata)
+{
     IR::Catamorphism<Counter, int> F(tree);
     EXPECT_EQ(F(root), 21);
 }
 
-int main(int argc, char** argv) {
+TEST_F(catamorphismTest, CataForwardsArguments)
+{
+    IR::Catamorphism<Counter, int> F(tree, 2);
+    EXPECT_EQ(F(root), 42);
+}
+
+int main(int argc, char** argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
