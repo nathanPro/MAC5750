@@ -41,7 +41,8 @@ enum class IRTag {
     EXP,
     JUMP,
     LABEL,
-    CMP
+    CMP,
+    CJMP
 };
 
 struct Const {
@@ -82,15 +83,12 @@ struct Exp {
 
 struct Jump {
     int exp;
-    int targets;
+    int target;
 };
 
-struct Cjump {
+struct Cjmp {
     int op;
-    int lhs;
-    int rhs;
-    int iftrue;
-    int iffalse;
+    int target;
 };
 
 struct Label {
@@ -127,6 +125,7 @@ class Tree
     std::vector<Jump>  _jump;
     std::vector<Label> _label;
     std::vector<Cmp>   _cmp;
+    std::vector<Cjmp>  _cjmp;
 
   public:
     Tree() : id(0) {}
@@ -144,6 +143,7 @@ class Tree
     Jump&  get_jump(int ref);
     Label& get_label(int ref);
     Cmp&   get_cmp(int ref);
+    Cjmp&  get_cjmp(int ref);
 
     // generic functinality
     IRTag   get_type(int ref);
@@ -195,6 +195,8 @@ struct Catamorphism {
             return f(tree.get_label(ref));
         case IRTag::CMP:
             return f(tree.get_cmp(ref));
+        case IRTag::CJMP:
+            return f(tree.get_cjmp(ref));
         }
         __builtin_unreachable();
     }

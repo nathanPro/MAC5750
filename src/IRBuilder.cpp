@@ -63,6 +63,9 @@ int IRBuilder::build()
         base.pos.push_back(base._cmp.size());
         base._cmp.push_back(IR::Cmp{data[0], data[1]});
         break;
+    case IR::IRTag::CJMP:
+        base.pos.push_back(base._cjmp.size());
+        base._cjmp.push_back(IR::Cjmp{data[0], data[1]});
     }
     return ref;
 }
