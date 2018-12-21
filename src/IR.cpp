@@ -24,6 +24,7 @@ IR_GETTER(_move, IRTag::MOVE, Move)
 IR_GETTER(_exp, IRTag::EXP, Exp)
 IR_GETTER(_jump, IRTag::JUMP, Jump)
 IR_GETTER(_label, IRTag::LABEL, Label)
+IR_GETTER(_cmp, IRTag::CMP, Cmp)
 
 #undef IR_GETTER
 size_t Tree::size() const { return id; }

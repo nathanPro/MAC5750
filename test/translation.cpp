@@ -99,6 +99,7 @@ TEST(translatorTest, IRPostOrdering)
         case IR::IRTag::TEMP:
         case IR::IRTag::LABEL:
         case IR::IRTag::CONST:
+        case IR::IRTag::CMP:
             break;
         }
         if (lhs != -1) {

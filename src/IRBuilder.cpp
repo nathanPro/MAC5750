@@ -59,6 +59,10 @@ int IRBuilder::build()
         base.pos.push_back(base._label.size());
         base._label.push_back(IR::Label{data[0]});
         break;
+    case IR::IRTag::CMP:
+        base.pos.push_back(base._cmp.size());
+        base._cmp.push_back(IR::Cmp{data[0], data[1]});
+        break;
     }
     return ref;
 }
