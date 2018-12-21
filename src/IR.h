@@ -39,7 +39,7 @@ enum class IRTag {
     CALL,
     MOVE,
     EXP,
-    JUMP,
+    JMP,
     LABEL,
     CMP,
     CJMP
@@ -81,7 +81,7 @@ struct Exp {
     int exp;
 };
 
-struct Jump {
+struct Jmp {
     int target;
 };
 
@@ -121,7 +121,7 @@ class Tree
     // Stm types
     std::vector<Move>  _move;
     std::vector<Exp>   _exp;
-    std::vector<Jump>  _jump;
+    std::vector<Jmp>   _jmp;
     std::vector<Label> _label;
     std::vector<Cmp>   _cmp;
     std::vector<Cjmp>  _cjmp;
@@ -139,7 +139,7 @@ class Tree
     // Stm types
     Move&  get_move(int ref);
     Exp&   get_exp(int ref);
-    Jump&  get_jump(int ref);
+    Jmp&   get_jmp(int ref);
     Label& get_label(int ref);
     Cmp&   get_cmp(int ref);
     Cjmp&  get_cjmp(int ref);
@@ -188,8 +188,8 @@ struct Catamorphism {
             return f(tree.get_move(ref));
         case IRTag::EXP:
             return f(tree.get_exp(ref));
-        case IRTag::JUMP:
-            return f(tree.get_jump(ref));
+        case IRTag::JMP:
+            return f(tree.get_jmp(ref));
         case IRTag::LABEL:
             return f(tree.get_label(ref));
         case IRTag::CMP:

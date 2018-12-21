@@ -89,9 +89,9 @@ TEST_F(IRBuilderTest, expBuiltWithBuilder)
 TEST_F(IRBuilderTest, jumpBuiltWithBuilder)
 {
     IRBuilder builder(tree);
-    builder << IR::IRTag::JUMP << 2;
+    builder << IR::IRTag::JMP << 2;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_jump(ref).target, 2);
+    EXPECT_EQ(tree.get_jmp(ref).target, 2);
 }
 
 TEST_F(IRBuilderTest, labelBuiltWithBuilder)
