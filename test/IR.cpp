@@ -103,6 +103,15 @@ TEST_F(IRBuilderTest, labelBuiltWithBuilder)
     EXPECT_EQ(tree.get_label(ref).label, 12);
 }
 
+TEST_F(IRBuilderTest, cmpBuiltWithBuilder)
+{
+    IRBuilder builder(tree);
+    builder << IR::IRTag::CMP << 12 << 13;
+    auto ref = builder.build();
+    EXPECT_EQ(tree.get_cmp(ref).lhs, 12);
+    EXPECT_EQ(tree.get_cmp(ref).rhs, 13);
+}
+
 TEST_F(IRBuilderTest, treeKeepsType)
 {
     int c, n;
