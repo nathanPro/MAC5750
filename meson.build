@@ -27,14 +27,33 @@ testing_deps = declare_dependency(
                 ])
 
 executable('bcc', 'src/main.cpp', dependencies : front_deps)
-executable('test_parser', 'test/parsing.cpp',
-           dependencies : [front_deps, testing_deps, gtest_dep])
-executable('test_helper', 'test/helper.cpp',
-           dependencies : [front_deps, end_deps, testing_deps, gtest_dep])
-executable('test_catamorphism', 'test/catamorphism.cpp',
-           dependencies : [front_deps, end_deps, testing_deps, gtest_dep])
-executable('test_IR', 'test/IR.cpp',
-           dependencies : [front_deps, end_deps, testing_deps, gtest_dep])
-executable('test_translation', 'test/translation.cpp',
-           dependencies : [front_deps, end_deps, testing_deps, gtest_dep])
-run_target('all_tests', command : 'test/run_all.sh')
+
+test('gtest parser', executable(
+    'test_parser', 'test/parsing.cpp',
+     dependencies : [front_deps, testing_deps, gtest_dep]
+   )
+)
+
+test('gtest helper', executable(
+    'test_helper', 'test/helper.cpp',
+    dependencies : [front_deps, end_deps, testing_deps, gtest_dep]
+  )
+)
+
+test('gtest catamorphism', executable(
+    'test_catamorphism', 'test/catamorphism.cpp',
+    dependencies : [front_deps, end_deps, testing_deps, gtest_dep]
+  )
+)
+
+test('gtest IR', executable(
+    'test_IR', 'test/IR.cpp',
+    dependencies : [front_deps, end_deps, testing_deps, gtest_dep]
+  )
+)
+
+test('gtest translation', executable(
+    'test_translation', 'test/translation.cpp',
+    dependencies : [front_deps, end_deps, testing_deps, gtest_dep]
+  )
+)
