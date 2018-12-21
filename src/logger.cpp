@@ -30,7 +30,7 @@ void Logger::mismatch(std::string expected, std::string found, int id)
     err->lines = lines;
     err->ctx   = context;
     errors[id].push_back(std::move(err));
-};
+}
 
 void Logger::unexpected(Lexeme un, int id)
 {

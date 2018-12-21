@@ -47,6 +47,6 @@ constexpr bool holds(Nonterminal&& nt)
 struct Indexable {
     int id;
 };
-}; // namespace Grammar
+} // namespace Grammar
 
 #endif

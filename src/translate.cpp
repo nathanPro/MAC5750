@@ -72,9 +72,9 @@ int translate(Tree& tree, AST::Stm const& stm)
     struct Visitor {
         Tree& t;
 
-        int operator()(AST::blockStm const& stm) { return -1; }
-        int operator()(AST::ifStm const& stm) { return -1; }
-        int operator()(AST::whileStm const& stm) { return -1; }
+        int operator()(AST::blockStm const&) { return -1; }
+        int operator()(AST::ifStm const&) { return -1; }
+        int operator()(AST::whileStm const&) { return -1; }
         int operator()(AST::printStm const& stm)
         {
             IRBuilder builder(t);
@@ -83,8 +83,8 @@ int translate(Tree& tree, AST::Stm const& stm)
             builder << t.keep_explist(Explist{translate(t, stm.exp)});
             return builder.build();
         }
-        int operator()(AST::assignStm const& stm) { return -1; }
-        int operator()(AST::indexAssignStm const& stm) { return -1; }
+        int operator()(AST::assignStm const&) { return -1; }
+        int operator()(AST::indexAssignStm const&) { return -1; }
     };
     return Grammar::visit(Visitor{tree}, stm);
 }

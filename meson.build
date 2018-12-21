@@ -17,9 +17,9 @@ helper      = static_library('helper', 'src/helper.cpp')
 
 front_deps = declare_dependency(link_with : 
   [lexer, logger, parser, builder])
-end_deps = declare_dependency(link_with : [
-                              ir, irbuilder, class_graph, translate, helper
-                              ])
+helper_deps = declare_dependency(link_with: [class_graph, helper])
+ir_deps = declare_dependency(link_with : [ir, irbuilder])
+end_deps = declare_dependency(link_with : [translate, helper])
 
 testing_deps = declare_dependency(
                 include_directories : [
@@ -35,25 +35,25 @@ test('gtest parser', executable(
 )
 
 test('gtest helper', executable(
-    'test_helper', 'test/helper.cpp',
-    dependencies : [front_deps, end_deps, testing_deps, gtest_dep]
+    'test_helper', 'test/helper.cpp', dependencies : 
+      [helper_deps, front_deps, testing_deps, gtest_dep]
   )
 )
 
 test('gtest catamorphism', executable(
     'test_catamorphism', 'test/catamorphism.cpp',
-    dependencies : [front_deps, end_deps, testing_deps, gtest_dep]
+    dependencies : [front_deps, ir_deps, testing_deps, gtest_dep]
   )
 )
 
 test('gtest IR', executable(
     'test_IR', 'test/IR.cpp',
-    dependencies : [front_deps, end_deps, testing_deps, gtest_dep]
+    dependencies : [front_deps, ir_deps, testing_deps, gtest_dep]
   )
 )
 
 test('gtest translation', executable(
-    'test_translation', 'test/translation.cpp',
-    dependencies : [front_deps, end_deps, testing_deps, gtest_dep]
+    'test_translation', 'test/translation.cpp', dependencies : 
+      [end_deps, front_deps, ir_deps, testing_deps, gtest_dep]
   )
 )

@@ -20,10 +20,10 @@ IR_GETTER(_temp, IRTag::TEMP, Temp)
 IR_GETTER(_binop, IRTag::BINOP, Binop)
 IR_GETTER(_mem, IRTag::MEM, Mem)
 IR_GETTER(_call, IRTag::CALL, Call)
-IR_GETTER(_move, IRTag::MOVE, Move);
-IR_GETTER(_exp, IRTag::EXP, Exp);
-IR_GETTER(_jump, IRTag::JUMP, Jump);
-IR_GETTER(_label, IRTag::LABEL, Label);
+IR_GETTER(_move, IRTag::MOVE, Move)
+IR_GETTER(_exp, IRTag::EXP, Exp)
+IR_GETTER(_jump, IRTag::JUMP, Jump)
+IR_GETTER(_label, IRTag::LABEL, Label)
 
 #undef IR_GETTER
 size_t Tree::size() const { return id; }
