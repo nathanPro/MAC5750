@@ -49,8 +49,11 @@ TEST_F(catamorphismTest, countNodesCata)
 
 TEST_F(catamorphismTest, CataForwardsArguments)
 {
-    IR::Catamorphism<Counter, int> F(tree, 2);
-    EXPECT_EQ(F(root), 42);
+    for (int i = 0; i < 10; i++) {
+        IR::Catamorphism<Counter, int> F(tree);
+        IR::Catamorphism<Counter, int> G(tree, i);
+        EXPECT_EQ(F(root) * i, G(root));
+    }
 }
 
 int main(int argc, char** argv)

@@ -151,8 +151,10 @@ struct Catamorphism {
     std::vector<R> x;
     F<rec_t>       f;
 
-    Catamorphism(IR::Tree& _t)
-        : tree(_t), x(tree.size()), f([&](int i) { return x[i]; })
+    template <typename... Args>
+    Catamorphism(IR::Tree& _t, Args... args)
+        : tree(_t), x(tree.size()),
+          f([&](int i) { return x[i]; }, args...)
     {
         for (size_t i = 0; i < tree.size(); i++) x[i] = calculate(i);
     }
