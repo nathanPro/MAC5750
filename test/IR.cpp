@@ -31,7 +31,7 @@ TEST_F(IRBuilderTest, nameBuiltWithBuilder)
     IRBuilder builder(tree);
     builder << IR::IRTag::NAME << 13;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_name(ref).label, 13);
+    EXPECT_EQ(tree.get_name(ref).id, 13);
 }
 
 TEST_F(IRBuilderTest, tempBuiltWithBuilder)
@@ -65,7 +65,7 @@ TEST_F(IRBuilderTest, callBuiltWithBuilder)
     IRBuilder builder(tree);
     builder << IR::IRTag::CALL << 1 << 2;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_call(ref).func, 1);
+    EXPECT_EQ(tree.get_call(ref).fn, 1);
     EXPECT_EQ(tree.get_call(ref).explist, 2);
 }
 
@@ -89,9 +89,8 @@ TEST_F(IRBuilderTest, expBuiltWithBuilder)
 TEST_F(IRBuilderTest, jumpBuiltWithBuilder)
 {
     IRBuilder builder(tree);
-    builder << IR::IRTag::JUMP << 1 << 2;
+    builder << IR::IRTag::JUMP << 2;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_jump(ref).exp, 1);
     EXPECT_EQ(tree.get_jump(ref).target, 2);
 }
 
@@ -100,7 +99,7 @@ TEST_F(IRBuilderTest, labelBuiltWithBuilder)
     IRBuilder builder(tree);
     builder << IR::IRTag::LABEL << 12;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_label(ref).label, 12);
+    EXPECT_EQ(tree.get_label(ref).id, 12);
 }
 
 TEST_F(IRBuilderTest, cmpBuiltWithBuilder)

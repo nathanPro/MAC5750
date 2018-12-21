@@ -50,7 +50,7 @@ struct Const {
 };
 
 struct Name {
-    int label;
+    int id;
 };
 
 struct Temp {
@@ -68,7 +68,7 @@ struct Mem {
 };
 
 struct Call {
-    int func;
+    int fn;
     int explist;
 };
 
@@ -82,7 +82,6 @@ struct Exp {
 };
 
 struct Jump {
-    int exp;
     int target;
 };
 
@@ -92,7 +91,7 @@ struct Cjmp {
 };
 
 struct Label {
-    int label;
+    int id;
 };
 
 struct Cmp {

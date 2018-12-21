@@ -89,7 +89,7 @@ TEST(translatorTest, IRPostOrdering)
             lhs = tree.get_exp(i).exp;
             break;
         case IR::IRTag::JUMP:
-            lhs = tree.get_jump(i).exp;
+            lhs = tree.get_jump(i).target;
             break;
         case IR::IRTag::CALL:
             for (auto j : tree.get_explist(tree.get_call(i).explist))

@@ -53,7 +53,7 @@ int IRBuilder::build()
         break;
     case IR::IRTag::JUMP:
         base.pos.push_back(base._jump.size());
-        base._jump.push_back(IR::Jump{data[0], data[1]});
+        base._jump.push_back(IR::Jump{data[0]});
         break;
     case IR::IRTag::LABEL:
         base.pos.push_back(base._label.size());
