@@ -92,7 +92,7 @@ TEST_F(IRBuilderTest, jumpBuiltWithBuilder)
     builder << IR::IRTag::JUMP << 1 << 2;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_jump(ref).exp, 1);
-    EXPECT_EQ(tree.get_jump(ref).targets, 2);
+    EXPECT_EQ(tree.get_jump(ref).target, 2);
 }
 
 TEST_F(IRBuilderTest, labelBuiltWithBuilder)
@@ -110,6 +110,15 @@ TEST_F(IRBuilderTest, cmpBuiltWithBuilder)
     auto ref = builder.build();
     EXPECT_EQ(tree.get_cmp(ref).lhs, 12);
     EXPECT_EQ(tree.get_cmp(ref).rhs, 13);
+}
+
+TEST_F(IRBuilderTest, cjmpBuiltWithBuilder)
+{
+    IRBuilder builder(tree);
+    builder << IR::IRTag::CJMP << 12 << 13;
+    auto ref = builder.build();
+    EXPECT_EQ(tree.get_cjmp(ref).op, 12);
+    EXPECT_EQ(tree.get_cjmp(ref).target, 13);
 }
 
 TEST_F(IRBuilderTest, treeKeepsType)
