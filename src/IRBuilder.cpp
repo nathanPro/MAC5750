@@ -49,14 +49,17 @@ int IRBuilder::build()
         base._move.push_back(IR::Move{data[0], data[1]});
         break;
     case IR::IRTag::EXP:
+        base.stm_seq.push_back(base.pos.size());
         base.pos.push_back(base._exp.size());
         base._exp.push_back(IR::Exp{data[0]});
         break;
     case IR::IRTag::JMP:
+        base.stm_seq.push_back(base.pos.size());
         base.pos.push_back(base._jmp.size());
         base._jmp.push_back(IR::Jmp{data[0]});
         break;
     case IR::IRTag::LABEL:
+        base.stm_seq.push_back(base.pos.size());
         base.pos.push_back(base._label.size());
         base._label.push_back(IR::Label{data[0]});
         break;
@@ -65,6 +68,7 @@ int IRBuilder::build()
         base._cmp.push_back(IR::Cmp{data[0], data[1]});
         break;
     case IR::IRTag::CJMP:
+        base.stm_seq.push_back(base.pos.size());
         base.pos.push_back(base._cjmp.size());
         base._cjmp.push_back(IR::Cjmp{data[0], data[1], data[2]});
     }
