@@ -37,11 +37,11 @@ enum class IRTag {
     BINOP,
     MEM,
     CALL,
+    CMP,
     MOVE,
     EXP,
     JMP,
     LABEL,
-    CMP,
     CJMP
 };
 

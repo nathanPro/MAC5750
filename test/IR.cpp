@@ -76,6 +76,7 @@ TEST_F(IRBuilderTest, moveBuiltWithBuilder)
     auto ref = builder.build();
     EXPECT_EQ(tree.get_move(ref).dst, 1);
     EXPECT_EQ(tree.get_move(ref).src, 2);
+    EXPECT_EQ(tree.stm_seq.back(), ref);
 }
 
 TEST_F(IRBuilderTest, expBuiltWithBuilder)
@@ -84,14 +85,16 @@ TEST_F(IRBuilderTest, expBuiltWithBuilder)
     builder << IR::IRTag::EXP << 1;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_exp(ref).exp, 1);
+    EXPECT_EQ(tree.stm_seq.back(), ref);
 }
 
-TEST_F(IRBuilderTest, jumpBuiltWithBuilder)
+TEST_F(IRBuilderTest, jmpBuiltWithBuilder)
 {
     IRBuilder builder(tree);
     builder << IR::IRTag::JMP << 2;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_jmp(ref).target, 2);
+    EXPECT_EQ(tree.stm_seq.back(), ref);
 }
 
 TEST_F(IRBuilderTest, labelBuiltWithBuilder)
@@ -100,6 +103,7 @@ TEST_F(IRBuilderTest, labelBuiltWithBuilder)
     builder << IR::IRTag::LABEL << 12;
     auto ref = builder.build();
     EXPECT_EQ(tree.get_label(ref).id, 12);
+    EXPECT_EQ(tree.stm_seq.back(), ref);
 }
 
 TEST_F(IRBuilderTest, cmpBuiltWithBuilder)
@@ -119,6 +123,7 @@ TEST_F(IRBuilderTest, cjmpBuiltWithBuilder)
     EXPECT_EQ(tree.get_cjmp(ref).op, 11);
     EXPECT_EQ(tree.get_cjmp(ref).temp, 12);
     EXPECT_EQ(tree.get_cjmp(ref).target, 13);
+    EXPECT_EQ(tree.stm_seq.back(), ref);
 }
 
 TEST_F(IRBuilderTest, treeKeepsType)
