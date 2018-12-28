@@ -65,10 +65,16 @@ int translate(Tree& tree, AST::Exp const& exp)
 
         int operator()(AST::lessExp const& exp)
         {
-            IRBuilder builder(t);
-            builder << IRTag::CMP << Grammar::visit(*this, exp.lhs)
-                    << Grammar::visit(*this, exp.rhs);
-            return builder.build();
+            IRBuilder root(t);
+            IRBuilder tmp(t);
+            IRBuilder cmp(t);
+
+            tmp << IRTag::TEMP;
+            cmp << IRTag::CMP << Grammar::visit(*this, exp.lhs)
+                << Grammar::visit(*this, exp.rhs);
+
+            root << IRTag::MOVE << tmp.build() << cmp.build();
+            return root.build();
         }
 
         int operator()(AST::bangExp const&) { return -1; }
