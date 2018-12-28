@@ -37,9 +37,9 @@ TEST_F(IRBuilderTest, nameBuiltWithBuilder)
 TEST_F(IRBuilderTest, tempBuiltWithBuilder)
 {
     IRBuilder builder(tree);
-    builder << IR::IRTag::TEMP << 11;
+    builder << IR::IRTag::TEMP;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_temp(ref).id, 11);
+    EXPECT_EQ(tree.get_temp(ref).id, 1);
 }
 
 TEST_F(IRBuilderTest, binopBuiltWithBuilder)

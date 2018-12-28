@@ -29,7 +29,7 @@ int IRBuilder::build()
         break;
     case IR::IRTag::TEMP:
         base.pos.push_back(base._temp.size());
-        base._temp.push_back(IR::Temp{data[0]});
+        base._temp.push_back(IR::Temp{++base.tmp});
         break;
     case IR::IRTag::BINOP:
         base.pos.push_back(base._binop.size());

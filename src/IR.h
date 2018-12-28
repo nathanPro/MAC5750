@@ -104,6 +104,8 @@ using Explist = std::vector<int>;
 class Tree
 {
     friend class ::IRBuilder;
+    int tmp;
+
     // Type checking info
     size_t               id;
     std::vector<int>     kind;
@@ -127,7 +129,7 @@ class Tree
     std::vector<Cjmp>  _cjmp;
 
   public:
-    Tree() : id(0) {}
+    Tree() : tmp(0), id(0) {}
     // Exp types
     Const& get_const(int ref);
     Name&  get_name(int ref);
