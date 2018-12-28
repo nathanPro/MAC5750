@@ -98,6 +98,11 @@ TEST(translatorTest, translateBangExp)
     ASSERT_NE(rhs, -1);
     EXPECT_EQ(tree.get_type(rhs), IR::IRTag::CONST);
     EXPECT_EQ(tree.get_const(rhs).value, 1);
+
+    ASSERT_EQ(tree.stm_seq.size(), 1);
+    EXPECT_EQ(tree.get_type(tree.stm_seq.back()), IR::IRTag::MOVE);
+    auto mv = tree.get_move(tree.stm_seq.back());
+    EXPECT_EQ(mv.dst, lhs);
 }
 
 TEST(translatorTest, translatePrint)
