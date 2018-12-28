@@ -77,7 +77,21 @@ int translate(Tree& tree, AST::Exp const& exp)
             return root.build();
         }
 
-        int operator()(AST::bangExp const&) { return -1; }
+        int operator()(AST::bangExp const& exp)
+        {
+            auto mv  = Grammar::visit(*this, exp.inner);
+            auto tmp = t.get_move(mv).dst;
+
+            IRBuilder root(t);
+            IRBuilder cte(t);
+            cte << IR::IRTag::CONST << 1;
+
+            root << IR::IRTag::BINOP << IR::BinopId::XOR << tmp
+                 << cte.build();
+
+            return root.build();
+        }
+
         int operator()(AST::ExpListRule const&) { return -1; }
 
         int operator()(AST::lengthExp const&) { return -1; }
