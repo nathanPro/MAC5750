@@ -151,6 +151,8 @@ class Tree
     size_t  size() const;
     Explist get_explist(int);
     int     keep_explist(Explist&&);
+
+    std::vector<int> stm_seq;
 };
 
 template <template <typename C> typename F, typename R>

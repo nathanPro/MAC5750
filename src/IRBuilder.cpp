@@ -44,6 +44,7 @@ int IRBuilder::build()
         base._call.push_back(IR::Call{data[0], data[1]});
         break;
     case IR::IRTag::MOVE:
+        base.stm_seq.push_back(base.pos.size());
         base.pos.push_back(base._move.size());
         base._move.push_back(IR::Move{data[0], data[1]});
         break;
