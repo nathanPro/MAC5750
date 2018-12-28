@@ -58,6 +58,25 @@ TEST(translatorTest, translateTrueAndFalse)
     }
 }
 
+TEST(translatorTest, translatelessExp)
+{
+    IR::Tree tree;
+    auto     stream = std::stringstream("3 < 4\n");
+    auto     ir     = IR::translate(tree, Parser(&stream).Exp());
+
+    ASSERT_NE(ir, -1);
+    EXPECT_EQ(tree.get_type(ir), IR::IRTag::CMP);
+    auto cmp = tree.get_cmp(ir);
+
+    ASSERT_NE(cmp.lhs, -1);
+    EXPECT_EQ(tree.get_type(cmp.lhs), IR::IRTag::CONST);
+    EXPECT_EQ(tree.get_const(cmp.lhs).value, 3);
+
+    ASSERT_NE(cmp.rhs, -1);
+    EXPECT_EQ(tree.get_type(cmp.rhs), IR::IRTag::CONST);
+    EXPECT_EQ(tree.get_const(cmp.rhs).value, 4);
+}
+
 TEST(translatorTest, translatePrint)
 {
     IR::Tree tree;
