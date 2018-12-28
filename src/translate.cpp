@@ -43,26 +43,39 @@ int translate(Tree& tree, AST::Exp const& exp)
             builder << IRTag::CONST << exp.value;
             return builder.build();
         }
+
+        int operator()(AST::trueExp const&)
+        {
+            IRBuilder builder(t);
+            builder << IRTag::CONST << 1;
+            return builder.build();
+        }
+
+        int operator()(AST::falseExp const&)
+        {
+            IRBuilder builder(t);
+            builder << IRTag::CONST << 0;
+            return builder.build();
+        }
+
         int operator()(AST::parenExp const& exp)
         {
             return Grammar::visit(*this, exp.inner);
         }
 
         int operator()(AST::lessExp const&) { return -1; }
-        int operator()(AST::indexingExp const&) { return -1; }
+        int operator()(AST::bangExp const&) { return -1; }
+        int operator()(AST::ExpListRule const&) { return -1; }
 
         int operator()(AST::lengthExp const&) { return -1; }
         int operator()(AST::methodCallExp const&) { return -1; }
 
-        int operator()(AST::trueExp const&) { return -1; }
-        int operator()(AST::falseExp const&) { return -1; }
         int operator()(AST::thisExp const&) { return -1; }
         int operator()(AST::identifierExp const&) { return -1; }
+        int operator()(AST::indexingExp const&) { return -1; }
 
         int operator()(AST::newArrayExp const&) { return -1; }
         int operator()(AST::newObjectExp const&) { return -1; }
-        int operator()(AST::bangExp const&) { return -1; }
-        int operator()(AST::ExpListRule const&) { return -1; }
     };
     return Grammar::visit(Visitor{tree}, exp);
 }

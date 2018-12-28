@@ -43,6 +43,21 @@ TEST(translatorTest, translateProd)
     ASSERT_NE(rhs, -1);
 }
 
+TEST(translatorTest, translateTrueAndFalse)
+{
+    IR::Tree    t[2];
+    const char* in[2] = {"false\n", "true\n"};
+
+    for (int i = 0; i < 2; i++) {
+        auto stream = std::stringstream(in[i]);
+        auto ir     = IR::translate(t[i], Parser(&stream).Exp());
+
+        ASSERT_NE(ir, -1);
+        EXPECT_EQ(t[i].get_type(ir), IR::IRTag::CONST);
+        EXPECT_EQ(t[i].get_const(ir).value, i);
+    }
+}
+
 TEST(translatorTest, translatePrint)
 {
     IR::Tree tree;
