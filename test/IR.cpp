@@ -114,9 +114,10 @@ TEST_F(IRBuilderTest, cmpBuiltWithBuilder)
 TEST_F(IRBuilderTest, cjmpBuiltWithBuilder)
 {
     IRBuilder builder(tree);
-    builder << IR::IRTag::CJMP << 12 << 13;
+    builder << IR::IRTag::CJMP << 11 << 12 << 13;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_cjmp(ref).op, 12);
+    EXPECT_EQ(tree.get_cjmp(ref).op, 11);
+    EXPECT_EQ(tree.get_cjmp(ref).temp, 12);
     EXPECT_EQ(tree.get_cjmp(ref).target, 13);
 }
 
