@@ -100,6 +100,12 @@ class_spec::class_spec(meta_data const&                 d,
       layout(data, kind, memory_layout::smooth(cls))
 {
     init_methods(cls.methods);
+    int b = base;
+    while (b != -1) {
+        for (auto const& mtd : data.c_info[b].method)
+            method.insert(mtd);
+        b = data.c_info[b].base;
+    }
 }
 
 int class_spec::size() const { return layout.size; }
