@@ -73,13 +73,10 @@ TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceVariables)
     EXPECT_EQ(data["B"]["t1"], helper::kind_t::var);
     EXPECT_EQ(data["C"]["t1"], helper::kind_t::var);
 
-    EXPECT_EQ(data["A"].layout["t1"], 0);
-    EXPECT_EQ(data["A"].layout["t2"], 8);
-    EXPECT_EQ(data["A"].layout["t3"], 16);
+    EXPECT_EQ(data["A"].layout["__base"], 0);
     EXPECT_EQ(data["A"].layout["t4"], 24);
 
-    EXPECT_EQ(data["B"].layout["t1"], 0);
-    EXPECT_EQ(data["B"].layout["t2"], 8);
+    EXPECT_EQ(data["B"].layout["__base"], 0);
     EXPECT_EQ(data["B"].layout["t3"], 16);
 
     EXPECT_EQ(data["C"].layout["t1"], 0);
