@@ -28,8 +28,12 @@ class IntegerWrapper {
         return inner;
     }
 }
-class A extends B {}
-class B extends C {}
+class A extends B {
+    int t4;
+}
+class B extends C {
+    int t3;
+}
 class C {
     int t1;
     int t2;
