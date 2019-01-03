@@ -8,5 +8,5 @@ build:
 bcc: build
 	ninja -j 4 -C build
 clean:
-	rm -rf dev-build
-	rm -rf build
+	ninja -C dev-build clean
+	ninja -C build clean
