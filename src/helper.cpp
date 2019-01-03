@@ -100,11 +100,10 @@ class_spec::class_spec(meta_data const&                 d,
       layout(data, kind, memory_layout::smooth(cls))
 {
     init_methods(cls.methods);
-    int b = base;
-    while (b != -1) {
-        for (auto const& mtd : data.c_info[b].method)
-            method.insert(mtd);
-        b = data.c_info[b].base;
+    for (int b = base; b != -1; b = data.c_info[b].base) {
+        auto const& info = data.c_info[b];
+        method.insert(begin(info.method), end(info.method));
+        kind.insert(begin(info.kind), end(info.kind));
     }
 }
 
