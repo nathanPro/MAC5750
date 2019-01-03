@@ -17,6 +17,7 @@ struct memory_layout {
     std::map<std::string, int> value;
     int                        size;
 
+    memory_layout();
     memory_layout(meta_data const&, std::map<std::string, kind_t>&,
                   common_t const&);
     int operator[](std::string const&) const;
@@ -28,9 +29,18 @@ struct memory_layout {
     static common_t smooth(AST::MainClassRule const&);
 };
 
+class method_spec
+{
+  public:
+    method_spec();
+    method_spec(memory_layout&&);
+    method_spec(memory_layout const&);
+
+    memory_layout const layout;
+};
+
 class class_spec
 {
-    int                           method_cnt;
     std::map<std::string, kind_t> kind;
     meta_data const&              data;
 
@@ -44,9 +54,9 @@ class class_spec
     int    size() const;
     kind_t operator[](const std::string&) const;
 
-    int                        base;
-    memory_layout const        layout;
-    std::map<std::string, int> method;
+    int                                base;
+    memory_layout const                layout;
+    std::map<std::string, method_spec> method;
 };
 
 class meta_data

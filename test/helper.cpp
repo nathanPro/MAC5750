@@ -50,6 +50,8 @@ TEST_F(HelperTest, MetaDataRecordLayout)
 TEST_F(HelperTest, MetaDataHandlesInheritance)
 {
     EXPECT_EQ(data["Child"]["ComputeFac"], helper::kind_t::method);
+    EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["num_aux"],
+              data["Child"].method["ComputeFac"].layout["num_aux"]);
 }
 
 TEST_F(HelperTest, MetaDataWorksOutOfOrder)
@@ -65,6 +67,12 @@ TEST_F(HelperTest, MetaDataDetectsCyclicDepdendencies)
     EXPECT_TRUE(cycle.check());
     EXPECT_THROW(helper::meta_data(cycle.syntax_tree),
                  helper::cyclic_classes);
+}
+
+TEST_F(HelperTest, MetaDataStoresStackLayout)
+{
+    EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["num_aux"], 0);
+    EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["not_aux"], 8);
 }
 
 int main(int argc, char** argv)

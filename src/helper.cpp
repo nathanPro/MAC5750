@@ -41,6 +41,7 @@ memory_layout::smooth(AST::MainClassRule const&)
     return {};
 }
 
+memory_layout::memory_layout() : size(0) {}
 memory_layout::memory_layout(meta_data const&               data,
                              std::map<std::string, kind_t>& kind,
                              memory_layout::common_t const& vars)
@@ -58,28 +59,36 @@ int memory_layout::operator[](std::string const& name) const
     return value.at(name);
 }
 
+method_spec::method_spec() {}
+method_spec::method_spec(memory_layout&& l) : layout(std::move(l)) {}
+method_spec::method_spec(memory_layout const& l) : layout(l) {}
+
 void class_spec::init_methods(
     std::vector<AST::MethodDecl> const& mtds)
 {
     for (auto const& mtd : mtds) {
-        auto const& mdr  = Grammar::get<AST::MethodDeclRule>(mtd);
-        kind[mdr.name]   = kind_t::method;
-        method[mdr.name] = method_cnt++;
+        auto const& mdr = Grammar::get<AST::MethodDeclRule>(mtd);
+        kind[mdr.name]  = kind_t::method;
+        method.insert(
+            {mdr.name,
+             method_spec{memory_layout{
+                 data, kind, memory_layout::smooth(mdr.variables)}}});
     }
 }
 
 class_spec::class_spec(meta_data const&          d,
                        AST::MainClassRule const& cls)
-    : method_cnt(0), data(d), base(-1),
+    : data(d), base(-1),
       layout(data, kind, memory_layout::smooth(cls))
 {
-    kind["main"]   = kind_t::method;
-    method["main"] = method_cnt++;
+    kind["main"] = kind_t::method;
+    method.insert(
+        {std::string{"main"}, memory_layout{data, kind, {}}});
 }
 
 class_spec::class_spec(meta_data const&                   d,
                        AST::ClassDeclNoInheritance const& cls)
-    : method_cnt(0), data(d), base(-1),
+    : data(d), base(-1),
       layout(data, kind, memory_layout::smooth(cls))
 {
     init_methods(cls.methods);
@@ -87,7 +96,7 @@ class_spec::class_spec(meta_data const&                   d,
 
 class_spec::class_spec(meta_data const&                 d,
                        AST::ClassDeclInheritance const& cls)
-    : method_cnt(0), data(d), base(data.c_id.at(cls.superclass)),
+    : data(d), base(data.c_id.at(cls.superclass)),
       layout(data, kind, memory_layout::smooth(cls))
 {
     init_methods(cls.methods);
