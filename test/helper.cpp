@@ -52,6 +52,8 @@ TEST_F(HelperTest, MetaDataHandlesInheritance)
     EXPECT_EQ(data["Child"]["ComputeFac"], helper::kind_t::method);
     EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["num_aux"],
               data["Child"].method["ComputeFac"].layout["num_aux"]);
+    EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["not_aux"],
+              data["Child"].method["ComputeFac"].layout["not_aux"]);
 }
 
 TEST_F(HelperTest, MetaDataWorksOutOfOrder)
@@ -59,6 +61,33 @@ TEST_F(HelperTest, MetaDataWorksOutOfOrder)
     TranslationUnit unordered("../input/unordered_classes.miniJava");
     EXPECT_TRUE(unordered.check());
     EXPECT_NO_THROW(helper::meta_data(unordered.syntax_tree));
+}
+
+TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceVariables)
+{
+    TranslationUnit unordered("../input/unordered_classes.miniJava");
+    EXPECT_TRUE(unordered.check());
+    data = helper::meta_data(unordered.syntax_tree);
+
+    EXPECT_EQ(data["A"]["t1"], helper::kind_t::var);
+    EXPECT_EQ(data["B"]["t1"], helper::kind_t::var);
+    EXPECT_EQ(data["C"]["t1"], helper::kind_t::var);
+}
+
+TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceMethods)
+{
+    TranslationUnit unordered("../input/unordered_classes.miniJava");
+    EXPECT_TRUE(unordered.check());
+    data = helper::meta_data(unordered.syntax_tree);
+
+    EXPECT_EQ(data["A"]["calculate"], helper::kind_t::method);
+    EXPECT_EQ(data["B"]["calculate"], helper::kind_t::method);
+    EXPECT_EQ(data["C"]["calculate"], helper::kind_t::method);
+
+    EXPECT_EQ(data["A"].method["calculate"].layout["num_aux"],
+              data["C"].method["calculate"].layout["num_aux"]);
+    EXPECT_EQ(data["A"].method["calculate"].layout["not_aux"],
+              data["C"].method["calculate"].layout["not_aux"]);
 }
 
 TEST_F(HelperTest, MetaDataDetectsCyclicDepdendencies)

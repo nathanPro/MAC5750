@@ -28,3 +28,14 @@ class IntegerWrapper {
         return inner;
     }
 }
+class A extends B {}
+class B extends C {}
+class C {
+    int t1;
+    int t2;
+    public int calculate() {
+        int not_aux;
+        int num_aux;
+        return 1;
+    }
+}
