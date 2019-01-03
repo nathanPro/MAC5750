@@ -242,10 +242,9 @@ struct Type : Grammar::Nonterminal<std::variant<
         : Grammar::Nonterminal<Type::variant_t>(*rhs._self)
     {
     }
-    Type& operator=(Type const& rhs)
+    Type& operator=(Type rhs)
     {
-        Type tmp(rhs);
-        *this = std::move(tmp);
+        _self.reset(rhs._self.release());
         return *this;
     }
 };
