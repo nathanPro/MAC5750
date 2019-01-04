@@ -11,6 +11,7 @@ namespace helper
 
 enum class kind_t { notfound, var, instance, method };
 class meta_data;
+class class_spec;
 
 struct memory_layout {
     using common_t = std::vector<AST::FormalDecl>;
@@ -31,20 +32,31 @@ struct memory_layout {
 
 class method_spec
 {
-  public:
-    method_spec();
-    method_spec(memory_layout&&);
-    method_spec(memory_layout const&);
+    meta_data const&  data;
+    class_spec const& cls;
 
+  public:
+    method_spec(meta_data const&, class_spec const&,
+                std::string const&, memory_layout&&);
+    method_spec(meta_data const&, class_spec const&,
+                std::string const&, memory_layout const&);
+
+    int position(std::string const&);
+
+    std::string const   name;
     memory_layout const layout;
 };
 
 class class_spec
 {
-    std::map<std::string, kind_t> kind;
     meta_data const&              data;
+    std::map<std::string, kind_t> kind;
+    std::map<std::string, int>    m_id;
+    std::vector<method_spec>      m_info;
 
     void init_methods(std::vector<AST::MethodDecl> const&);
+    void insert_method(std::string const&, memory_layout&&);
+    void insert_method(std::string const&, method_spec const&);
 
   public:
     class_spec(meta_data const&, AST::MainClassRule const&);
@@ -54,9 +66,11 @@ class class_spec
     int    size() const;
     kind_t operator[](const std::string&) const;
 
-    int                                base;
-    memory_layout const                layout;
-    std::map<std::string, method_spec> method;
+    std::string const&  name;
+    int                 base;
+    memory_layout const variable;
+    method_spec&        method(std::string const&);
+    method_spec const&  method(std::string const&) const;
 };
 
 class meta_data

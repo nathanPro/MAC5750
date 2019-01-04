@@ -59,61 +59,95 @@ int memory_layout::operator[](std::string const& name) const
     return value.at(name);
 }
 
-method_spec::method_spec() {}
-method_spec::method_spec(memory_layout&& l) : layout(std::move(l)) {}
-method_spec::method_spec(memory_layout const& l) : layout(l) {}
+method_spec::method_spec(meta_data const& d, class_spec const& c,
+                         std::string const& n, memory_layout&& l)
+    : data(d), cls(c), name(n), layout(std::move(l))
+{
+}
+method_spec::method_spec(meta_data const& d, class_spec const& c,
+                         std::string const& n, memory_layout const& l)
+    : data(d), cls(c), name(n), layout(l)
+{
+}
+
+int method_spec::position(std::string const& name) { return 0; }
+
+void class_spec::insert_method(std::string const& name,
+                               memory_layout&&    layout)
+{
+    if (m_id.count(name)) return;
+    kind[name] = kind_t::method;
+    m_id[name] = m_info.size();
+    m_info.emplace_back(data, *this, name, std::move(layout));
+}
+
+void class_spec::insert_method(std::string const& name,
+                               method_spec const& mtd)
+{
+    if (m_id.count(name)) return;
+    kind[name] = kind_t::method;
+    m_id[name] = m_info.size();
+    m_info.push_back(mtd);
+}
 
 void class_spec::init_methods(
     std::vector<AST::MethodDecl> const& mtds)
 {
     for (auto const& mtd : mtds) {
         auto const& mdr = Grammar::get<AST::MethodDeclRule>(mtd);
-        kind[mdr.name]  = kind_t::method;
-        method.insert(
-            {mdr.name,
-             method_spec{memory_layout{
-                 data, kind, memory_layout::smooth(mdr.variables)}}});
+        insert_method(mdr.name, memory_layout{data, kind,
+                                              memory_layout::smooth(
+                                                  mdr.variables)});
     }
 }
 
 class_spec::class_spec(meta_data const&          d,
                        AST::MainClassRule const& cls)
-    : data(d), base(-1),
-      layout(data, kind, memory_layout::smooth(cls))
+    : data(d), name(cls.name), base(-1),
+      variable(data, kind, memory_layout::smooth(cls))
 {
-    kind["main"] = kind_t::method;
-    method.insert(
-        {std::string{"main"}, memory_layout{data, kind, {}}});
+    insert_method("main", memory_layout{data, kind, {}});
 }
 
 class_spec::class_spec(meta_data const&                   d,
                        AST::ClassDeclNoInheritance const& cls)
-    : data(d), base(-1),
-      layout(data, kind, memory_layout::smooth(cls))
+    : data(d), name(cls.name), base(-1),
+      variable(data, kind, memory_layout::smooth(cls))
 {
     init_methods(cls.methods);
 }
 
 class_spec::class_spec(meta_data const&                 d,
                        AST::ClassDeclInheritance const& cls)
-    : data(d), base(data.c_id.at(cls.superclass)),
-      layout(data, kind, memory_layout::smooth(cls))
+    : data(d), name(cls.name), base(data.c_id.at(cls.superclass)),
+      variable(data, kind, memory_layout::smooth(cls))
 {
     init_methods(cls.methods);
     for (int b = base; b != -1; b = data.c_info[b].base) {
         auto const& info = data.c_info[b];
-        method.insert(begin(info.method), end(info.method));
+        for (auto const& i : info.m_id)
+            insert_method(i.first, info.m_info[i.second]);
         kind.insert(begin(info.kind), end(info.kind));
     }
 }
 
-int class_spec::size() const { return layout.size; }
+int class_spec::size() const { return variable.size; }
 
 kind_t class_spec::operator[](std::string const& name) const
 {
     if (kind.count(name)) return kind.at(name);
     if (base != -1) return data.c_info[base][name];
     return kind_t::notfound;
+}
+
+method_spec& class_spec::method(std::string const& name)
+{
+    return m_info[m_id.at(name)];
+}
+
+method_spec const& class_spec::method(std::string const& name) const
+{
+    return m_info[m_id.at(name)];
 }
 
 meta_data::meta_data(AST::Program const& prog)

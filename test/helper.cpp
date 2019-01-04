@@ -40,8 +40,8 @@ TEST_F(HelperTest, MetaDataDistinguishesMethodFromVariable)
 
 TEST_F(HelperTest, MetaDataRecordLayout)
 {
-    EXPECT_EQ(data["Fac"].layout["t1"], 0);
-    EXPECT_EQ(data["Fac"].layout["t2"], 8);
+    EXPECT_EQ(data["Fac"].variable["t1"], 0);
+    EXPECT_EQ(data["Fac"].variable["t2"], 8);
     EXPECT_EQ(data["Factorial"].size(), 0);
     EXPECT_EQ(data["Fac"].size(), 16);
     EXPECT_EQ(data["Child"].size(), data["Fac"].size());
@@ -50,10 +50,17 @@ TEST_F(HelperTest, MetaDataRecordLayout)
 TEST_F(HelperTest, MetaDataHandlesInheritance)
 {
     EXPECT_EQ(data["Child"]["ComputeFac"], helper::kind_t::method);
-    EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["num_aux"],
-              data["Child"].method["ComputeFac"].layout["num_aux"]);
-    EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["not_aux"],
-              data["Child"].method["ComputeFac"].layout["not_aux"]);
+    EXPECT_EQ(data["Fac"].method("ComputeFac").layout["num_aux"],
+              data["Child"].method("ComputeFac").layout["num_aux"]);
+    EXPECT_EQ(data["Fac"].method("ComputeFac").layout["not_aux"],
+              data["Child"].method("ComputeFac").layout["not_aux"]);
+}
+
+TEST_F(HelperTest, MetaDataKeepsNames)
+{
+    EXPECT_EQ(data["Child"].name, std::string("Child"));
+    EXPECT_EQ(data["Child"].method("ComputeFac").name,
+              std::string("ComputeFac"));
 }
 
 TEST_F(HelperTest, MetaDataWorksOutOfOrder)
@@ -73,14 +80,19 @@ TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceVariables)
     EXPECT_EQ(data["B"]["t1"], helper::kind_t::var);
     EXPECT_EQ(data["C"]["t1"], helper::kind_t::var);
 
-    EXPECT_EQ(data["A"].layout["__base"], 0);
-    EXPECT_EQ(data["A"].layout["t4"], 24);
+    EXPECT_EQ(data["A"].variable["__base"], 0);
+    EXPECT_EQ(data["A"].variable["t4"], 24);
 
-    EXPECT_EQ(data["B"].layout["__base"], 0);
-    EXPECT_EQ(data["B"].layout["t3"], 16);
+    EXPECT_EQ(data["B"].variable["__base"], 0);
+    EXPECT_EQ(data["B"].variable["t3"], 16);
 
-    EXPECT_EQ(data["C"].layout["t1"], 0);
-    EXPECT_EQ(data["C"].layout["t2"], 8);
+    EXPECT_EQ(data["C"].variable["t1"], 0);
+    EXPECT_EQ(data["C"].variable["t2"], 8);
+
+    EXPECT_EQ(data["A"].method("calculate").position("t1"), 0);
+    EXPECT_EQ(data["A"].method("calculate").position("t2"), 8);
+    EXPECT_EQ(data["A"].method("calculate").position("t3"), 16);
+    EXPECT_EQ(data["A"].method("calculate").position("t4"), 24);
 }
 
 TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceMethods)
@@ -93,10 +105,10 @@ TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceMethods)
     EXPECT_EQ(data["B"]["calculate"], helper::kind_t::method);
     EXPECT_EQ(data["C"]["calculate"], helper::kind_t::method);
 
-    EXPECT_EQ(data["A"].method["calculate"].layout["num_aux"],
-              data["C"].method["calculate"].layout["num_aux"]);
-    EXPECT_EQ(data["A"].method["calculate"].layout["not_aux"],
-              data["C"].method["calculate"].layout["not_aux"]);
+    EXPECT_EQ(data["A"].method("calculate").layout["num_aux"],
+              data["C"].method("calculate").layout["num_aux"]);
+    EXPECT_EQ(data["A"].method("calculate").layout["not_aux"],
+              data["C"].method("calculate").layout["not_aux"]);
 }
 
 TEST_F(HelperTest, MetaDataDetectsCyclicDepdendencies)
@@ -109,8 +121,8 @@ TEST_F(HelperTest, MetaDataDetectsCyclicDepdendencies)
 
 TEST_F(HelperTest, MetaDataStoresStackLayout)
 {
-    EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["num_aux"], 0);
-    EXPECT_EQ(data["Fac"].method["ComputeFac"].layout["not_aux"], 8);
+    EXPECT_EQ(data["Fac"].method("ComputeFac").layout["num_aux"], 0);
+    EXPECT_EQ(data["Fac"].method("ComputeFac").layout["not_aux"], 8);
 }
 
 int main(int argc, char** argv)
