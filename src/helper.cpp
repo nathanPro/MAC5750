@@ -29,10 +29,7 @@ memory_layout::smooth(AST::ClassDeclNoInheritance const& cls)
 memory_layout::common_t
 memory_layout::smooth(AST::ClassDeclInheritance const& cls)
 {
-    auto aux = memory_layout::smooth(cls.variables);
-    aux.push_back({AST::classType{cls.superclass}, "__base"});
-    std::rotate(begin(aux), prev(end(aux)), end(aux));
-    return aux;
+    return memory_layout::smooth(cls.variables);
 }
 
 memory_layout::common_t
@@ -52,7 +49,7 @@ memory_layout::memory_layout(meta_data const&               data,
         value[var.name] = size;
         size += data.type_size(var.type);
     }
-} // namespace helper
+}
 
 int memory_layout::operator[](std::string const& name) const
 {
@@ -69,8 +66,6 @@ method_spec::method_spec(meta_data const& d, class_spec const& c,
     : data(d), cls(c), name(n), layout(l)
 {
 }
-
-int method_spec::position(std::string const& name) { return 0; }
 
 void class_spec::insert_method(std::string const& name,
                                memory_layout&&    layout)
@@ -120,7 +115,15 @@ class_spec::class_spec(meta_data const&                   d,
 class_spec::class_spec(meta_data const&                 d,
                        AST::ClassDeclInheritance const& cls)
     : data(d), name(cls.name), base(data.c_id.at(cls.superclass)),
-      variable(data, kind, memory_layout::smooth(cls))
+      variable([&] {
+          auto ans = data[cls.superclass].variable;
+          for (auto const& var :
+               memory_layout::smooth(cls.variables)) {
+              ans.value.insert({var.name, ans.size});
+              ans.size += data.type_size(var.type);
+          }
+          return ans;
+      }())
 {
     init_methods(cls.methods);
     for (int b = base; b != -1; b = data.c_info[b].base) {

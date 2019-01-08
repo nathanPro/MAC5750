@@ -70,7 +70,7 @@ TEST_F(HelperTest, MetaDataWorksOutOfOrder)
     EXPECT_NO_THROW(helper::meta_data(unordered.syntax_tree));
 }
 
-TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceVariables)
+TEST_F(HelperTest, MetaDataHandlesDeeperInheritsLayout)
 {
     TranslationUnit unordered("../input/unordered_classes.miniJava");
     EXPECT_TRUE(unordered.check());
@@ -80,19 +80,17 @@ TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceVariables)
     EXPECT_EQ(data["B"]["t1"], helper::kind_t::var);
     EXPECT_EQ(data["C"]["t1"], helper::kind_t::var);
 
-    EXPECT_EQ(data["A"].variable["__base"], 0);
-    EXPECT_EQ(data["A"].variable["t4"], 24);
-
-    EXPECT_EQ(data["B"].variable["__base"], 0);
-    EXPECT_EQ(data["B"].variable["t3"], 16);
-
     EXPECT_EQ(data["C"].variable["t1"], 0);
     EXPECT_EQ(data["C"].variable["t2"], 8);
 
-    EXPECT_EQ(data["A"].method("calculate").position("t1"), 0);
-    EXPECT_EQ(data["A"].method("calculate").position("t2"), 8);
-    EXPECT_EQ(data["A"].method("calculate").position("t3"), 16);
-    EXPECT_EQ(data["A"].method("calculate").position("t4"), 24);
+    EXPECT_EQ(data["B"].variable["t1"], 0);
+    EXPECT_EQ(data["B"].variable["t2"], 8);
+    EXPECT_EQ(data["B"].variable["t3"], 16);
+
+    EXPECT_EQ(data["A"].variable["t1"], 0);
+    EXPECT_EQ(data["A"].variable["t2"], 8);
+    EXPECT_EQ(data["A"].variable["t3"], 16);
+    EXPECT_EQ(data["A"].variable["t4"], 24);
 }
 
 TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceMethods)

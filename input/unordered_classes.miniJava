@@ -30,9 +30,15 @@ class IntegerWrapper {
 }
 class A extends B {
     int t4;
+    public int calculateA() {
+        return this.calculate();
+    }
 }
 class B extends C {
     int t3;
+    public int calculateB() {
+        return this.calculate();
+    }
 }
 class C {
     int t1;

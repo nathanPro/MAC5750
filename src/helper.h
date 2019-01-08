@@ -41,8 +41,6 @@ class method_spec
     method_spec(meta_data const&, class_spec const&,
                 std::string const&, memory_layout const&);
 
-    int position(std::string const&);
-
     std::string const   name;
     memory_layout const layout;
 };
