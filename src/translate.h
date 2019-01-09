@@ -10,7 +10,8 @@ namespace IR
 {
 class Translator
 {
-    Tree& t;
+    Tree&             t;
+    helper::meta_data data;
 
     int binop(BinopId, AST::__detail::BinaryRule<AST::Exp> const&);
 

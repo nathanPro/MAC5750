@@ -79,6 +79,7 @@ class meta_data
   public:
     friend class class_spec;
     meta_data(const AST::Program&);
+    meta_data();
 
     void operator()(const AST::integerArrayType&);
     void operator()(const AST::booleanType&);

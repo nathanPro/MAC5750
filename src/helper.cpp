@@ -158,6 +158,8 @@ meta_data::meta_data(AST::Program const& prog)
     Grammar::visit(*this, prog);
 }
 
+meta_data::meta_data() {}
+
 void meta_data::operator()(AST::ProgramRule const& prog)
 {
     class_graph top_sort(prog);
