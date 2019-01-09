@@ -26,11 +26,10 @@ testing_deps = declare_dependency(
                   include_directories('src')
                 ])
 
-executable('IRd', 'src/IRd.cpp', 
-           dependencies : [front_deps, helper_deps, ir_deps, end_deps])
 executable('lab', 'src/lab.cpp', 
            dependencies : [front_deps, helper_deps, ir_deps, end_deps])
-executable('bcc', 'src/main.cpp', dependencies : front_deps)
+executable('bcc', 'src/main.cpp',
+           dependencies : [front_deps, helper_deps, ir_deps, end_deps])
 
 test('gtest parser', executable(
     'test_parser', 'test/parsing.cpp',

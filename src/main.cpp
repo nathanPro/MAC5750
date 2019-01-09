@@ -1,12 +1,22 @@
-#include "error.h"
+#include "helper.h"
 #include "parser.h"
+#include "translate.h"
 #include "util.h"
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     if (argc == 1) {
-        std::cerr << "Please input a file\n";
-        return 0;
+        Util::write(std::cerr, "Please give an input file");
+        return 1;
     }
-    auto TU = TranslationUnit(argv[1]);
-    if (TU.check()) std::cout << "File parsed successfully\n";
+
+    TranslationUnit tu(std::string{argv[1]});
+    if (!tu.check()) {
+        Util::write(std::cerr, "Syntax error\n");
+        return 1;
+    }
+
+    IR::Tree tree;
+    translate(tree, tu.syntax_tree);
+    Util::write(std::cout, tree);
 }
