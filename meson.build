@@ -54,6 +54,6 @@ test('gtest IR', executable(
 
 test('gtest translation', executable(
     'test_translation', 'test/translation.cpp', dependencies : 
-      [end_deps, front_deps, ir_deps, testing_deps, gtest_dep]
+      [helper_deps, end_deps, front_deps, ir_deps, testing_deps, gtest_dep]
   )
 )

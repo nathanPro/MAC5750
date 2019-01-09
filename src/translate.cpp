@@ -4,6 +4,7 @@ namespace IR
 {
 
 Translator::Translator(Tree& tree) : t(tree) {}
+Translator::Translator(Tree& tree, helper::meta_data&&) : t(tree) {}
 
 int Translator::binop(BinopId                                    id,
                       AST::__detail::BinaryRule<AST::Exp> const& exp)

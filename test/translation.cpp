@@ -128,7 +128,7 @@ TEST(translatorTest, translatesFullProgram)
     TranslationUnit tu("../input/calc.miniJava");
     EXPECT_TRUE(tu.check());
 
-    Translator vis(tree, helper::meta_data(tu.syntax_tree));
+    IR::Translator vis(tree, helper::meta_data(tu.syntax_tree));
     EXPECT_EQ(tree.methods.size(), 1);
     EXPECT_EQ(tree.methods.begin()->first,
               helper::mangle("Calculator", "main"));

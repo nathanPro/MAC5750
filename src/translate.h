@@ -4,6 +4,7 @@
 #include "AST.h"
 #include "IR.h"
 #include "IRBuilder.h"
+#include "helper.h"
 
 namespace IR
 {
@@ -15,6 +16,7 @@ class Translator
 
   public:
     Translator(Tree&);
+    Translator(Tree&, helper::meta_data&&);
 
     int operator()(AST::andExp const& exp);
     int operator()(AST::sumExp const& exp);

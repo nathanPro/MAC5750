@@ -4,6 +4,7 @@
 #include <cassert>
 #include <functional>
 #include <iostream>
+#include <map>
 #include <vector>
 
 class IRBuilder;
@@ -153,7 +154,8 @@ class Tree
     Explist get_explist(int);
     int     keep_explist(Explist&&);
 
-    std::vector<int> stm_seq;
+    std::vector<int>                        stm_seq;
+    std::map<std::string, std::vector<int>> methods;
 };
 
 template <template <typename C> typename F, typename R>
