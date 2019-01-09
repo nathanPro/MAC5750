@@ -1,4 +1,5 @@
 #include "error.h"
+#include "helper.h"
 #include "parser.h"
 #include "translate.h"
 #include "gtest/gtest.h"
@@ -119,6 +120,18 @@ TEST(translatorTest, translatePrint)
     EXPECT_EQ(es.size(), static_cast<size_t>(1));
     EXPECT_EQ(tree.get_type(es[0]), IR::IRTag::BINOP);
     EXPECT_EQ(tree.get_binop(es[0]).op, IR::BinopId::MUL);
+}
+
+TEST(translatorTest, translatesFullProgram)
+{
+    IR::Tree        tree;
+    TranslationUnit tu("../input/calc.miniJava");
+    EXPECT_TRUE(tu.check());
+
+    Translator vis(tree, helper::meta_data(tu.syntax_tree));
+    EXPECT_EQ(tree.methods.size(), 1);
+    EXPECT_EQ(tree.methods.begin()->first,
+              helper::mangle("Calculator", "main"));
 }
 
 TEST(translatorTest, IRPostOrdering)
