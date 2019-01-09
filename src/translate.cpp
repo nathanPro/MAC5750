@@ -106,12 +106,16 @@ int Translator::operator()(AST::ifStm const&) { return -1; }
 int Translator::operator()(AST::whileStm const&) { return -1; }
 int Translator::operator()(AST::printStm const& stm)
 {
-    IRBuilder builder(t);
+    IRBuilder exp(t);
+    exp << IR::IRTag::EXP << [&] {
+        IRBuilder builder(t);
 
-    builder << IR::IRTag::CALL << 0;
-    builder << t.keep_explist(
-        Explist{Grammar::visit(*this, stm.exp)});
-    return builder.build();
+        builder << IR::IRTag::CALL << 0;
+        builder << t.keep_explist(Explist{
+            store_in_temp(t, Grammar::visit(*this, stm.exp))});
+        return builder.build();
+    }();
+    return exp.build();
 }
 int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }

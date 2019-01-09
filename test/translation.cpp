@@ -112,14 +112,43 @@ TEST(translatorTest, translatePrint)
     auto stream = std::stringstream("System.out.println(21 * 2);\n");
     auto ir     = IR::translate(tree, Parser(&stream).Stm());
     ASSERT_NE(ir, -1);
-    EXPECT_EQ(tree.get_type(ir), IR::IRTag::CALL);
-    auto [f, _es] = tree.get_call(ir);
-    EXPECT_EQ(f, 0);
+    EXPECT_EQ(tree.get_type(ir), IR::IRTag::EXP);
 
-    auto es = tree.get_explist(_es);
-    EXPECT_EQ(es.size(), static_cast<size_t>(1));
-    EXPECT_EQ(tree.get_type(es[0]), IR::IRTag::BINOP);
-    EXPECT_EQ(tree.get_binop(es[0]).op, IR::BinopId::MUL);
+    ASSERT_EQ(tree.stm_seq.size(), 2);
+
+    EXPECT_EQ(tree.get_type(tree.stm_seq[0]), IR::IRTag::MOVE);
+
+    int id;
+    {
+        int tmp = tree.get_move(tree.stm_seq[0]).dst;
+        EXPECT_EQ(tree.get_type(tmp), IR::IRTag::TEMP);
+        id = tree.get_temp(tmp).id;
+    }
+
+    {
+        int bnp = tree.get_move(tree.stm_seq[0]).src;
+        EXPECT_EQ(tree.get_type(bnp), IR::IRTag::BINOP);
+        auto [op, lhs, rhs] = tree.get_binop(bnp);
+        EXPECT_EQ(op, IR::BinopId::MUL);
+        EXPECT_EQ(tree.get_type(lhs), IR::IRTag::CONST);
+        EXPECT_EQ(tree.get_const(lhs).value, 21);
+        EXPECT_EQ(tree.get_type(rhs), IR::IRTag::CONST);
+        EXPECT_EQ(tree.get_const(rhs).value, 2);
+    }
+
+    EXPECT_EQ(tree.get_type(tree.stm_seq[1]), IR::IRTag::EXP);
+    EXPECT_EQ(tree.get_type(tree.get_exp(tree.stm_seq[1]).exp),
+              IR::IRTag::CALL);
+
+    {
+        auto [fn, _es] =
+            tree.get_call(tree.get_exp(tree.stm_seq[1]).exp);
+        EXPECT_EQ(fn, 0);
+        auto es = tree.get_explist(_es);
+        EXPECT_EQ(es.size(), 1);
+        EXPECT_EQ(tree.get_type(es[0]), IR::IRTag::TEMP);
+        EXPECT_EQ(tree.get_temp(es[0]).id, id);
+    }
 }
 
 TEST(translatorTest, translatesFullProgram)
@@ -131,6 +160,9 @@ TEST(translatorTest, translatesFullProgram)
     EXPECT_EQ(tree.methods.size(), 1);
     EXPECT_EQ(tree.methods.begin()->first,
               helper::mangle("Calculator", "main"));
+
+    auto const& main_frag = tree.methods.begin()->second;
+    EXPECT_EQ(main_frag.size(), 2);
 }
 
 TEST(translatorTest, IRPostOrdering)
