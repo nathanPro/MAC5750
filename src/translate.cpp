@@ -120,13 +120,36 @@ int Translator::operator()(AST::printStm const& stm)
 int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
 
-int Translator::operator()(AST::ClassDeclNoInheritance const&)
+void Translator::record_stm_seq()
 {
-    return -1;
+    t.methods.insert({helper::mangle(current_class, current_method),
+                      std::move(t.stm_seq)});
+    t.stm_seq = {};
 }
-int Translator::operator()(AST::ClassDeclInheritance const&)
+int Translator::operator()(AST::MethodDeclRule const& mdr)
 {
-    return -1;
+    current_method = mdr.name;
+    // TODO handle arguments
+    for (auto const& stm : mdr.body) Grammar::visit(*this, stm);
+
+    IRBuilder ret(t);
+    ret << IRTag::EXP << Grammar::visit(*this, mdr.return_exp);
+    ret.build();
+
+    record_stm_seq();
+    return 0;
+}
+int Translator::operator()(AST::ClassDeclNoInheritance const& cls)
+{
+    current_class = cls.name;
+    for (auto const& mtd : cls.methods) Grammar::visit(*this, mtd);
+    return 0;
+}
+int Translator::operator()(AST::ClassDeclInheritance const& cls)
+{
+    current_class = cls.name;
+    for (auto const& mtd : cls.methods) Grammar::visit(*this, mtd);
+    return 0;
 }
 int Translator::operator()(AST::MainClassRule const& mc)
 {
@@ -135,9 +158,7 @@ int Translator::operator()(AST::MainClassRule const& mc)
 
     Grammar::visit(*this, mc.body);
 
-    t.methods.insert({helper::mangle(current_class, current_method),
-                      std::move(t.stm_seq)});
-    t.stm_seq = {};
+    record_stm_seq();
     return 0;
 }
 int Translator::operator()(AST::ProgramRule const& prog)

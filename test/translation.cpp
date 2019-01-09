@@ -151,7 +151,7 @@ TEST(translatorTest, translatePrint)
     }
 }
 
-TEST(translatorTest, translatesFullProgram)
+TEST(translatorTest, translatesFullCalc)
 {
     IR::Tree        tree;
     TranslationUnit tu("../input/calc.miniJava");
@@ -163,6 +163,27 @@ TEST(translatorTest, translatesFullProgram)
 
     auto const& main_frag = tree.methods.begin()->second;
     EXPECT_EQ(main_frag.size(), 2);
+}
+
+TEST(translatorTest, translatesFullSample)
+{
+    IR::Tree        tree;
+    TranslationUnit tu("../input/sample.miniJava");
+    EXPECT_TRUE(tu.check());
+    translate(tree, tu.syntax_tree);
+    EXPECT_EQ(tree.methods.size(), 2);
+
+    std::set<std::string> frags = {
+        helper::mangle("Factorial", "main"),
+        helper::mangle("Fac", "ComputeFac")};
+
+    for (auto it : tree.methods) {
+        auto f = frags.find(it.first);
+        EXPECT_NE(f, frags.end());
+        frags.erase(f);
+    }
+
+    EXPECT_EQ(frags.size(), 0);
 }
 
 TEST(translatorTest, IRPostOrdering)

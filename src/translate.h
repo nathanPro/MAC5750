@@ -15,7 +15,8 @@ class Translator
     std::string       current_class;
     std::string       current_method;
 
-    int binop(BinopId, AST::__detail::BinaryRule<AST::Exp> const&);
+    int  binop(BinopId, AST::__detail::BinaryRule<AST::Exp> const&);
+    void record_stm_seq();
 
   public:
     Translator(Tree&);
@@ -50,6 +51,7 @@ class Translator
     int operator()(AST::MainClassRule const&);
     int operator()(AST::ClassDeclNoInheritance const&);
     int operator()(AST::ClassDeclInheritance const&);
+    int operator()(AST::MethodDeclRule const&);
 };
 
 int  translate(Tree&, AST::Exp const&);
