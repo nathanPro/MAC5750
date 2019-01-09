@@ -63,7 +63,7 @@ template <typename C> struct Inners {
         static std::vector<std::string> names = {
             "+", "-", "*", "/", "&", "|", "<<", ">>", "ARSHIFT", "^"};
         return names[b.op] + std::string(": ") +
-               std::to_string(b.lhs) + std::string(", ") +
+               std::to_string(b.lhs) + std::string(" ") +
                std::to_string(b.rhs);
     }
     std::string operator()(Mem const& m)
@@ -72,17 +72,17 @@ template <typename C> struct Inners {
     }
     std::string operator()(Call const& c)
     {
-        return std::to_string(c.fn) + std::string(", ") +
+        return std::to_string(c.fn) + std::string(" ") +
                std::to_string(c.explist);
     }
     std::string operator()(Cmp const& c)
     {
-        return std::to_string(c.lhs) + std::string(", ") +
+        return std::to_string(c.lhs) + std::string(" ") +
                std::to_string(c.rhs);
     }
     std::string operator()(Move const& m)
     {
-        return std::to_string(m.dst) + std::string(", ") +
+        return std::to_string(m.dst) + std::string(" ") +
                std::to_string(m.src);
     }
     std::string operator()(Exp const& e)
@@ -98,8 +98,8 @@ template <typename C> struct Inners {
         static std::vector<std::string> names = {
             "==", "!=", "<",   ">",  "<=",
             ">=", "u<", "u<=", "u>", "u>="};
-        return names[c.op] + std::string(": ") +
-               std::to_string(c.temp) + std::string(", ") +
+        return names[c.op] + std::string(" ") +
+               std::to_string(c.temp) + std::string(" ") +
                std::to_string(c.target);
     }
     std::string operator()(Label const& l)
@@ -120,14 +120,27 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
     IR::Catamorphism<Inners, std::string> F(t);
 
     Util::write(out, "Tree has", t.pos.size(), "nodes");
-    for (int i = 0; i < t.kind.size(); i++)
-        Util::write(out, "[", i, "]",
-                    TYPES[static_cast<int>(t.get_type(i))], F(i));
+    for (int i = 0; i < static_cast<int>(t.kind.size()); i++)
+        Util::write(out, i, ":\t",
+                    TYPES[static_cast<int>(t.get_type(i))], "\t",
+                    F(i));
 
-    Util::write(out, "It has", t.methods.size(),
+    Util::write(out, "\nIt has", t.methods.size(),
                 "function fragments");
+    for (auto const& f : t.methods) {
+        Util::write(out, f.first);
+        for (auto const& s : f.second)
+            Util::write(out, s, ":\t",
+                        TYPES[static_cast<int>(t.get_type(s))], "\t",
+                        F(s));
+    }
 
-    for (auto const& f : t.methods) Util::write(out, f.first);
+    Util::write(out, "\nIt has", t._explist.size(), "Explists");
+    for (int i = 0; i < static_cast<int>(t._explist.size()); i++) {
+        out << std::to_string(i) + std::string(":\t");
+        for (int j : t.get_explist(i)) out << j;
+        out << "\n";
+    }
     return out;
 }
 } // namespace IR
