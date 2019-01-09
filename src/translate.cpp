@@ -116,6 +116,33 @@ int Translator::operator()(AST::printStm const& stm)
 int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
 
+int Translator::operator()(AST::ClassDeclNoInheritance const&)
+{
+    return -1;
+}
+int Translator::operator()(AST::ClassDeclInheritance const&)
+{
+    return -1;
+}
+int Translator::operator()(AST::MainClassRule const& mc)
+{
+    current_class  = mc.name;
+    current_method = "main";
+
+    Grammar::visit(*this, mc.body);
+
+    t.methods.insert({helper::mangle(current_class, current_method),
+                      std::move(t.stm_seq)});
+    t.stm_seq = {};
+    return 0;
+}
+int Translator::operator()(AST::ProgramRule const& prog)
+{
+    Grammar::visit(*this, prog.main);
+    for (auto const& c : prog.classes) Grammar::visit(*this, c);
+    return 0;
+}
+
 int translate(Tree& t, AST::Exp const& exp)
 {
     return Grammar::visit(Translator{t}, exp);
@@ -124,6 +151,11 @@ int translate(Tree& t, AST::Exp const& exp)
 int translate(Tree& t, AST::Stm const& stm)
 {
     return Grammar::visit(Translator{t}, stm);
+}
+
+void translate(Tree& t, AST::Program const& p)
+{
+    Grammar::visit(Translator{t, helper::meta_data(p)}, p);
 }
 
 } // namespace IR

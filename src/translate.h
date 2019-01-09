@@ -12,6 +12,8 @@ class Translator
 {
     Tree&             t;
     helper::meta_data data;
+    std::string       current_class;
+    std::string       current_method;
 
     int binop(BinopId, AST::__detail::BinaryRule<AST::Exp> const&);
 
@@ -43,10 +45,16 @@ class Translator
     int operator()(AST::printStm const& stm);
     int operator()(AST::assignStm const&);
     int operator()(AST::indexAssignStm const&);
+
+    int operator()(AST::ProgramRule const&);
+    int operator()(AST::MainClassRule const&);
+    int operator()(AST::ClassDeclNoInheritance const&);
+    int operator()(AST::ClassDeclInheritance const&);
 };
 
-int translate(Tree&, AST::Exp const&);
-int translate(Tree&, AST::Stm const&);
+int  translate(Tree&, AST::Exp const&);
+int  translate(Tree&, AST::Stm const&);
+void translate(Tree&, AST::Program const&);
 } // namespace IR
 
 #endif
