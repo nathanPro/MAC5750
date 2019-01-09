@@ -43,4 +43,15 @@ int Tree::keep_explist(Explist&& els)
     _explist.push_back(els);
     return ans;
 }
+
+std::ostream& operator<<(std::ostream& out, Tree const& t)
+{
+    Util::write(out, "Tree has", t.pos.size(), "nodes");
+    Util::write(out, "It has", t.methods.size(),
+                "function fragments");
+    Util::write(out, t.stm_seq.size());
+    for (auto const& f : t.methods)
+        Util::write(out, f.first, f.second.size());
+    return out;
+}
 } // namespace IR

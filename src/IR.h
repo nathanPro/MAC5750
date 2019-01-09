@@ -1,10 +1,12 @@
 #ifndef BCC_IR
 #define BCC_IR
 
+#include "util.h"
 #include <cassert>
 #include <functional>
 #include <iostream>
 #include <map>
+#include <ostream>
 #include <vector>
 
 class IRBuilder;
@@ -106,6 +108,8 @@ using Explist = std::vector<int>;
 class Tree
 {
     friend class ::IRBuilder;
+    friend std::ostream& operator<<(std::ostream&, Tree const&);
+
     int tmp;
 
     // Type checking info
@@ -157,6 +161,8 @@ class Tree
     std::vector<int>                        stm_seq;
     std::map<std::string, std::vector<int>> methods;
 };
+
+std::ostream& operator<<(std::ostream& out, Tree const&);
 
 template <template <typename C> typename F, typename R>
 struct Catamorphism {
