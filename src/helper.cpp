@@ -221,4 +221,9 @@ int meta_data::type_size(AST::Type const& type) const
     return Grammar::visit(Visitor{*this}, type);
 }
 
+std::string mangle(std::string cls, std::string mtd)
+{
+    return std::string("_Z") + cls + std::string("_") + mtd;
+}
+
 } // namespace helper

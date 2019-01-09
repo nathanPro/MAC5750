@@ -123,6 +123,12 @@ TEST_F(HelperTest, MetaDataStoresStackLayout)
     EXPECT_EQ(data["Fac"].method("ComputeFac").layout["not_aux"], 8);
 }
 
+TEST_F(HelperTest, HelperMangles)
+{
+    EXPECT_EQ(helper::mangle("Calculator", "main"),
+              "_ZCalculator_main");
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

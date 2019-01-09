@@ -97,6 +97,8 @@ class meta_data
     int               type_size(std::string const&) const;
     int               type_size(AST::Type const&) const;
 };
+
+std::string mangle(std::string, std::string);
 } // namespace helper
 
 #endif
