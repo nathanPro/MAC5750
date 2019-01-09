@@ -120,15 +120,19 @@ int Translator::operator()(AST::printStm const& stm)
 int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
 
-void Translator::record_stm_seq()
+labelGuard::labelGuard(Tree& _t, std::string _l) : t(_t), label(_l)
 {
-    t.methods.insert({helper::mangle(current_class, current_method),
-                      std::move(t.stm_seq)});
     t.stm_seq = {};
 }
+labelGuard::~labelGuard()
+{
+    t.methods.insert({label, std::move(t.stm_seq)});
+}
+
 int Translator::operator()(AST::MethodDeclRule const& mdr)
 {
-    current_method = mdr.name;
+    labelGuard guard(
+        t, helper::mangle(current_class, current_method = mdr.name));
     // TODO handle arguments
     for (auto const& stm : mdr.body) Grammar::visit(*this, stm);
 
@@ -136,7 +140,6 @@ int Translator::operator()(AST::MethodDeclRule const& mdr)
     ret << IRTag::EXP << Grammar::visit(*this, mdr.return_exp);
     ret.build();
 
-    record_stm_seq();
     return 0;
 }
 int Translator::operator()(AST::ClassDeclNoInheritance const& cls)
@@ -153,12 +156,10 @@ int Translator::operator()(AST::ClassDeclInheritance const& cls)
 }
 int Translator::operator()(AST::MainClassRule const& mc)
 {
-    current_class  = mc.name;
-    current_method = "main";
+    labelGuard guard(t, std::string("main"));
 
     Grammar::visit(*this, mc.body);
 
-    record_stm_seq();
     return 0;
 }
 int Translator::operator()(AST::ProgramRule const& prog)

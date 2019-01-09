@@ -106,9 +106,11 @@ struct Cmp {
 
 using Explist = std::vector<int>;
 
+struct labelGuard;
 class Tree
 {
     friend class ::IRBuilder;
+    friend struct labelGuard;
     friend std::ostream& operator<<(std::ostream&, Tree&);
 
     int tmp;

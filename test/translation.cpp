@@ -158,8 +158,7 @@ TEST(translatorTest, translatesFullCalc)
     EXPECT_TRUE(tu.check());
     translate(tree, tu.syntax_tree);
     EXPECT_EQ(tree.methods.size(), 1);
-    EXPECT_EQ(tree.methods.begin()->first,
-              helper::mangle("Calculator", "main"));
+    EXPECT_EQ(tree.methods.begin()->first, std::string("main"));
 
     auto const& main_frag = tree.methods.begin()->second;
     EXPECT_EQ(main_frag.size(), 2);
@@ -174,8 +173,7 @@ TEST(translatorTest, translatesFullSample)
     EXPECT_EQ(tree.methods.size(), 2);
 
     std::set<std::string> frags = {
-        helper::mangle("Factorial", "main"),
-        helper::mangle("Fac", "ComputeFac")};
+        std::string("main"), helper::mangle("Fac", "ComputeFac")};
 
     for (auto it : tree.methods) {
         auto f = frags.find(it.first);

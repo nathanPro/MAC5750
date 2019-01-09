@@ -8,6 +8,7 @@
 
 namespace IR
 {
+struct labelGuard;
 class Translator
 {
     Tree&             t;
@@ -15,8 +16,7 @@ class Translator
     std::string       current_class;
     std::string       current_method;
 
-    int  binop(BinopId, AST::__detail::BinaryRule<AST::Exp> const&);
-    void record_stm_seq();
+    int binop(BinopId, AST::__detail::BinaryRule<AST::Exp> const&);
 
   public:
     Translator(Tree&);
@@ -52,6 +52,14 @@ class Translator
     int operator()(AST::ClassDeclNoInheritance const&);
     int operator()(AST::ClassDeclInheritance const&);
     int operator()(AST::MethodDeclRule const&);
+};
+
+struct labelGuard {
+    Tree&       t;
+    std::string label;
+
+    labelGuard(Tree& _t, std::string _l);
+    ~labelGuard();
 };
 
 int  translate(Tree&, AST::Exp const&);
