@@ -44,14 +44,90 @@ int Tree::keep_explist(Explist&& els)
     return ans;
 }
 
-std::ostream& operator<<(std::ostream& out, Tree const& t)
+template <typename C> struct Inners {
+
+    std::string operator()(Const const& c)
+    {
+        return std::to_string(c.value);
+    }
+    std::string operator()(Name const& n)
+    {
+        return std::to_string(n.id);
+    }
+    std::string operator()(Temp const& t)
+    {
+        return std::to_string(t.id);
+    }
+    std::string operator()(Binop const& b)
+    {
+        static std::vector<std::string> names = {
+            "+", "-", "*", "/", "&", "|", "<<", ">>", "ARSHIFT", "^"};
+        return names[b.op] + std::string(": ") +
+               std::to_string(b.lhs) + std::string(", ") +
+               std::to_string(b.rhs);
+    }
+    std::string operator()(Mem const& m)
+    {
+        return std::to_string(m.exp);
+    }
+    std::string operator()(Call const& c)
+    {
+        return std::to_string(c.fn) + std::string(", ") +
+               std::to_string(c.explist);
+    }
+    std::string operator()(Cmp const& c)
+    {
+        return std::to_string(c.lhs) + std::string(", ") +
+               std::to_string(c.rhs);
+    }
+    std::string operator()(Move const& m)
+    {
+        return std::to_string(m.dst) + std::string(", ") +
+               std::to_string(m.src);
+    }
+    std::string operator()(Exp const& e)
+    {
+        return std::to_string(e.exp);
+    }
+    std::string operator()(Jmp const& j)
+    {
+        return std::to_string(j.target);
+    }
+    std::string operator()(Cjmp const& c)
+    {
+        static std::vector<std::string> names = {
+            "==", "!=", "<",   ">",  "<=",
+            ">=", "u<", "u<=", "u>", "u>="};
+        return names[c.op] + std::string(": ") +
+               std::to_string(c.temp) + std::string(", ") +
+               std::to_string(c.target);
+    }
+    std::string operator()(Label const& l)
+    {
+        return std::to_string(l.id);
+    }
+
+    Inners(C&& __fmap) : fmap(__fmap) {}
+    C fmap;
+};
+
+std::ostream& operator<<(std::ostream& out, Tree& t)
 {
+    std::vector<std::string> TYPES = {
+        "CONST", "NAME", "TEMP", "BINOP", "MEM",   "CALL",
+        "CMP",   "MOVE", "EXP",  "JMP",   "LABEL", "CJMP"};
+
+    IR::Catamorphism<Inners, std::string> F(t);
+
     Util::write(out, "Tree has", t.pos.size(), "nodes");
+    for (int i = 0; i < t.kind.size(); i++)
+        Util::write(out, "[", i, "]",
+                    TYPES[static_cast<int>(t.get_type(i))], F(i));
+
     Util::write(out, "It has", t.methods.size(),
                 "function fragments");
-    Util::write(out, t.stm_seq.size());
-    for (auto const& f : t.methods)
-        Util::write(out, f.first, f.second.size());
+
+    for (auto const& f : t.methods) Util::write(out, f.first);
     return out;
 }
 } // namespace IR

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <ostream>
+#include <string>
 #include <vector>
 
 class IRBuilder;
@@ -108,7 +109,7 @@ using Explist = std::vector<int>;
 class Tree
 {
     friend class ::IRBuilder;
-    friend std::ostream& operator<<(std::ostream&, Tree const&);
+    friend std::ostream& operator<<(std::ostream&, Tree&);
 
     int tmp;
 
