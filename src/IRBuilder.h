@@ -3,7 +3,8 @@
 
 #include "IR.h"
 
-class IRBuilder {
+class IRBuilder
+{
     IR::Tree& base;
     int       ref;
     int       kind;
@@ -16,5 +17,7 @@ class IRBuilder {
     IRBuilder& operator<<(int in);
     int        build();
 };
+
+int store_in_temp(IR::Tree&, int);
 
 #endif

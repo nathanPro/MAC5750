@@ -14,6 +14,21 @@ IRBuilder& IRBuilder::operator<<(int in)
     return *this;
 }
 
+int store_in_temp(IR::Tree& t, int exp_ref)
+{
+    auto tref = [&] {
+        IRBuilder tmp(t);
+        tmp << IR::IRTag::TEMP;
+        return tmp.build();
+    }();
+
+    IRBuilder assign(t);
+    assign << IR::IRTag::MOVE << tref << exp_ref;
+    assign.build();
+
+    return tref;
+}
+
 int IRBuilder::build()
 {
     base.kind.push_back(kind);
