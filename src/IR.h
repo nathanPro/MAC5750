@@ -106,11 +106,22 @@ struct Cmp {
 
 using Explist = std::vector<int>;
 
-struct labelGuard;
+struct fragmentGuard;
+struct activation_record {
+    std::map<std::string, int> arguments;
+    int                        sp;
+    int                        tp;
+};
+struct fragment {
+    activation_record stack;
+    std::vector<int>  stms;
+    size_t            size() const;
+};
+
 class Tree
 {
     friend class ::IRBuilder;
-    friend struct labelGuard;
+    friend struct fragmentGuard;
     friend std::ostream& operator<<(std::ostream&, Tree&);
 
     int tmp;
@@ -161,8 +172,8 @@ class Tree
     int     keep_explist(Explist&&);
     int     new_temp();
 
-    std::vector<int>                        stm_seq;
-    std::map<std::string, std::vector<int>> methods;
+    std::vector<int>                stm_seq;
+    std::map<std::string, fragment> methods;
 };
 
 std::ostream& operator<<(std::ostream& out, Tree const&);

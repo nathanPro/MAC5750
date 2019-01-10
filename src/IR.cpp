@@ -53,6 +53,8 @@ int Tree::new_temp()
     return ref;
 }
 
+size_t fragment::size() const { return stms.size(); }
+
 template <typename C> struct Inners {
 
     std::string operator()(Const const& c)
@@ -130,7 +132,7 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
 
     Util::write(out, "Tree has", t.pos.size(), "nodes");
     for (int i = 0; i < static_cast<int>(t.kind.size()); i++)
-        Util::write(out, i, ":\t",
+        Util::write(out, "\t", i, ":\t",
                     TYPES[static_cast<int>(t.get_type(i))], "\t",
                     F(i));
 
@@ -138,15 +140,22 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
                 "function fragments");
     for (auto const& f : t.methods) {
         Util::write(out, f.first);
-        for (auto const& s : f.second)
-            Util::write(out, s, ":\t",
+        Util::write(out, "The arguments are:");
+        for (auto const& a : f.second.stack.arguments)
+            Util::write(out, "\t", a.first, ":=",
+                        TYPES[static_cast<int>(t.get_type(a.second))],
+                        "\t", a.second);
+        Util::write(out, "The code is:");
+        for (auto const& s : f.second.stms)
+            Util::write(out, "\t", s, ":\t",
                         TYPES[static_cast<int>(t.get_type(s))], "\t",
                         F(s));
     }
 
     Util::write(out, "\nIt has", t._explist.size(), "Explists");
     for (int i = 0; i < static_cast<int>(t._explist.size()); i++) {
-        out << std::to_string(i) + std::string(":\t");
+        out << std::string("\t")
+            << std::to_string(i) + std::string(":\t");
         for (int j : t.get_explist(i)) out << j;
         out << "\n";
     }

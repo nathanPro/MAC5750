@@ -8,7 +8,7 @@
 
 namespace IR
 {
-struct labelGuard;
+struct fragmentGuard;
 class Translator
 {
     Tree&             t;
@@ -54,12 +54,13 @@ class Translator
     int operator()(AST::MethodDeclRule const&);
 };
 
-struct labelGuard {
-    Tree&       t;
-    std::string label;
+struct fragmentGuard {
+    Tree&             t;
+    std::string       label;
+    activation_record rec;
 
-    labelGuard(Tree& _t, std::string _l);
-    ~labelGuard();
+    fragmentGuard(Tree&, std::string, activation_record&&);
+    ~fragmentGuard();
 };
 
 int  translate(Tree&, AST::Exp const&);

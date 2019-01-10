@@ -120,20 +120,29 @@ int Translator::operator()(AST::printStm const& stm)
 int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
 
-labelGuard::labelGuard(Tree& _t, std::string _l) : t(_t), label(_l)
+fragmentGuard::fragmentGuard(Tree& _t, std::string _l,
+                             IR::activation_record&& _r)
+    : t(_t), label(_l), rec(_r)
 {
     t.stm_seq = {};
 }
-labelGuard::~labelGuard()
+fragmentGuard::~fragmentGuard()
 {
-    t.methods.insert({label, std::move(t.stm_seq)});
+    t.methods.insert({label, {rec, std::move(t.stm_seq)}});
 }
 
 int Translator::operator()(AST::MethodDeclRule const& mdr)
 {
-    labelGuard guard(
-        t, helper::mangle(current_class, current_method = mdr.name));
-    // TODO handle arguments
+
+    IR::activation_record stack = {{}, t.new_temp(), t.new_temp()};
+    auto flr = Grammar::get<AST::FormalListRule>(mdr.arguments);
+    for (auto const& d : flr.decls)
+        stack.arguments.insert({d.name, t.new_temp()});
+
+    fragmentGuard guard(
+        t, helper::mangle(current_class, current_method = mdr.name),
+        std::move(stack));
+
     for (auto const& stm : mdr.body) Grammar::visit(*this, stm);
 
     IRBuilder ret(t);
@@ -156,7 +165,8 @@ int Translator::operator()(AST::ClassDeclInheritance const& cls)
 }
 int Translator::operator()(AST::MainClassRule const& mc)
 {
-    labelGuard guard(t, std::string("main"));
+    fragmentGuard guard(t, std::string("main"),
+                        {{}, t.new_temp(), t.new_temp()});
 
     Grammar::visit(*this, mc.body);
 
