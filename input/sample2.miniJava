@@ -1,0 +1,18 @@
+
+class Factorial {
+    public static void main(String[] a) {
+        System.out.println(new Fac().ComputeFac(10));
+    }
+}
+class Fac {
+    int t1;
+    int t2;
+    public int ComputeFac(int num) {
+        int num_aux;
+        int not_aux;
+        num_aux = 2 * num;
+        return num_aux;
+    }
+}
+class Child extends Fac {
+}
