@@ -21,7 +21,8 @@ struct memory_layout {
     memory_layout();
     memory_layout(meta_data const&, std::map<std::string, kind_t>&,
                   common_t const&);
-    int operator[](std::string const&) const;
+    int  operator[](std::string const&) const;
+    bool has(std::string const&) const;
 
     static common_t smooth(std::vector<AST::VarDecl> const&);
     static common_t smooth(AST::FormalList const&);

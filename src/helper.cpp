@@ -51,6 +51,11 @@ memory_layout::memory_layout(meta_data const&               data,
     }
 }
 
+bool memory_layout::has(std::string const& name) const
+{
+    return value.count(name) != 0;
+}
+
 int memory_layout::operator[](std::string const& name) const
 {
     return value.at(name);
