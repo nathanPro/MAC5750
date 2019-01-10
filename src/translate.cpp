@@ -93,14 +93,42 @@ int Translator::operator()(AST::bangExp const& exp)
     return root.build();
 }
 
+int Translator::operator()(AST::identifierExp const& exp)
+{
+    if (frame.arguments.count(exp.value))
+        return frame.arguments[exp.value];
+
+    int pt  = -1;
+    int dsp = 0;
+    if (data[current_class]
+            .method(current_method)
+            .layout.has(exp.value))
+        pt = frame.sp, dsp = data[current_class]
+                                 .method(current_method)
+                                 .layout[exp.value];
+    else if (data[current_class].variable.has(exp.value))
+        pt = frame.tp, dsp = data[current_class].variable[exp.value];
+
+    IRBuilder cte(t);
+    cte << IRTag::CONST << dsp;
+
+    IRBuilder mem(t);
+    mem << IRTag::MEM << [&] {
+        IRBuilder binop(t);
+        binop << IRTag::BINOP << BinopId::PLUS << pt << cte.build();
+        return binop.build();
+    }();
+    return mem.build();
+}
+
+int Translator::operator()(AST::thisExp const&) { return frame.tp; }
+int Translator::operator()(AST::methodCallExp const&) { return -1; }
+int Translator::operator()(AST::newObjectExp const&) { return -1; }
+
 int Translator::operator()(AST::ExpListRule const&) { return -1; }
 int Translator::operator()(AST::lengthExp const&) { return -1; }
-int Translator::operator()(AST::methodCallExp const&) { return -1; }
-int Translator::operator()(AST::thisExp const&) { return -1; }
-int Translator::operator()(AST::identifierExp const&) { return -1; }
 int Translator::operator()(AST::indexingExp const&) { return -1; }
 int Translator::operator()(AST::newArrayExp const&) { return -1; }
-int Translator::operator()(AST::newObjectExp const&) { return -1; }
 int Translator::operator()(AST::blockStm const&) { return -1; }
 int Translator::operator()(AST::ifStm const&) { return -1; }
 int Translator::operator()(AST::whileStm const&) { return -1; }
@@ -121,7 +149,7 @@ int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
 
 fragmentGuard::fragmentGuard(Tree& _t, std::string _l,
-                             IR::activation_record&& _r)
+                             IR::activation_record _r)
     : t(_t), label(_l), rec(_r)
 {
     t.stm_seq = {};
@@ -134,14 +162,15 @@ fragmentGuard::~fragmentGuard()
 int Translator::operator()(AST::MethodDeclRule const& mdr)
 {
 
-    IR::activation_record stack = {{}, t.new_temp(), t.new_temp()};
+    frame = {{}, t.new_temp(), t.new_temp()};
+
     auto flr = Grammar::get<AST::FormalListRule>(mdr.arguments);
     for (auto const& d : flr.decls)
-        stack.arguments.insert({d.name, t.new_temp()});
+        frame.arguments.insert({d.name, t.new_temp()});
 
     fragmentGuard guard(
         t, helper::mangle(current_class, current_method = mdr.name),
-        std::move(stack));
+        frame);
 
     for (auto const& stm : mdr.body) Grammar::visit(*this, stm);
 

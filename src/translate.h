@@ -15,6 +15,7 @@ class Translator
     helper::meta_data data;
     std::string       current_class;
     std::string       current_method;
+    activation_record frame;
 
     int binop(BinopId, AST::__detail::BinaryRule<AST::Exp> const&);
 
@@ -59,7 +60,7 @@ struct fragmentGuard {
     std::string       label;
     activation_record rec;
 
-    fragmentGuard(Tree&, std::string, activation_record&&);
+    fragmentGuard(Tree&, std::string, activation_record);
     ~fragmentGuard();
 };
 

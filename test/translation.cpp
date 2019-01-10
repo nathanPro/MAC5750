@@ -184,6 +184,36 @@ TEST(translatorTest, translatesFullSample)
     EXPECT_EQ(frags.size(), 0);
 }
 
+TEST(translatorTest, translatesIdentifierExp)
+{
+    IR::Tree        tree;
+    TranslationUnit tu("../input/sample2.miniJava");
+    EXPECT_TRUE(tu.check());
+    translate(tree, tu.syntax_tree);
+    EXPECT_EQ(tree.methods.size(), 2);
+
+    auto const lbl = helper::mangle("Fac", "ComputeFac");
+    ASSERT_NE(tree.methods.count(lbl), 0);
+
+    auto const& frag = tree.methods[lbl];
+    ASSERT_NE(frag.stms.size(), 0);
+
+    auto ret_stm = frag.stms.back();
+    EXPECT_EQ(tree.get_type(ret_stm), IR::IRTag::EXP);
+    auto ret_ref = tree.get_exp(ret_stm).exp;
+    EXPECT_EQ(tree.get_type(ret_ref), IR::IRTag::MEM);
+    EXPECT_EQ(tree.get_type(tree.get_mem(ret_ref).exp),
+              IR::IRTag::BINOP);
+
+    auto [op, lhs, rhs] = tree.get_binop(tree.get_mem(ret_ref).exp);
+    EXPECT_EQ(op, IR::BinopId::PLUS);
+    EXPECT_EQ(tree.get_type(lhs), IR::IRTag::TEMP);
+    EXPECT_EQ(lhs, frag.stack.sp);
+
+    EXPECT_EQ(tree.get_type(rhs), IR::IRTag::CONST);
+    EXPECT_EQ(tree.get_const(rhs).value, 0);
+}
+
 TEST(translatorTest, IRPostOrdering)
 {
     IR::Tree tree;
