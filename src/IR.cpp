@@ -141,10 +141,17 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
     for (auto const& f : t.methods) {
         Util::write(out, f.first);
         Util::write(out, "The arguments are:");
+        int sp = f.second.stack.sp, tp = f.second.stack.tp;
+        Util::write(out, "\t", "sp", ":=", "[", sp, "]",
+                    TYPES[static_cast<int>(t.get_type(sp))], "\t",
+                    t.get_temp(sp).id);
+        Util::write(out, "\t", "tp", ":=", "[", tp, "]",
+                    TYPES[static_cast<int>(t.get_type(tp))], "\t",
+                    t.get_temp(tp).id);
         for (auto const& a : f.second.stack.arguments)
-            Util::write(out, "\t", a.first, ":=",
+            Util::write(out, "\t", a.first, ":=", "[", a.second, "]",
                         TYPES[static_cast<int>(t.get_type(a.second))],
-                        "\t", a.second);
+                        "\t", t.get_temp(a.second).id);
         Util::write(out, "The code is:");
         for (auto const& s : f.second.stms)
             Util::write(out, "\t", s, ":\t",
