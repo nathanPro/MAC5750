@@ -16,11 +16,7 @@ IRBuilder& IRBuilder::operator<<(int in)
 
 int store_in_temp(IR::Tree& t, int exp_ref)
 {
-    auto tref = [&] {
-        IRBuilder tmp(t);
-        tmp << IR::IRTag::TEMP;
-        return tmp.build();
-    }();
+    auto tref = t.new_temp();
 
     IRBuilder assign(t);
     assign << IR::IRTag::MOVE << tref << exp_ref;
@@ -32,7 +28,7 @@ int store_in_temp(IR::Tree& t, int exp_ref)
 int IRBuilder::build()
 {
     base.kind.push_back(kind);
-    ref = base.id++;
+    ref = base.pos.size();
     switch (static_cast<IR::IRTag>(kind)) {
     case IR::IRTag::CONST:
         base.pos.push_back(base._const.size());
@@ -44,7 +40,7 @@ int IRBuilder::build()
         break;
     case IR::IRTag::TEMP:
         base.pos.push_back(base._temp.size());
-        base._temp.push_back(IR::Temp{++base.tmp});
+        base._temp.push_back(IR::Temp{base.tmp++});
         break;
     case IR::IRTag::BINOP:
         base.pos.push_back(base._binop.size());

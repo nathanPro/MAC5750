@@ -116,7 +116,6 @@ class Tree
     int tmp;
 
     // Type checking info
-    size_t               id;
     std::vector<int>     kind;
     std::vector<int>     pos;
     std::vector<Explist> _explist;
@@ -138,7 +137,7 @@ class Tree
     std::vector<Cjmp>  _cjmp;
 
   public:
-    Tree() : tmp(0), id(0) {}
+    Tree() : tmp(0) {}
     // Exp types
     Const& get_const(int ref);
     Name&  get_name(int ref);
@@ -160,6 +159,7 @@ class Tree
     size_t  size() const;
     Explist get_explist(int);
     int     keep_explist(Explist&&);
+    int     new_temp();
 
     std::vector<int>                        stm_seq;
     std::map<std::string, std::vector<int>> methods;

@@ -28,7 +28,7 @@ IR_GETTER(_cmp, IRTag::CMP, Cmp)
 IR_GETTER(_cjmp, IRTag::CJMP, Cjmp)
 
 #undef IR_GETTER
-size_t Tree::size() const { return id; }
+size_t Tree::size() const { return pos.size(); }
 
 IRTag Tree::get_type(int ref)
 {
@@ -42,6 +42,15 @@ int Tree::keep_explist(Explist&& els)
     int ans = _explist.size();
     _explist.push_back(els);
     return ans;
+}
+
+int Tree::new_temp()
+{
+    auto ref = pos.size();
+    kind.push_back(static_cast<int>(IRTag::TEMP));
+    pos.push_back(_temp.size());
+    _temp.push_back(Temp{tmp++});
+    return ref;
 }
 
 template <typename C> struct Inners {
