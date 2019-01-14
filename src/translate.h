@@ -64,6 +64,38 @@ struct fragmentGuard {
     ~fragmentGuard();
 };
 
+struct TypeError {
+    AST::Type expected;
+    AST::Type found;
+};
+
+template <typename T> void type_assert(AST::Type fnd)
+{
+    if (!Grammar::holds<T>(fnd)) throw TypeError{T{}, fnd};
+}
+
+struct TypeInferenceVisitor {
+    Translator& translator;
+
+    AST::Type operator()(AST::andExp const&);
+    AST::Type operator()(AST::lessExp const&);
+    AST::Type operator()(AST::sumExp const&);
+    AST::Type operator()(AST::minusExp const&);
+    AST::Type operator()(AST::prodExp const&);
+    AST::Type operator()(AST::indexingExp const&);
+    AST::Type operator()(AST::lengthExp const&);
+    AST::Type operator()(AST::methodCallExp const&);
+    AST::Type operator()(AST::integerExp const&);
+    AST::Type operator()(AST::trueExp const&);
+    AST::Type operator()(AST::falseExp const&);
+    AST::Type operator()(AST::thisExp const&);
+    AST::Type operator()(AST::identifierExp const&);
+    AST::Type operator()(AST::newArrayExp const&);
+    AST::Type operator()(AST::newObjectExp const&);
+    AST::Type operator()(AST::bangExp const&);
+    AST::Type operator()(AST::parenExp const&);
+};
+
 int  translate(Tree&, AST::Exp const&);
 int  translate(Tree&, AST::Stm const&);
 void translate(Tree&, AST::Program const&);

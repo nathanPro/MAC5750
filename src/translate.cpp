@@ -236,4 +236,109 @@ void translate(Tree& t, AST::Program const& p)
     Grammar::visit(Translator{t, helper::meta_data(p)}, p);
 }
 
+AST::Type TypeInferenceVisitor::operator()(AST::methodCallExp const&)
+{
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::thisExp const&)
+{
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::identifierExp const&)
+{
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::andExp const& exp)
+{
+    type_assert<AST::booleanType>(Grammar::visit(*this, exp.lhs));
+    type_assert<AST::booleanType>(Grammar::visit(*this, exp.rhs));
+    return AST::booleanType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::lessExp const& exp)
+{
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.lhs));
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.rhs));
+    return AST::booleanType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::sumExp const& exp)
+{
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.lhs));
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.rhs));
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::minusExp const& exp)
+{
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.lhs));
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.rhs));
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::prodExp const& exp)
+{
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.lhs));
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.rhs));
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::
+          operator()(AST::indexingExp const& exp)
+{
+    type_assert<AST::integerArrayType>(
+        Grammar::visit(*this, exp.lhs));
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.rhs));
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::lengthExp const& exp)
+{
+    type_assert<AST::integerArrayType>(
+        Grammar::visit(*this, exp.inner));
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::integerExp const&)
+{
+    return AST::integerType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::trueExp const&)
+{
+    return AST::booleanType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::falseExp const&)
+{
+    return AST::booleanType{};
+}
+
+AST::Type TypeInferenceVisitor::
+          operator()(AST::newArrayExp const& exp)
+{
+    type_assert<AST::integerType>(Grammar::visit(*this, exp.inner));
+    return AST::integerArrayType{};
+}
+
+AST::Type TypeInferenceVisitor::
+          operator()(AST::newObjectExp const& exp)
+{
+    return AST::classType{exp.value};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::bangExp const& exp)
+{
+    type_assert<AST::booleanType>(exp.inner);
+    return AST::booleanType{};
+}
+
+AST::Type TypeInferenceVisitor::operator()(AST::parenExp const& exp)
+{
+    return Grammar::visit(*this, exp.inner);
+}
+
 } // namespace IR
