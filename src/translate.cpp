@@ -123,7 +123,6 @@ int Translator::operator()(AST::identifierExp const& exp)
 
 int Translator::operator()(AST::thisExp const&) { return frame.tp; }
 int Translator::operator()(AST::methodCallExp const&) { return -1; }
-int Translator::operator()(AST::newObjectExp const&) { return -1; }
 
 int Translator::operator()(AST::ExpListRule const&) { return -1; }
 int Translator::operator()(AST::lengthExp const&) { return -1; }
@@ -132,6 +131,9 @@ int Translator::operator()(AST::newArrayExp const&) { return -1; }
 int Translator::operator()(AST::blockStm const&) { return -1; }
 int Translator::operator()(AST::ifStm const&) { return -1; }
 int Translator::operator()(AST::whileStm const&) { return -1; }
+int Translator::operator()(AST::assignStm const&) { return -1; }
+int Translator::operator()(AST::indexAssignStm const&) { return -1; }
+
 int Translator::operator()(AST::printStm const& stm)
 {
     IRBuilder exp(t);
@@ -145,8 +147,19 @@ int Translator::operator()(AST::printStm const& stm)
     }();
     return exp.build();
 }
-int Translator::operator()(AST::assignStm const&) { return -1; }
-int Translator::operator()(AST::indexAssignStm const&) { return -1; }
+
+int Translator::operator()(AST::newObjectExp const& noe)
+{
+    return store_in_temp(t, [&] {
+        IRBuilder call(t);
+        IRBuilder cte(t);
+        cte << IR::IRTag::CONST << data[noe.value].size();
+
+        call << IR::IRTag::CALL << 1
+             << t.keep_explist(Explist{cte.build()});
+        return call.build();
+    }());
+}
 
 fragmentGuard::fragmentGuard(Tree& _t, std::string _l,
                              IR::activation_record _r)
