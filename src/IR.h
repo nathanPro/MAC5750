@@ -72,8 +72,8 @@ struct Mem {
 };
 
 struct Call {
-    int fn;
-    int explist;
+    std::string fn;
+    int         explist;
 };
 
 struct Move {
@@ -125,6 +125,7 @@ class Tree
     friend std::ostream& operator<<(std::ostream&, Tree&);
 
     int tmp;
+    int lbl;
 
     // Type checking info
     std::vector<int>     kind;
@@ -138,17 +139,17 @@ class Tree
     std::vector<Binop> _binop;
     std::vector<Mem>   _mem;
     std::vector<Call>  _call;
+    std::vector<Cmp>   _cmp;
 
     // Stm types
     std::vector<Move>  _move;
     std::vector<Exp>   _exp;
     std::vector<Jmp>   _jmp;
     std::vector<Label> _label;
-    std::vector<Cmp>   _cmp;
     std::vector<Cjmp>  _cjmp;
 
   public:
-    Tree() : tmp(0) {}
+    Tree();
     // Exp types
     Const& get_const(int ref);
     Name&  get_name(int ref);
@@ -171,6 +172,7 @@ class Tree
     Explist get_explist(int);
     int     keep_explist(Explist&&);
     int     new_temp();
+    int     new_label();
 
     std::vector<int>                stm_seq;
     std::map<std::string, fragment> methods;

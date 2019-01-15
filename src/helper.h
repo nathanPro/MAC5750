@@ -17,6 +17,7 @@ struct memory_layout {
     using common_t = std::vector<AST::FormalDecl>;
     std::map<std::string, int> value;
     int                        size;
+    common_t                   source;
 
     memory_layout();
     memory_layout(meta_data const&, std::map<std::string, kind_t>&,
@@ -38,12 +39,16 @@ class method_spec
 
   public:
     method_spec(meta_data const&, class_spec const&,
-                std::string const&, memory_layout&&);
+                std::string const&, memory_layout&&,
+                memory_layout::common_t&&, AST::Type);
     method_spec(meta_data const&, class_spec const&,
-                std::string const&, memory_layout const&);
+                std::string const&, memory_layout const&,
+                memory_layout::common_t&&, AST::Type);
 
-    std::string const   name;
-    memory_layout const layout;
+    std::string const             name;
+    memory_layout const           layout;
+    memory_layout::common_t const arglist;
+    AST::Type                     return_type;
 };
 
 class class_spec
@@ -54,7 +59,8 @@ class class_spec
     std::vector<method_spec>      m_info;
 
     void init_methods(std::vector<AST::MethodDecl> const&);
-    void insert_method(std::string const&, memory_layout&&);
+    void insert_method(std::string const&, memory_layout&&,
+                       memory_layout::common_t&&, AST::Type);
     void insert_method(std::string const&, method_spec const&);
 
   public:

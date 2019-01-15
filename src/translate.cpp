@@ -48,7 +48,7 @@ int Translator::operator()(AST::integerExp const& exp)
 int Translator::operator()(AST::trueExp const&)
 {
     IRBuilder builder(t);
-    builder << IRTag::CONST << 1;
+    builder << IRTag::CONST << 0x80;
     return builder.build();
 }
 
@@ -66,31 +66,32 @@ int Translator::operator()(AST::parenExp const& exp)
 
 int Translator::operator()(AST::lessExp const& exp)
 {
-    IRBuilder root(t);
-    IRBuilder tmp(t);
-    IRBuilder cmp(t);
 
-    tmp << IRTag::TEMP;
-    cmp << IRTag::CMP << Grammar::visit(*this, exp.lhs)
-        << Grammar::visit(*this, exp.rhs);
+    IRBuilder bn(t);
 
-    root << IRTag::MOVE << tmp.build() << cmp.build();
-    return root.build();
+    bn << IR::IRTag::BINOP << IR::BinopId::AND
+       << store_in_temp(t,
+                        [&] {
+                            IRBuilder cmp(t);
+                            cmp << IRTag::CMP
+                                << Grammar::visit(*this, exp.lhs)
+                                << Grammar::visit(*this, exp.rhs);
+                            return cmp.build();
+                        }())
+       << Grammar::visit(*this, AST::Exp{AST::trueExp{}});
+
+    return bn.build();
 }
 
 int Translator::operator()(AST::bangExp const& exp)
 {
-    auto mv  = Grammar::visit(*this, exp.inner);
-    auto tmp = t.get_move(mv).dst;
+    IRBuilder bn(t);
 
-    IRBuilder root(t);
-    IRBuilder cte(t);
-    cte << IR::IRTag::CONST << 1;
+    bn << IR::IRTag::BINOP << IR::BinopId::XOR
+       << Grammar::visit(*this, exp.inner)
+       << Grammar::visit(*this, AST::Exp{AST::trueExp{}});
 
-    root << IR::IRTag::BINOP << IR::BinopId::XOR << tmp
-         << cte.build();
-
-    return root.build();
+    return bn.build();
 }
 
 int Translator::operator()(AST::identifierExp const& exp)
@@ -109,20 +110,38 @@ int Translator::operator()(AST::identifierExp const& exp)
     else if (data[current_class].variable.has(exp.value))
         pt = frame.tp, dsp = data[current_class].variable[exp.value];
 
-    IRBuilder cte(t);
-    cte << IRTag::CONST << dsp;
-
-    IRBuilder mem(t);
-    mem << IRTag::MEM << [&] {
-        IRBuilder binop(t);
-        binop << IRTag::BINOP << BinopId::PLUS << pt << cte.build();
-        return binop.build();
+    IRBuilder binop(t);
+    binop << IRTag::BINOP << BinopId::PLUS << pt << [&] {
+        IRBuilder cte(t);
+        cte << IRTag::CONST << dsp;
+        return cte.build();
     }();
-    return mem.build();
+    return binop.build();
 }
 
 int Translator::operator()(AST::thisExp const&) { return frame.tp; }
-int Translator::operator()(AST::methodCallExp const&) { return -1; }
+int Translator::operator()(AST::methodCallExp const& exp)
+{
+    auto const& cls_name =
+        Grammar::get<AST::classType>(
+            Grammar::visit(TypeInferenceVisitor{*this}, exp.object))
+            .value;
+    auto const& es =
+        Grammar::get<AST::ExpListRule>(exp.arguments).exps;
+
+    IRBuilder call(t);
+    call << IRTag::CALL << helper::mangle(cls_name, exp.name) << [&] {
+        Explist args;
+        args.push_back(
+            store_in_temp(t, Grammar::visit(*this, exp.object)));
+        for (auto const& e : es)
+            args.push_back(
+                store_in_temp(t, Grammar::visit(*this, e)));
+        return t.keep_explist(std::move(args));
+    }();
+
+    return call.build();
+}
 
 int Translator::operator()(AST::ExpListRule const&) { return -1; }
 int Translator::operator()(AST::lengthExp const&) { return -1; }
@@ -140,7 +159,7 @@ int Translator::operator()(AST::printStm const& stm)
     exp << IR::IRTag::EXP << [&] {
         IRBuilder builder(t);
 
-        builder << IR::IRTag::CALL << 0;
+        builder << IR::IRTag::CALL << std::string("print");
         builder << t.keep_explist(Explist{
             store_in_temp(t, Grammar::visit(*this, stm.exp))});
         return builder.build();
@@ -155,7 +174,7 @@ int Translator::operator()(AST::newObjectExp const& noe)
         IRBuilder cte(t);
         cte << IR::IRTag::CONST << data[noe.value].size();
 
-        call << IR::IRTag::CALL << 1
+        call << IR::IRTag::CALL << std::string("malloc")
              << t.keep_explist(Explist{cte.build()});
         return call.build();
     }());
@@ -187,10 +206,22 @@ int Translator::operator()(AST::MethodDeclRule const& mdr)
 
     for (auto const& stm : mdr.body) Grammar::visit(*this, stm);
 
-    IRBuilder ret(t);
-    ret << IRTag::EXP << Grammar::visit(*this, mdr.return_exp);
-    ret.build();
+    auto ret_t =
+        Grammar::visit(TypeInferenceVisitor{*this}, mdr.return_exp);
 
+    IRBuilder ret(t);
+    ret << IRTag::EXP;
+
+    if (Grammar::holds<AST::classType>(ret_t) ||
+        Grammar::holds<AST::integerArrayType>(ret_t))
+        ret << Grammar::visit(*this, mdr.return_exp);
+    else {
+        IRBuilder mem(t);
+        mem << IRTag::MEM << Grammar::visit(*this, mdr.return_exp);
+        ret << mem.build();
+    }
+
+    ret.build();
     return 0;
 }
 int Translator::operator()(AST::ClassDeclNoInheritance const& cls)
@@ -236,19 +267,62 @@ void translate(Tree& t, AST::Program const& p)
     Grammar::visit(Translator{t, helper::meta_data(p)}, p);
 }
 
-AST::Type TypeInferenceVisitor::operator()(AST::methodCallExp const&)
+AST::Type TypeInferenceVisitor::
+          operator()(AST::methodCallExp const& exp)
 {
-    return AST::integerType{};
+    auto obj = Grammar::get<AST::classType>(
+        Grammar::visit(*this, exp.object));
+
+    int  cnt     = 0;
+    auto explist = [&] {
+        helper::memory_layout::common_t ans;
+        for (auto const& e :
+             Grammar::get<AST::ExpListRule>(exp.arguments).exps)
+            ans.push_back(
+                {Grammar::visit(*this, e), std::to_string(cnt++)});
+        return ans;
+    }();
+
+    for (int i = 0; i < cnt; i++)
+        if (Grammar::index(explist[i].type) !=
+            Grammar::index(translator.data[obj.value]
+                               .method(exp.name)
+                               .arglist[i]
+                               .type))
+            throw;
+
+    return translator.data[obj.value].method(exp.name).return_type;
 }
 
 AST::Type TypeInferenceVisitor::operator()(AST::thisExp const&)
 {
-    return AST::integerType{};
+    return AST::classType{translator.current_class};
 }
 
-AST::Type TypeInferenceVisitor::operator()(AST::identifierExp const&)
+AST::Type TypeInferenceVisitor::
+          operator()(AST::identifierExp const& exp)
 {
-    return AST::integerType{};
+    auto const& source = [&] {
+        if (translator.frame.arguments.count(exp.value))
+            return translator.data[translator.current_class]
+                .method(translator.current_method)
+                .arglist;
+
+        if (translator.data[translator.current_class]
+                .method(translator.current_method)
+                .layout.has(exp.value))
+            return translator.data[translator.current_class]
+                .method(translator.current_method)
+                .layout.source;
+
+        if (translator.data[translator.current_class].variable.has(
+                exp.value))
+            return translator.data[translator.current_class]
+                .variable.source;
+    }();
+
+    for (auto const& [type, name] : source)
+        if (name == exp.value) return type;
 }
 
 AST::Type TypeInferenceVisitor::operator()(AST::andExp const& exp)

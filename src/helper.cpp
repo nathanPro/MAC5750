@@ -42,12 +42,17 @@ memory_layout::memory_layout() : size(0) {}
 memory_layout::memory_layout(meta_data const&               data,
                              std::map<std::string, kind_t>& kind,
                              memory_layout::common_t const& vars)
-    : size(0)
+    : size(0), source([&] {
+          common_t ans;
+          for (auto const& var : vars)
+              ans.push_back({var.type, var.name});
+          return ans;
+      }())
 {
-    for (auto const& var : vars) {
-        kind[var.name]  = kind_t::var;
-        value[var.name] = size;
-        size += data.type_size(var.type);
+    for (auto const& [type, name] : source) {
+        kind[name]  = kind_t::var;
+        value[name] = size;
+        size += data.type_size(type);
     }
 }
 
@@ -62,23 +67,32 @@ int memory_layout::operator[](std::string const& name) const
 }
 
 method_spec::method_spec(meta_data const& d, class_spec const& c,
-                         std::string const& n, memory_layout&& l)
-    : data(d), cls(c), name(n), layout(std::move(l))
+                         std::string const& n, memory_layout&& l,
+                         memory_layout::common_t&& _arglist,
+                         AST::Type                 _rt)
+    : data(d), cls(c), name(n), layout(std::move(l)),
+      arglist(std::move(_arglist)), return_type(_rt)
 {
 }
 method_spec::method_spec(meta_data const& d, class_spec const& c,
-                         std::string const& n, memory_layout const& l)
-    : data(d), cls(c), name(n), layout(l)
+                         std::string const& n, memory_layout const& l,
+                         memory_layout::common_t&& _arglist,
+                         AST::Type                 _rt)
+    : data(d), cls(c), name(n), layout(l),
+      arglist(std::move(_arglist)), return_type(_rt)
 {
 }
 
-void class_spec::insert_method(std::string const& name,
-                               memory_layout&&    layout)
+void class_spec::insert_method(std::string const&        name,
+                               memory_layout&&           layout,
+                               memory_layout::common_t&& args,
+                               AST::Type                 type)
 {
     if (m_id.count(name)) return;
     kind[name] = kind_t::method;
     m_id[name] = m_info.size();
-    m_info.emplace_back(data, *this, name, std::move(layout));
+    m_info.emplace_back(data, *this, name, std::move(layout),
+                        std::move(args), type);
 }
 
 void class_spec::insert_method(std::string const& name,
@@ -95,9 +109,11 @@ void class_spec::init_methods(
 {
     for (auto const& mtd : mtds) {
         auto const& mdr = Grammar::get<AST::MethodDeclRule>(mtd);
-        insert_method(mdr.name, memory_layout{data, kind,
-                                              memory_layout::smooth(
-                                                  mdr.variables)});
+        insert_method(
+            mdr.name,
+            memory_layout{data, kind,
+                          memory_layout::smooth(mdr.variables)},
+            memory_layout::smooth(mdr.arguments), mdr.type);
     }
 }
 
@@ -106,7 +122,8 @@ class_spec::class_spec(meta_data const&          d,
     : data(d), name(cls.name), base(-1),
       variable(data, kind, memory_layout::smooth(cls))
 {
-    insert_method("main", memory_layout{data, kind, {}});
+    insert_method("main", memory_layout{data, kind, {}}, {},
+                  AST::integerType{});
 }
 
 class_spec::class_spec(meta_data const&                   d,

@@ -63,19 +63,37 @@ TEST_F(IRBuilderTest, memBuiltWithBuilder)
 TEST_F(IRBuilderTest, callBuiltWithBuilder)
 {
     IRBuilder builder(tree);
-    builder << IR::IRTag::CALL << 1 << 2;
+    builder << IR::IRTag::CALL << std::string("fn") << 2;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_call(ref).fn, 1);
+    EXPECT_EQ(tree.get_call(ref).fn, std::string("fn"));
     EXPECT_EQ(tree.get_call(ref).explist, 2);
 }
 
 TEST_F(IRBuilderTest, moveBuiltWithBuilder)
 {
     IRBuilder builder(tree);
-    builder << IR::IRTag::MOVE << 1 << 2;
+    auto      t1 = tree.new_temp();
+    auto      t2 = tree.new_temp();
+    builder << IR::IRTag::MOVE << t1 << t2;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_move(ref).dst, 1);
-    EXPECT_EQ(tree.get_move(ref).src, 2);
+    EXPECT_EQ(tree.get_move(ref).dst, t1);
+    EXPECT_EQ(tree.get_move(ref).src, t2);
+    EXPECT_EQ(tree.stm_seq.back(), ref);
+}
+
+TEST_F(IRBuilderTest, moveCoercesLHS)
+{
+    IRBuilder builder(tree);
+    auto      tmp = tree.new_temp();
+    builder << IR::IRTag::MOVE << [&] {
+        IRBuilder cte(tree);
+        cte << IR::IRTag::CONST << 0;
+        return cte.build();
+    }() << tmp;
+
+    auto ref = builder.build();
+    EXPECT_EQ(tree.get_type(tree.get_move(ref).dst), IR::IRTag::MEM);
+    EXPECT_EQ(tree.get_move(ref).src, tmp);
     EXPECT_EQ(tree.stm_seq.back(), ref);
 }
 

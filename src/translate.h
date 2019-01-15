@@ -11,6 +11,7 @@ namespace IR
 struct fragmentGuard;
 class Translator
 {
+    friend struct TypeInferenceVisitor;
     Tree&             t;
     helper::meta_data data;
     std::string       current_class;
