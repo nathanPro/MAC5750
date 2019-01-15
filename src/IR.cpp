@@ -162,7 +162,7 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
     for (int i = 0; i < static_cast<int>(t._explist.size()); i++) {
         out << std::string("\t")
             << std::to_string(i) + std::string(":\t");
-        for (int j : t.get_explist(i)) out << j;
+        for (int j : t.get_explist(i)) out << j << " ";
         out << "\n";
     }
     return out;
