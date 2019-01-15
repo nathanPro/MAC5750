@@ -63,6 +63,15 @@ int IRBuilder::build()
     case IR::IRTag::MOVE:
         base.stm_seq.push_back(base.pos.size());
         base.pos.push_back(base._move.size());
+        data[0] = [&](IR::IRTag tag) {
+            if (tag == IR::IRTag::TEMP || tag == IR::IRTag::MEM)
+                return data[0];
+            else {
+                IRBuilder mem(base);
+                mem << IR::IRTag::MEM << data[0];
+                return mem.build();
+            }
+        }(base.get_type(data[0]));
         base._move.push_back(IR::Move{data[0], data[1]});
         break;
     case IR::IRTag::EXP:
