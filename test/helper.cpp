@@ -123,6 +123,15 @@ TEST_F(HelperTest, MetaDataStoresStackLayout)
     EXPECT_EQ(data["Fac"].method("ComputeFac").layout["not_aux"], 8);
 }
 
+TEST_F(HelperTest, MetaDataStoresFormalList)
+{
+    EXPECT_EQ(data["Fac"].method("ComputeFac").arglist.size(), 1);
+    auto const& [type, name] =
+        data["Fac"].method("ComputeFac").arglist[0];
+    EXPECT_TRUE(Grammar::holds<AST::integerType>(type));
+    EXPECT_EQ(name, std::string("num"));
+}
+
 TEST_F(HelperTest, HelperMangles)
 {
     EXPECT_EQ(helper::mangle("Calculator", "main"),
