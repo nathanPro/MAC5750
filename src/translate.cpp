@@ -48,7 +48,7 @@ int Translator::operator()(AST::integerExp const& exp)
 int Translator::operator()(AST::trueExp const&)
 {
     IRBuilder builder(t);
-    builder << IRTag::CONST << 1;
+    builder << IRTag::CONST << 0x80;
     return builder.build();
 }
 
@@ -66,31 +66,32 @@ int Translator::operator()(AST::parenExp const& exp)
 
 int Translator::operator()(AST::lessExp const& exp)
 {
-    IRBuilder root(t);
-    IRBuilder tmp(t);
-    IRBuilder cmp(t);
 
-    tmp << IRTag::TEMP;
-    cmp << IRTag::CMP << Grammar::visit(*this, exp.lhs)
-        << Grammar::visit(*this, exp.rhs);
+    IRBuilder bn(t);
 
-    root << IRTag::MOVE << tmp.build() << cmp.build();
-    return root.build();
+    bn << IR::IRTag::BINOP << IR::BinopId::AND
+       << store_in_temp(t,
+                        [&] {
+                            IRBuilder cmp(t);
+                            cmp << IRTag::CMP
+                                << Grammar::visit(*this, exp.lhs)
+                                << Grammar::visit(*this, exp.rhs);
+                            return cmp.build();
+                        }())
+       << Grammar::visit(*this, AST::Exp{AST::trueExp{}});
+
+    return bn.build();
 }
 
 int Translator::operator()(AST::bangExp const& exp)
 {
-    auto mv  = Grammar::visit(*this, exp.inner);
-    auto tmp = t.get_move(mv).dst;
+    IRBuilder bn(t);
 
-    IRBuilder root(t);
-    IRBuilder cte(t);
-    cte << IR::IRTag::CONST << 1;
+    bn << IR::IRTag::BINOP << IR::BinopId::XOR
+       << Grammar::visit(*this, exp.inner)
+       << Grammar::visit(*this, AST::Exp{AST::trueExp{}});
 
-    root << IR::IRTag::BINOP << IR::BinopId::XOR << tmp
-         << cte.build();
-
-    return root.build();
+    return bn.build();
 }
 
 int Translator::operator()(AST::identifierExp const& exp)

@@ -55,7 +55,7 @@ TEST(translatorTest, translateTrueAndFalse)
 
         ASSERT_NE(ir, -1);
         EXPECT_EQ(t[i].get_type(ir), IR::IRTag::CONST);
-        EXPECT_EQ(t[i].get_const(ir).value, i);
+        EXPECT_EQ(t[i].get_const(ir).value, i * 0x80);
     }
 }
 
@@ -66,11 +66,18 @@ TEST(translatorTest, translatelessExp)
     auto     ir     = IR::translate(tree, Parser(&stream).Exp());
 
     ASSERT_NE(ir, -1);
-    EXPECT_EQ(tree.get_type(ir), IR::IRTag::MOVE);
-    auto m = tree.get_move(ir);
+    EXPECT_EQ(tree.get_type(ir), IR::IRTag::BINOP);
+    auto [op, lhs, rhs] = tree.get_binop(ir);
+    EXPECT_EQ(op, IR::BinopId::AND);
+    EXPECT_EQ(tree.get_type(lhs), IR::IRTag::TEMP);
+    EXPECT_EQ(tree.get_type(rhs), IR::IRTag::CONST);
+    EXPECT_EQ(tree.get_const(rhs).value, 0x80);
 
-    ASSERT_NE(m.dst, -1);
-    EXPECT_EQ(tree.get_type(m.dst), IR::IRTag::TEMP);
+    auto mv = tree.stm_seq.back();
+
+    EXPECT_EQ(tree.get_type(mv), IR::IRTag::MOVE);
+    auto m = tree.get_move(mv);
+    EXPECT_EQ(lhs, m.dst);
 
     ASSERT_NE(m.src, -1);
     EXPECT_EQ(tree.get_type(m.src), IR::IRTag::CMP);
@@ -94,16 +101,18 @@ TEST(translatorTest, translateBangExp)
     EXPECT_EQ(op, IR::BinopId::XOR);
 
     ASSERT_NE(lhs, -1);
-    EXPECT_EQ(tree.get_type(lhs), IR::IRTag::TEMP);
+    EXPECT_EQ(tree.get_type(lhs), IR::IRTag::BINOP);
 
     ASSERT_NE(rhs, -1);
     EXPECT_EQ(tree.get_type(rhs), IR::IRTag::CONST);
-    EXPECT_EQ(tree.get_const(rhs).value, 1);
+    EXPECT_EQ(tree.get_const(rhs).value, 0x80);
 
     ASSERT_EQ(tree.stm_seq.size(), 1);
     EXPECT_EQ(tree.get_type(tree.stm_seq.back()), IR::IRTag::MOVE);
-    auto mv = tree.get_move(tree.stm_seq.back());
-    EXPECT_EQ(mv.dst, lhs);
+    EXPECT_EQ(tree.get_type(tree.get_move(tree.stm_seq.back()).dst),
+              IR::IRTag::TEMP);
+    EXPECT_EQ(tree.get_type(tree.get_move(tree.stm_seq.back()).src),
+              IR::IRTag::CMP);
 }
 
 TEST(translatorTest, translatePrint)
