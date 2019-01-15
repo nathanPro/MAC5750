@@ -243,23 +243,28 @@ void translate(Tree& t, AST::Program const& p)
 AST::Type TypeInferenceVisitor::
           operator()(AST::methodCallExp const& exp)
 {
-    Util::write(std::cerr, "Inference!");
     auto obj = Grammar::get<AST::classType>(
         Grammar::visit(*this, exp.object));
-    Util::write(
-        std::cerr, obj.value, exp.name,
-        translator.data[obj.value].method(exp.name).arglist.size());
 
-    for (auto const& [type, name] :
-         translator.data[obj.value].method(exp.name).arglist) {
-        if (Grammar::holds<AST::classType>(type))
-            Util::write(std::cerr,
-                        Grammar::get<AST::classType>(type).value,
-                        name);
-        else
-            Util::write(std::cerr, "builtin", name);
-    }
-    return AST::integerType{};
+    int  cnt     = 0;
+    auto explist = [&] {
+        helper::memory_layout::common_t ans;
+        for (auto const& e :
+             Grammar::get<AST::ExpListRule>(exp.arguments).exps)
+            ans.push_back(
+                {Grammar::visit(*this, e), std::to_string(cnt++)});
+        return ans;
+    }();
+
+    for (int i = 0; i < cnt; i++)
+        if (Grammar::index(explist[i].type) !=
+            Grammar::index(translator.data[obj.value]
+                               .method(exp.name)
+                               .arglist[i]
+                               .type))
+            throw;
+
+    return translator.data[obj.value].method(exp.name).return_type;
 }
 
 AST::Type TypeInferenceVisitor::operator()(AST::thisExp const&)
@@ -267,9 +272,30 @@ AST::Type TypeInferenceVisitor::operator()(AST::thisExp const&)
     return AST::classType{translator.current_class};
 }
 
-AST::Type TypeInferenceVisitor::operator()(AST::identifierExp const&)
+AST::Type TypeInferenceVisitor::
+          operator()(AST::identifierExp const& exp)
 {
-    return AST::integerType{};
+    auto const& source = [&] {
+        if (translator.frame.arguments.count(exp.value))
+            return translator.data[translator.current_class]
+                .method(translator.current_method)
+                .arglist;
+
+        if (translator.data[translator.current_class]
+                .method(translator.current_method)
+                .layout.has(exp.value))
+            return translator.data[translator.current_class]
+                .method(translator.current_method)
+                .layout.source;
+
+        if (translator.data[translator.current_class].variable.has(
+                exp.value))
+            return translator.data[translator.current_class]
+                .variable.source;
+    }();
+
+    for (auto const& [type, name] : source)
+        if (name == exp.value) return type;
 }
 
 AST::Type TypeInferenceVisitor::operator()(AST::andExp const& exp)
