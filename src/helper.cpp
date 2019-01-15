@@ -68,12 +68,13 @@ int memory_layout::operator[](std::string const& name) const
 
 method_spec::method_spec(meta_data const& d, class_spec const& c,
                          std::string const& n, memory_layout&& l)
-    : data(d), cls(c), name(n), layout(std::move(l))
+    : data(d), cls(c), name(n), layout(std::move(l)),
+      arglist(layout.source)
 {
 }
 method_spec::method_spec(meta_data const& d, class_spec const& c,
                          std::string const& n, memory_layout const& l)
-    : data(d), cls(c), name(n), layout(l)
+    : data(d), cls(c), name(n), layout(l), arglist(layout.source)
 {
 }
 

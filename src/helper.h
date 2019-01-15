@@ -43,8 +43,9 @@ class method_spec
     method_spec(meta_data const&, class_spec const&,
                 std::string const&, memory_layout const&);
 
-    std::string const   name;
-    memory_layout const layout;
+    std::string const              name;
+    memory_layout const            layout;
+    memory_layout::common_t const& arglist;
 };
 
 class class_spec
