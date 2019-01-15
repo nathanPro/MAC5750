@@ -132,6 +132,12 @@ TEST_F(HelperTest, MetaDataStoresFormalList)
     EXPECT_EQ(name, std::string("num"));
 }
 
+TEST_F(HelperTest, MetaDataStoresReturnType)
+{
+    EXPECT_TRUE(Grammar::holds<AST::integerType>(
+        data["Fac"].method("ComputeFac").return_type));
+}
+
 TEST_F(HelperTest, HelperMangles)
 {
     EXPECT_EQ(helper::mangle("Calculator", "main"),

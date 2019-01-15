@@ -40,14 +40,15 @@ class method_spec
   public:
     method_spec(meta_data const&, class_spec const&,
                 std::string const&, memory_layout&&,
-                memory_layout::common_t&&);
+                memory_layout::common_t&&, AST::Type);
     method_spec(meta_data const&, class_spec const&,
                 std::string const&, memory_layout const&,
-                memory_layout::common_t&&);
+                memory_layout::common_t&&, AST::Type);
 
     std::string const             name;
     memory_layout const           layout;
     memory_layout::common_t const arglist;
+    AST::Type                     return_type;
 };
 
 class class_spec
@@ -59,7 +60,7 @@ class class_spec
 
     void init_methods(std::vector<AST::MethodDecl> const&);
     void insert_method(std::string const&, memory_layout&&,
-                       memory_layout::common_t&&);
+                       memory_layout::common_t&&, AST::Type);
     void insert_method(std::string const&, method_spec const&);
 
   public:
