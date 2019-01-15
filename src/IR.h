@@ -139,13 +139,13 @@ class Tree
     std::vector<Binop> _binop;
     std::vector<Mem>   _mem;
     std::vector<Call>  _call;
+    std::vector<Cmp>   _cmp;
 
     // Stm types
     std::vector<Move>  _move;
     std::vector<Exp>   _exp;
     std::vector<Jmp>   _jmp;
     std::vector<Label> _label;
-    std::vector<Cmp>   _cmp;
     std::vector<Cjmp>  _cjmp;
 
   public:
