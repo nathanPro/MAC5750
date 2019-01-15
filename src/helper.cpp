@@ -42,12 +42,17 @@ memory_layout::memory_layout() : size(0) {}
 memory_layout::memory_layout(meta_data const&               data,
                              std::map<std::string, kind_t>& kind,
                              memory_layout::common_t const& vars)
-    : size(0)
+    : size(0), source([&] {
+          common_t ans;
+          for (auto const& var : vars)
+              ans.push_back({var.type, var.name});
+          return ans;
+      }())
 {
-    for (auto const& var : vars) {
-        kind[var.name]  = kind_t::var;
-        value[var.name] = size;
-        size += data.type_size(var.type);
+    for (auto const& [type, name] : source) {
+        kind[name]  = kind_t::var;
+        value[name] = size;
+        size += data.type_size(type);
     }
 }
 

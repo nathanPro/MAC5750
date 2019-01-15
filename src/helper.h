@@ -17,6 +17,7 @@ struct memory_layout {
     using common_t = std::vector<AST::FormalDecl>;
     std::map<std::string, int> value;
     int                        size;
+    common_t                   source;
 
     memory_layout();
     memory_layout(meta_data const&, std::map<std::string, kind_t>&,
