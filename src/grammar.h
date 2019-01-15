@@ -21,6 +21,8 @@ template <typename variant> struct Nonterminal {
     friend constexpr const Alternative& get(Nonterminal&&);
     template <typename Alternative, class Nonterminal>
     friend constexpr bool holds(Nonterminal&&);
+    template <class Nonterminal>
+    friend constexpr std::size_t index(Nonterminal&&);
 
   protected:
     std::unique_ptr<variant_t> _self;
@@ -42,6 +44,12 @@ template <typename Alternative, class Nonterminal>
 constexpr bool holds(Nonterminal&& nt)
 {
     return std::holds_alternative<Alternative>(*nt._self);
+}
+
+template <class Nonterminal>
+constexpr std::size_t index(Nonterminal&& nt)
+{
+    return nt._self->index();
 }
 
 struct Indexable {
