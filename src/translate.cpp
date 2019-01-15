@@ -332,7 +332,7 @@ AST::Type TypeInferenceVisitor::
 
 AST::Type TypeInferenceVisitor::operator()(AST::bangExp const& exp)
 {
-    type_assert<AST::booleanType>(exp.inner);
+    type_assert<AST::booleanType>(Grammar::visit(*this, exp.inner));
     return AST::booleanType{};
 }
 
