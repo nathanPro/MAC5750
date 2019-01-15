@@ -72,8 +72,8 @@ struct Mem {
 };
 
 struct Call {
-    int fn;
-    int explist;
+    std::string fn;
+    int         explist;
 };
 
 struct Move {

@@ -63,9 +63,9 @@ TEST_F(IRBuilderTest, memBuiltWithBuilder)
 TEST_F(IRBuilderTest, callBuiltWithBuilder)
 {
     IRBuilder builder(tree);
-    builder << IR::IRTag::CALL << 1 << 2;
+    builder << IR::IRTag::CALL << std::string("fn") << 2;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_call(ref).fn, 1);
+    EXPECT_EQ(tree.get_call(ref).fn, std::string("fn"));
     EXPECT_EQ(tree.get_call(ref).explist, 2);
 }
 

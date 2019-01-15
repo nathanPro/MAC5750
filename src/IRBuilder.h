@@ -5,16 +5,18 @@
 
 class IRBuilder
 {
-    IR::Tree& base;
-    int       ref;
-    int       kind;
-    int       data[5];
-    size_t    ds;
+    IR::Tree&   base;
+    int         ref;
+    int         kind;
+    int         data[5];
+    size_t      ds;
+    std::string s;
 
   public:
     IRBuilder(IR::Tree& tree);
-    IRBuilder& operator<<(IR::IRTag in);
-    IRBuilder& operator<<(int in);
+    IRBuilder& operator<<(IR::IRTag);
+    IRBuilder& operator<<(int);
+    IRBuilder& operator<<(std::string);
     int        build();
 };
 

@@ -144,7 +144,7 @@ int Translator::operator()(AST::printStm const& stm)
     exp << IR::IRTag::EXP << [&] {
         IRBuilder builder(t);
 
-        builder << IR::IRTag::CALL << 0;
+        builder << IR::IRTag::CALL << std::string("print");
         builder << t.keep_explist(Explist{
             store_in_temp(t, Grammar::visit(*this, stm.exp))});
         return builder.build();
@@ -159,7 +159,7 @@ int Translator::operator()(AST::newObjectExp const& noe)
         IRBuilder cte(t);
         cte << IR::IRTag::CONST << data[noe.value].size();
 
-        call << IR::IRTag::CALL << 1
+        call << IR::IRTag::CALL << std::string("malloc")
              << t.keep_explist(Explist{cte.build()});
         return call.build();
     }());

@@ -14,6 +14,12 @@ IRBuilder& IRBuilder::operator<<(int in)
     return *this;
 }
 
+IRBuilder& IRBuilder::operator<<(std::string _s)
+{
+    s = _s;
+    return *this;
+}
+
 int store_in_temp(IR::Tree& t, int exp_ref)
 {
     auto tref = t.new_temp();
@@ -52,7 +58,7 @@ int IRBuilder::build()
         break;
     case IR::IRTag::CALL:
         base.pos.push_back(base._call.size());
-        base._call.push_back(IR::Call{data[0], data[1]});
+        base._call.push_back(IR::Call{s, data[0]});
         break;
     case IR::IRTag::MOVE:
         base.stm_seq.push_back(base.pos.size());

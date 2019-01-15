@@ -143,7 +143,7 @@ TEST(translatorTest, translatePrint)
     {
         auto [fn, _es] =
             tree.get_call(tree.get_exp(tree.stm_seq[1]).exp);
-        EXPECT_EQ(fn, 0);
+        EXPECT_EQ(fn, std::string("print"));
         auto es = tree.get_explist(_es);
         EXPECT_EQ(es.size(), 1);
         EXPECT_EQ(tree.get_type(es[0]), IR::IRTag::TEMP);

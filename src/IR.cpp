@@ -83,8 +83,7 @@ template <typename C> struct Inners {
     }
     std::string operator()(Call const& c)
     {
-        return std::to_string(c.fn) + std::string(" ") +
-               std::to_string(c.explist);
+        return c.fn + std::string(" ") + std::to_string(c.explist);
     }
     std::string operator()(Cmp const& c)
     {
