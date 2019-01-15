@@ -122,7 +122,11 @@ int Translator::operator()(AST::identifierExp const& exp)
 }
 
 int Translator::operator()(AST::thisExp const&) { return frame.tp; }
-int Translator::operator()(AST::methodCallExp const&) { return -1; }
+int Translator::operator()(AST::methodCallExp const& exp)
+{
+    Grammar::visit(TypeInferenceVisitor{*this}, exp.object);
+    return -1;
+}
 
 int Translator::operator()(AST::ExpListRule const&) { return -1; }
 int Translator::operator()(AST::lengthExp const&) { return -1; }
@@ -236,14 +240,31 @@ void translate(Tree& t, AST::Program const& p)
     Grammar::visit(Translator{t, helper::meta_data(p)}, p);
 }
 
-AST::Type TypeInferenceVisitor::operator()(AST::methodCallExp const&)
+AST::Type TypeInferenceVisitor::
+          operator()(AST::methodCallExp const& exp)
 {
+    Util::write(std::cerr, "Inference!");
+    auto obj = Grammar::get<AST::classType>(
+        Grammar::visit(*this, exp.object));
+    Util::write(
+        std::cerr, obj.value, exp.name,
+        translator.data[obj.value].method(exp.name).arglist.size());
+
+    for (auto const& [type, name] :
+         translator.data[obj.value].method(exp.name).arglist) {
+        if (Grammar::holds<AST::classType>(type))
+            Util::write(std::cerr,
+                        Grammar::get<AST::classType>(type).value,
+                        name);
+        else
+            Util::write(std::cerr, "builtin", name);
+    }
     return AST::integerType{};
 }
 
 AST::Type TypeInferenceVisitor::operator()(AST::thisExp const&)
 {
-    return AST::integerType{};
+    return AST::classType{translator.current_class};
 }
 
 AST::Type TypeInferenceVisitor::operator()(AST::identifierExp const&)
