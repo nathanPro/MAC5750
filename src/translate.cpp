@@ -332,13 +332,13 @@ AST::Type TypeInferenceVisitor::
 
 AST::Type TypeInferenceVisitor::operator()(AST::bangExp const& exp)
 {
-    type_assert<AST::booleanType>(exp.inner);
+    type_assert<AST::booleanType>(Grammar::visit(*this, exp.inner));
     return AST::booleanType{};
 }
 
 AST::Type TypeInferenceVisitor::operator()(AST::parenExp const& exp)
 {
-    return Grammar::visit(*this, exp.inner);
+    return AST::Type{Grammar::visit(*this, exp.inner)};
 }
 
 } // namespace IR
