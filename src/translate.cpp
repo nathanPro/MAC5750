@@ -124,8 +124,25 @@ int Translator::operator()(AST::identifierExp const& exp)
 int Translator::operator()(AST::thisExp const&) { return frame.tp; }
 int Translator::operator()(AST::methodCallExp const& exp)
 {
-    Grammar::visit(TypeInferenceVisitor{*this}, exp.object);
-    return -1;
+    auto const& cls_name =
+        Grammar::get<AST::classType>(
+            Grammar::visit(TypeInferenceVisitor{*this}, exp.object))
+            .value;
+    auto const& es =
+        Grammar::get<AST::ExpListRule>(exp.arguments).exps;
+
+    IRBuilder call(t);
+    call << IRTag::CALL << helper::mangle(cls_name, exp.name) << [&] {
+        Explist args;
+        args.push_back(
+            store_in_temp(t, Grammar::visit(*this, exp.object)));
+        for (auto const& e : es)
+            args.push_back(
+                store_in_temp(t, Grammar::visit(*this, e)));
+        return t.keep_explist(std::move(args));
+    }();
+
+    return call.build();
 }
 
 int Translator::operator()(AST::ExpListRule const&) { return -1; }
