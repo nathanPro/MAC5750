@@ -39,13 +39,15 @@ class method_spec
 
   public:
     method_spec(meta_data const&, class_spec const&,
-                std::string const&, memory_layout&&);
+                std::string const&, memory_layout&&,
+                memory_layout::common_t&&);
     method_spec(meta_data const&, class_spec const&,
-                std::string const&, memory_layout const&);
+                std::string const&, memory_layout const&,
+                memory_layout::common_t&&);
 
-    std::string const              name;
-    memory_layout const            layout;
-    memory_layout::common_t const& arglist;
+    std::string const             name;
+    memory_layout const           layout;
+    memory_layout::common_t const arglist;
 };
 
 class class_spec
@@ -56,7 +58,8 @@ class class_spec
     std::vector<method_spec>      m_info;
 
     void init_methods(std::vector<AST::MethodDecl> const&);
-    void insert_method(std::string const&, memory_layout&&);
+    void insert_method(std::string const&, memory_layout&&,
+                       memory_layout::common_t&&);
     void insert_method(std::string const&, method_spec const&);
 
   public:

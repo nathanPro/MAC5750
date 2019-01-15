@@ -67,24 +67,29 @@ int memory_layout::operator[](std::string const& name) const
 }
 
 method_spec::method_spec(meta_data const& d, class_spec const& c,
-                         std::string const& n, memory_layout&& l)
+                         std::string const& n, memory_layout&& l,
+                         memory_layout::common_t&& _arglist)
     : data(d), cls(c), name(n), layout(std::move(l)),
-      arglist(layout.source)
+      arglist(std::move(_arglist))
 {
 }
 method_spec::method_spec(meta_data const& d, class_spec const& c,
-                         std::string const& n, memory_layout const& l)
-    : data(d), cls(c), name(n), layout(l), arglist(layout.source)
+                         std::string const& n, memory_layout const& l,
+                         memory_layout::common_t&& _arglist)
+    : data(d), cls(c), name(n), layout(l),
+      arglist(std::move(_arglist))
 {
 }
 
-void class_spec::insert_method(std::string const& name,
-                               memory_layout&&    layout)
+void class_spec::insert_method(std::string const&        name,
+                               memory_layout&&           layout,
+                               memory_layout::common_t&& args)
 {
     if (m_id.count(name)) return;
     kind[name] = kind_t::method;
     m_id[name] = m_info.size();
-    m_info.emplace_back(data, *this, name, std::move(layout));
+    m_info.emplace_back(data, *this, name, std::move(layout),
+                        std::move(args));
 }
 
 void class_spec::insert_method(std::string const& name,
@@ -101,9 +106,11 @@ void class_spec::init_methods(
 {
     for (auto const& mtd : mtds) {
         auto const& mdr = Grammar::get<AST::MethodDeclRule>(mtd);
-        insert_method(mdr.name, memory_layout{data, kind,
-                                              memory_layout::smooth(
-                                                  mdr.variables)});
+        insert_method(
+            mdr.name,
+            memory_layout{data, kind,
+                          memory_layout::smooth(mdr.variables)},
+            memory_layout::smooth(mdr.arguments));
     }
 }
 
@@ -112,7 +119,7 @@ class_spec::class_spec(meta_data const&          d,
     : data(d), name(cls.name), base(-1),
       variable(data, kind, memory_layout::smooth(cls))
 {
-    insert_method("main", memory_layout{data, kind, {}});
+    insert_method("main", memory_layout{data, kind, {}}, {});
 }
 
 class_spec::class_spec(meta_data const&                   d,
