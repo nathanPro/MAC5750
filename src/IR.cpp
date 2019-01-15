@@ -28,6 +28,9 @@ IR_GETTER(_cmp, IRTag::CMP, Cmp)
 IR_GETTER(_cjmp, IRTag::CJMP, Cjmp)
 
 #undef IR_GETTER
+
+Tree::Tree() : tmp(0), lbl(0) {}
+
 size_t Tree::size() const { return pos.size(); }
 
 IRTag Tree::get_type(int ref)
@@ -50,6 +53,15 @@ int Tree::new_temp()
     kind.push_back(static_cast<int>(IRTag::TEMP));
     pos.push_back(_temp.size());
     _temp.push_back(Temp{tmp++});
+    return ref;
+}
+
+int Tree::new_label()
+{
+    auto ref = pos.size();
+    kind.push_back(static_cast<int>(IRTag::LABEL));
+    pos.push_back(_label.size());
+    _label.push_back(Label{lbl++});
     return ref;
 }
 

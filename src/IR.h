@@ -125,6 +125,7 @@ class Tree
     friend std::ostream& operator<<(std::ostream&, Tree&);
 
     int tmp;
+    int lbl;
 
     // Type checking info
     std::vector<int>     kind;
@@ -148,7 +149,7 @@ class Tree
     std::vector<Cjmp>  _cjmp;
 
   public:
-    Tree() : tmp(0) {}
+    Tree();
     // Exp types
     Const& get_const(int ref);
     Name&  get_name(int ref);
@@ -171,6 +172,7 @@ class Tree
     Explist get_explist(int);
     int     keep_explist(Explist&&);
     int     new_temp();
+    int     new_label();
 
     std::vector<int>                stm_seq;
     std::map<std::string, fragment> methods;
