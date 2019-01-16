@@ -205,13 +205,50 @@ int Translator::operator()(AST::whileStm const& wst)
 }
 int Translator::operator()(AST::assignStm const& ast)
 {
+    auto lhs_exp = AST::Exp{AST::identifierExp{ast.name}};
+
+    auto lhs_t = Grammar::visit(TypeInferenceVisitor{*this}, lhs_exp);
+    auto rhs_t =
+        Grammar::visit(TypeInferenceVisitor{*this}, ast.value);
+
+    if (Grammar::index(lhs_t) != Grammar::index(rhs_t)) throw;
+
+    auto lhs = Grammar::visit(*this, lhs_exp);
+    auto rhs = Grammar::visit(*this, ast.value);
+
+    if (Grammar::holds<AST::classType>(lhs_t)) {
+        auto const& cls_name =
+            Grammar::get<AST::classType>(lhs_t).value;
+
+        if (t.get_type(lhs) == IR::IRTag::MEM)
+            lhs = t.get_mem(lhs).exp;
+
+        Explist args;
+        args.push_back(store_in_temp(t, lhs));
+        args.push_back(store_in_temp(t, rhs));
+        args.push_back([&] {
+            IRBuilder cte(t);
+            cte << IR::IRTag::CONST << data[cls_name].size();
+            return cte.build();
+        }());
+
+        auto explist = t.keep_explist(std::move(args));
+
+        IRBuilder exp(t);
+        exp << IR::IRTag::EXP << [&] {
+            IRBuilder call(t);
+            call << IR::IRTag::CALL << std::string("memcpy")
+                 << explist;
+            return call.build();
+        }();
+        return exp.build();
+    }
+
     IRBuilder mov(t);
-    mov << IR::IRTag::MOVE
-        << Grammar::visit(*this,
-                          AST::Exp{AST::identifierExp{ast.name}})
-        << Grammar::visit(*this, ast.value);
+    mov << IR::IRTag::MOVE << lhs << rhs;
     return mov.build();
 }
+
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
 
 int Translator::operator()(AST::printStm const& stm)
