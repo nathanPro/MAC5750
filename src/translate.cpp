@@ -203,7 +203,15 @@ int Translator::operator()(AST::whileStm const& wst)
     t.place_label(std::move(out_lbl));
     return 0;
 }
-int Translator::operator()(AST::assignStm const&) { return -1; }
+int Translator::operator()(AST::assignStm const& ast)
+{
+    IRBuilder mov(t);
+    mov << IR::IRTag::MOVE
+        << Grammar::visit(*this,
+                          AST::Exp{AST::identifierExp{ast.name}})
+        << Grammar::visit(*this, ast.value);
+    return mov.build();
+}
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
 
 int Translator::operator()(AST::printStm const& stm)
