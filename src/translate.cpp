@@ -391,6 +391,8 @@ AST::Type TypeInferenceVisitor::operator()(AST::thisExp const&)
 AST::Type TypeInferenceVisitor::
           operator()(AST::identifierExp const& exp)
 {
+    helper::memory_layout::common_t dft;
+
     auto const& source = [&] {
         if (translator.frame.arguments.count(exp.value))
             return translator.data[translator.current_class]
@@ -408,10 +410,13 @@ AST::Type TypeInferenceVisitor::
                 exp.value))
             return translator.data[translator.current_class]
                 .variable.source;
+        return dft;
     }();
+    if (!source.size()) throw;
 
     for (auto const& [type, name] : source)
         if (name == exp.value) return type;
+    throw;
 }
 
 AST::Type TypeInferenceVisitor::operator()(AST::andExp const& exp)
