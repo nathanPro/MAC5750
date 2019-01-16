@@ -1,12 +1,17 @@
 .PHONY: test clean
+
+SHELL = /bin/bash
+
+PYTHON_VENV = source .venv/bin/activate &&
+
 test: dev-build 
-	ninja -j 4 -C dev-build test
+	$(PYTHON_VENV) ninja -j 4 -C dev-build test
 dev-build:
-	meson --buildtype=debug --warnlevel=3 dev-build
+	$(PYTHON_VENV) meson --buildtype=debug --warnlevel=3 dev-build
 build:
-	meson --buildtype=release build
+	$(PYTHON_VENV) meson --buildtype=release build
 bcc: build
-	ninja -j 4 -C build
+	$(PYTHON_VENV) ninja -j 4 -C build
 clean:
-	ninja -C dev-build clean
-	ninja -C build clean
+	$(PYTHON_VENV) ninja -C dev-build clean
+	$(PYTHON_VENV) ninja -C build clean
