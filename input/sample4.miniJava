@@ -1,0 +1,21 @@
+class Factorial {
+    public static void main(String[] a) {
+        System.out.println(new Fac());
+    }
+}
+class Fac {
+    int t1;
+    public Fac ComputeFac(int num) {
+        int num_aux;
+        int not_aux;
+        num_aux = 2 * num;
+        return this.increase(5).increase(5);
+    }
+
+    public Fac increase(int contra_fatos) {
+        t1 = t1 + 1;
+        return this;
+    }
+}
+class Child extends Fac {
+}
