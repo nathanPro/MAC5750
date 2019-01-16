@@ -323,6 +323,14 @@ int Translator::operator()(AST::ClassDeclInheritance const& cls)
 {
     current_class = cls.name;
     for (auto const& mtd : cls.methods) Grammar::visit(*this, mtd);
+    for (auto const& mtd : data[current_class].methods)
+        if (data[current_class][mtd] == helper::kind_t::method_inh)
+            for (int b = data[current_class].base; b != -1;
+                 b     = data[b].base) {
+                if (data[b][mtd] == helper::kind_t::method_def)
+                    t.aliases[helper::mangle(data[b].name, mtd)]
+                        .insert(helper::mangle(cls.name, mtd));
+            }
     return 0;
 }
 int Translator::operator()(AST::MainClassRule const& mc)

@@ -157,6 +157,12 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
     for (auto const& f : t.methods) {
         Util::write(out, f.first);
         Util::write(out, "The arguments are:");
+        if (t.aliases[f.first].empty())
+            Util::write(out, f.first, "has no aliases");
+        else
+            for (auto const& a : t.aliases[f.first])
+                Util::write(out, a, "is an alias of it");
+
         int sp = f.second.stack.sp, tp = f.second.stack.tp;
         Util::write(out, "\t", "sp", ":=", "[", sp, "]",
                     TYPES[static_cast<int>(t.get_type(sp))], "\t",

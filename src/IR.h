@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <ostream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -188,8 +189,9 @@ class Tree
     label_handle new_label();
     int          place_label(label_handle&&);
 
-    std::vector<int>                stm_seq;
-    std::map<std::string, fragment> methods;
+    std::vector<int>                             stm_seq;
+    std::map<std::string, fragment>              methods;
+    std::map<std::string, std::set<std::string>> aliases;
 };
 
 std::ostream& operator<<(std::ostream& out, Tree const&);
