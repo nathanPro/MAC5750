@@ -33,6 +33,7 @@ int store_in_temp(IR::Tree& t, int exp_ref)
 
 int IRBuilder::build()
 {
+    if (static_cast<IR::IRTag>(kind) == IR::IRTag::LABEL) return -1;
     base.kind.push_back(kind);
     ref = base.pos.size();
     switch (static_cast<IR::IRTag>(kind)) {
@@ -60,8 +61,12 @@ int IRBuilder::build()
         base.pos.push_back(base._call.size());
         base._call.push_back(IR::Call{s, data[0]});
         break;
+    case IR::IRTag::CMP:
+        base.pos.push_back(base._cmp.size());
+        base._cmp.push_back(IR::Cmp{data[0], data[1]});
+        break;
     case IR::IRTag::MOVE:
-        base.stm_seq.push_back(base.pos.size());
+        base.stm_seq.push_back(ref);
         base.pos.push_back(base._move.size());
         data[0] = [&](IR::IRTag tag) {
             if (tag == IR::IRTag::TEMP || tag == IR::IRTag::MEM)
@@ -75,28 +80,22 @@ int IRBuilder::build()
         base._move.push_back(IR::Move{data[0], data[1]});
         break;
     case IR::IRTag::EXP:
-        base.stm_seq.push_back(base.pos.size());
+        base.stm_seq.push_back(ref);
         base.pos.push_back(base._exp.size());
         base._exp.push_back(IR::Exp{data[0]});
         break;
     case IR::IRTag::JMP:
-        base.stm_seq.push_back(base.pos.size());
+        base.stm_seq.push_back(ref);
         base.pos.push_back(base._jmp.size());
         base._jmp.push_back(IR::Jmp{data[0]});
         break;
-    case IR::IRTag::LABEL:
-        base.stm_seq.push_back(base.pos.size());
-        base.pos.push_back(base._label.size());
-        base._label.push_back(IR::Label{data[0]});
-        break;
-    case IR::IRTag::CMP:
-        base.pos.push_back(base._cmp.size());
-        base._cmp.push_back(IR::Cmp{data[0], data[1]});
-        break;
     case IR::IRTag::CJMP:
-        base.stm_seq.push_back(base.pos.size());
+        base.stm_seq.push_back(ref);
         base.pos.push_back(base._cjmp.size());
         base._cjmp.push_back(IR::Cjmp{data[0], data[1], data[2]});
+        break;
+    case IR::IRTag::LABEL:
+        break;
     }
     return ref;
 }

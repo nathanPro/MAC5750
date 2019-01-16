@@ -56,13 +56,20 @@ int Tree::new_temp()
     return ref;
 }
 
-int Tree::new_label()
+label_handle::label_handle(int _ref) : ref(_ref) {}
+
+label_handle Tree::new_label()
 {
     auto ref = pos.size();
     kind.push_back(static_cast<int>(IRTag::LABEL));
     pos.push_back(_label.size());
     _label.push_back(Label{lbl++});
     return ref;
+}
+
+void Tree::place_label(label_handle&& lbl)
+{
+    stm_seq.push_back(lbl.ref);
 }
 
 size_t fragment::size() const { return stms.size(); }

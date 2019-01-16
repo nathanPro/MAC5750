@@ -107,15 +107,27 @@ struct Cmp {
 using Explist = std::vector<int>;
 
 struct fragmentGuard;
+
 struct activation_record {
     std::map<std::string, int> arguments;
     int                        sp;
     int                        tp;
 };
+
 struct fragment {
     activation_record stack;
     std::vector<int>  stms;
     size_t            size() const;
+};
+
+class Tree;
+class label_handle
+{
+    friend class Tree;
+    int ref;
+
+  public:
+    label_handle(int);
 };
 
 class Tree
@@ -172,7 +184,9 @@ class Tree
     Explist get_explist(int);
     int     keep_explist(Explist&&);
     int     new_temp();
-    int     new_label();
+
+    label_handle new_label();
+    void         place_label(label_handle&&);
 
     std::vector<int>                stm_seq;
     std::map<std::string, fragment> methods;

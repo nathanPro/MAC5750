@@ -115,13 +115,14 @@ TEST_F(IRBuilderTest, jmpBuiltWithBuilder)
     EXPECT_EQ(tree.stm_seq.back(), ref);
 }
 
-TEST_F(IRBuilderTest, labelBuiltWithBuilder)
+TEST_F(IRBuilderTest, labelBuilt)
 {
-    IRBuilder builder(tree);
-    builder << IR::IRTag::LABEL << 12;
-    auto ref = builder.build();
-    EXPECT_EQ(tree.get_label(ref).id, 12);
-    EXPECT_EQ(tree.stm_seq.back(), ref);
+    auto handle = tree.new_label();
+    EXPECT_EQ(tree.stm_seq.size(), 0);
+    tree.place_label(std::move(handle));
+    EXPECT_EQ(tree.stm_seq.size(), 1);
+    tree.place_label(tree.new_label());
+    EXPECT_EQ(tree.stm_seq.size(), 2);
 }
 
 TEST_F(IRBuilderTest, cmpBuiltWithBuilder)
