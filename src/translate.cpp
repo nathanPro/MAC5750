@@ -155,7 +155,27 @@ int Translator::operator()(AST::blockStm const& blk)
     return 0;
 }
 
-int Translator::operator()(AST::ifStm const& ifs) { return -1; }
+int Translator::operator()(AST::ifStm const& ifs)
+{
+    auto cnd = store_in_temp(t, Grammar::visit(*this, ifs.condition));
+    auto if_lbl  = t.new_label();
+    auto end_lbl = t.new_label();
+    {
+        IRBuilder cjmp(t);
+        cjmp << IR::IRTag::CJMP << IR::RelopId::LT << cnd
+             << int(if_lbl);
+        cjmp.build();
+    }
+    Grammar::visit(*this, ifs.else_clause);
+    {
+        IRBuilder jmp(t);
+        jmp << IR::IRTag::JMP << end_lbl;
+        jmp.build();
+    }
+    t.place_label(std::move(if_lbl));
+    Grammar::visit(*this, ifs.if_clause);
+    t.place_label(std::move(end_lbl));
+}
 int Translator::operator()(AST::whileStm const&) { return -1; }
 int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }

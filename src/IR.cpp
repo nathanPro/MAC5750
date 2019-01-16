@@ -57,6 +57,7 @@ int Tree::new_temp()
 }
 
 label_handle::label_handle(int _ref) : ref(_ref) {}
+label_handle::operator int() const { return ref; }
 
 label_handle Tree::new_label()
 {

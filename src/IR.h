@@ -125,9 +125,10 @@ class label_handle
 {
     friend class Tree;
     int ref;
+    label_handle(int);
 
   public:
-    label_handle(int);
+    operator int() const;
 };
 
 class Tree
