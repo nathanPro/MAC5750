@@ -16,3 +16,8 @@ memcpy.o: memcpy.asm
 	nasm $(DEBUG) -f elf64 memcpy.asm
 memcpy: memcpy.o
 	ld -o memcpy -dynamic-linker $(LINKER) $(OLIB)/crt1.o $(OLIB)/crti.o -lc memcpy.o $(OLIB)/crtn.o
+
+alias.o: alias.asm
+	nasm $(DEBUG) -f elf64 alias.asm
+alias: alias.o
+	ld -o alias -dynamic-linker $(LINKER) $(OLIB)/crt1.o $(OLIB)/crti.o -lc alias.o $(OLIB)/crtn.o
