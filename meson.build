@@ -14,12 +14,13 @@ irbuilder   = static_library('IRBuilder', 'src/IRBuilder.cpp')
 class_graph = static_library('class_graph', 'src/class_graph.cpp')
 translate   = static_library('translate', 'src/translate.cpp')
 helper      = static_library('helper', 'src/helper.cpp')
+codegen = static_library('codegen', 'src/codegen.cpp')
 
 front_deps = declare_dependency(link_with : 
   [lexer, logger, parser, builder])
 helper_deps = declare_dependency(link_with: [class_graph, helper])
 ir_deps = declare_dependency(link_with : [ir, irbuilder])
-end_deps = declare_dependency(link_with : [translate, helper])
+end_deps = declare_dependency(link_with : [translate, helper, codegen])
 
 testing_deps = declare_dependency(
                 include_directories : [
