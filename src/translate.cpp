@@ -149,8 +149,13 @@ int Translator::operator()(AST::ExpListRule const&) { return -1; }
 int Translator::operator()(AST::lengthExp const&) { return -1; }
 int Translator::operator()(AST::indexingExp const&) { return -1; }
 int Translator::operator()(AST::newArrayExp const&) { return -1; }
-int Translator::operator()(AST::blockStm const&) { return -1; }
-int Translator::operator()(AST::ifStm const&) { return -1; }
+int Translator::operator()(AST::blockStm const& blk)
+{
+    for (auto const& s : blk.statements) Grammar::visit(*this, s);
+    return 0;
+}
+
+int Translator::operator()(AST::ifStm const& ifs) { return -1; }
 int Translator::operator()(AST::whileStm const&) { return -1; }
 int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
