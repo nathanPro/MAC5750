@@ -104,6 +104,8 @@ TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceMethods)
     EXPECT_EQ(data["A"]["calculate"], helper::kind_t::method_inh);
     EXPECT_EQ(data["B"]["calculate"], helper::kind_t::method_inh);
     EXPECT_EQ(data["C"]["calculate"], helper::kind_t::method_def);
+    EXPECT_EQ(data["D"]["calculate"], helper::kind_t::method_inh);
+    EXPECT_EQ(data["E"]["calculate"], helper::kind_t::method_def);
 
     EXPECT_EQ(data["A"].method("calculate").layout["num_aux"],
               data["C"].method("calculate").layout["num_aux"]);

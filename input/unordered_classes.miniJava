@@ -40,6 +40,12 @@ class B extends C {
         return this.calculate();
     }
 }
+class E extends D {
+    public int calculate() {
+        return 2;
+    }
+}
+class D extends C {}
 class C {
     int t1;
     int t2;
