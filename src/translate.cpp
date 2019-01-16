@@ -174,8 +174,35 @@ int Translator::operator()(AST::ifStm const& ifs)
     t.place_label(std::move(if_lbl));
     Grammar::visit(*this, ifs.if_clause);
     t.place_label(std::move(end_lbl));
+    return 0;
 }
-int Translator::operator()(AST::whileStm const&) { return -1; }
+
+int Translator::operator()(AST::whileStm const& wst)
+{
+    auto cnd_lbl = t.place_label(t.new_label());
+    auto cnd = store_in_temp(t, Grammar::visit(*this, wst.condition));
+    auto bdy_lbl = t.new_label();
+    auto out_lbl = t.new_label();
+    {
+        IRBuilder cjmp(t);
+        cjmp << IR::IRTag::CJMP << cnd << int(bdy_lbl);
+        cjmp.build();
+    }
+    {
+        IRBuilder jmp(t);
+        jmp << IR::IRTag::JMP << int(out_lbl);
+        jmp.build();
+    }
+    t.place_label(std::move(bdy_lbl));
+    Grammar::visit(*this, wst.body);
+    {
+        IRBuilder jmp(t);
+        jmp << IR::IRTag::JMP << int(cnd_lbl);
+        jmp.build();
+    }
+    t.place_label(std::move(out_lbl));
+    return 0;
+}
 int Translator::operator()(AST::assignStm const&) { return -1; }
 int Translator::operator()(AST::indexAssignStm const&) { return -1; }
 
