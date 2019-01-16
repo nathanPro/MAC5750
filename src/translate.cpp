@@ -162,8 +162,7 @@ int Translator::operator()(AST::ifStm const& ifs)
     auto end_lbl = t.new_label();
     {
         IRBuilder cjmp(t);
-        cjmp << IR::IRTag::CJMP << IR::RelopId::LT << cnd
-             << int(if_lbl);
+        cjmp << IR::IRTag::CJMP << cnd << int(if_lbl);
         cjmp.build();
     }
     Grammar::visit(*this, ifs.else_clause);

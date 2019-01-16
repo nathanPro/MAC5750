@@ -90,7 +90,6 @@ struct Jmp {
 };
 
 struct Cjmp {
-    int op;
     int temp;
     int target;
 };

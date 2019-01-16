@@ -125,11 +125,7 @@ template <typename C> struct Inners {
     }
     std::string operator()(Cjmp const& c)
     {
-        static std::vector<std::string> names = {
-            "==", "!=", "<",   ">",  "<=",
-            ">=", "u<", "u<=", "u>", "u>="};
-        return names[c.op] + std::string(" ") +
-               std::to_string(c.temp) + std::string(" ") +
+        return std::to_string(c.temp) + std::string(" ") +
                std::to_string(c.target);
     }
     std::string operator()(Label const& l)

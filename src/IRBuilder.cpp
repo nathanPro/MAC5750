@@ -92,7 +92,7 @@ int IRBuilder::build()
     case IR::IRTag::CJMP:
         base.stm_seq.push_back(ref);
         base.pos.push_back(base._cjmp.size());
-        base._cjmp.push_back(IR::Cjmp{data[0], data[1], data[2]});
+        base._cjmp.push_back(IR::Cjmp{data[0], data[1]});
         break;
     case IR::IRTag::LABEL:
         break;
