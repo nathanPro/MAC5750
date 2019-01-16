@@ -9,7 +9,7 @@
 namespace helper
 {
 
-enum class kind_t { notfound, var, instance, method };
+enum class kind_t { notfound, var, instance, method_def, method_inh };
 class meta_data;
 class class_spec;
 

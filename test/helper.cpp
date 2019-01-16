@@ -35,7 +35,7 @@ TEST_F(HelperTest, MetaDataDistinguishesMethodFromVariable)
 {
     EXPECT_EQ(data["Fac"]["t1"], helper::kind_t::var);
     EXPECT_EQ(data["Fac"]["Compute"], helper::kind_t::notfound);
-    EXPECT_EQ(data["Fac"]["ComputeFac"], helper::kind_t::method);
+    EXPECT_EQ(data["Fac"]["ComputeFac"], helper::kind_t::method_def);
 }
 
 TEST_F(HelperTest, MetaDataRecordLayout)
@@ -49,7 +49,9 @@ TEST_F(HelperTest, MetaDataRecordLayout)
 
 TEST_F(HelperTest, MetaDataHandlesInheritance)
 {
-    EXPECT_EQ(data["Child"]["ComputeFac"], helper::kind_t::method);
+    EXPECT_EQ(data["Fac"]["ComputeFac"], helper::kind_t::method_def);
+    EXPECT_EQ(data["Child"]["ComputeFac"],
+              helper::kind_t::method_inh);
     EXPECT_EQ(data["Fac"].method("ComputeFac").layout["num_aux"],
               data["Child"].method("ComputeFac").layout["num_aux"]);
     EXPECT_EQ(data["Fac"].method("ComputeFac").layout["not_aux"],
@@ -99,9 +101,9 @@ TEST_F(HelperTest, MetaDataHandlesDeeperInheritanceMethods)
     EXPECT_TRUE(unordered.check());
     data = helper::meta_data(unordered.syntax_tree);
 
-    EXPECT_EQ(data["A"]["calculate"], helper::kind_t::method);
-    EXPECT_EQ(data["B"]["calculate"], helper::kind_t::method);
-    EXPECT_EQ(data["C"]["calculate"], helper::kind_t::method);
+    EXPECT_EQ(data["A"]["calculate"], helper::kind_t::method_inh);
+    EXPECT_EQ(data["B"]["calculate"], helper::kind_t::method_inh);
+    EXPECT_EQ(data["C"]["calculate"], helper::kind_t::method_def);
 
     EXPECT_EQ(data["A"].method("calculate").layout["num_aux"],
               data["C"].method("calculate").layout["num_aux"]);
