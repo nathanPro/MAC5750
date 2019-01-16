@@ -110,13 +110,15 @@ int Translator::operator()(AST::identifierExp const& exp)
     else if (data[current_class].variable.has(exp.value))
         pt = frame.tp, dsp = data[current_class].variable[exp.value];
 
+    IRBuilder mem(t);
     IRBuilder binop(t);
     binop << IRTag::BINOP << BinopId::PLUS << pt << [&] {
         IRBuilder cte(t);
         cte << IRTag::CONST << dsp;
         return cte.build();
     }();
-    return binop.build();
+    mem << IRTag::MEM << binop.build();
+    return mem.build();
 }
 
 int Translator::operator()(AST::thisExp const&) { return frame.tp; }
@@ -210,18 +212,9 @@ int Translator::operator()(AST::MethodDeclRule const& mdr)
         Grammar::visit(TypeInferenceVisitor{*this}, mdr.return_exp);
 
     IRBuilder ret(t);
-    ret << IRTag::EXP;
-
-    if (Grammar::holds<AST::classType>(ret_t) ||
-        Grammar::holds<AST::integerArrayType>(ret_t))
-        ret << Grammar::visit(*this, mdr.return_exp);
-    else {
-        IRBuilder mem(t);
-        mem << IRTag::MEM << Grammar::visit(*this, mdr.return_exp);
-        ret << mem.build();
-    }
-
+    ret << IRTag::EXP << Grammar::visit(*this, mdr.return_exp);
     ret.build();
+
     return 0;
 }
 int Translator::operator()(AST::ClassDeclNoInheritance const& cls)
