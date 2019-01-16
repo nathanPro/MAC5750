@@ -89,6 +89,7 @@ void class_spec::insert_method(std::string const&        name,
                                AST::Type                 type)
 {
     if (m_id.count(name)) return;
+    methods.push_back(name);
     kind[name] = kind_t::method_def;
     m_id[name] = m_info.size();
     m_info.emplace_back(data, *this, name, std::move(layout),
@@ -99,6 +100,7 @@ void class_spec::insert_method(std::string const& name,
                                method_spec const& mtd)
 {
     if (m_id.count(name)) return;
+    methods.push_back(name);
     kind[name] = kind_t::method_inh;
     m_id[name] = m_info.size();
     m_info.push_back(mtd);
@@ -223,6 +225,13 @@ class_spec& meta_data::operator[](std::string const& name)
 class_spec const& meta_data::operator[](std::string const& name) const
 {
     return c_info.at(c_id.at(name));
+}
+
+class_spec& meta_data::operator[](int id) { return c_info.at(id); }
+
+class_spec const& meta_data::operator[](int id) const
+{
+    return c_info.at(id);
 }
 
 int meta_data::type_size(std::string const& type) const

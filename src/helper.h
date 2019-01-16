@@ -71,11 +71,12 @@ class class_spec
     int    size() const;
     kind_t operator[](const std::string&) const;
 
-    std::string const&  name;
-    int                 base;
-    memory_layout const variable;
-    method_spec&        method(std::string const&);
-    method_spec const&  method(std::string const&) const;
+    std::string const&       name;
+    int                      base;
+    memory_layout const      variable;
+    method_spec&             method(std::string const&);
+    method_spec const&       method(std::string const&) const;
+    std::vector<std::string> methods;
 };
 
 class meta_data
@@ -102,6 +103,8 @@ class meta_data
     int               count(std::string const&) const;
     class_spec&       operator[](std::string const&);
     class_spec const& operator[](std::string const&) const;
+    class_spec&       operator[](int);
+    class_spec const& operator[](int) const;
     int               type_size(std::string const&) const;
     int               type_size(AST::Type const&) const;
 };
