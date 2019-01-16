@@ -68,9 +68,10 @@ label_handle Tree::new_label()
     return ref;
 }
 
-void Tree::place_label(label_handle&& lbl)
+int Tree::place_label(label_handle&& lbl)
 {
     stm_seq.push_back(lbl.ref);
+    return lbl.ref;
 }
 
 size_t fragment::size() const { return stms.size(); }

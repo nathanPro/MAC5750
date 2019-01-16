@@ -186,7 +186,7 @@ class Tree
     int     new_temp();
 
     label_handle new_label();
-    void         place_label(label_handle&&);
+    int          place_label(label_handle&&);
 
     std::vector<int>                stm_seq;
     std::map<std::string, fragment> methods;
