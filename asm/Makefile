@@ -11,3 +11,8 @@ fib.o: fib.asm
 	nasm $(DEBUG) -f elf64 fib.asm
 fib: fib.o
 	ld -o fib -dynamic-linker $(LINKER) $(OLIB)/crt1.o $(OLIB)/crti.o -lc fib.o $(OLIB)/crtn.o
+
+memcpy.o: memcpy.asm
+	nasm $(DEBUG) -f elf64 memcpy.asm
+memcpy: memcpy.o
+	ld -o memcpy -dynamic-linker $(LINKER) $(OLIB)/crt1.o $(OLIB)/crti.o -lc memcpy.o $(OLIB)/crtn.o
