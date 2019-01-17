@@ -214,12 +214,12 @@ std::ostream& operator<<(std::ostream& out, Tree const&);
 template <template <typename C> typename F, typename R>
 struct Catamorphism {
     using rec_t = std::function<R(int)>;
-    Tree&          tree;
+    Tree const&    tree;
     std::vector<R> x;
     F<rec_t>       f;
 
     template <typename... Args>
-    Catamorphism(IR::Tree& _t, Args... args)
+    Catamorphism(IR::Tree const& _t, Args... args)
         : tree(_t), x(tree.size()),
           f([&](int i) { return x[i]; }, args...)
     {
