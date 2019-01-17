@@ -179,10 +179,25 @@ class Tree
     Cmp&   get_cmp(int ref);
     Cjmp&  get_cjmp(int ref);
 
+    Const const& get_const(int ref) const;
+    Name const&  get_name(int ref) const;
+    Temp const&  get_temp(int ref) const;
+    Binop const& get_binop(int ref) const;
+    Mem const&   get_mem(int ref) const;
+    Call const&  get_call(int ref) const;
+
+    // Stm types
+    Move const&  get_move(int ref) const;
+    Exp const&   get_exp(int ref) const;
+    Jmp const&   get_jmp(int ref) const;
+    Label const& get_label(int ref) const;
+    Cmp const&   get_cmp(int ref) const;
+    Cjmp const&  get_cjmp(int ref) const;
+
     // generic functinality
-    IRTag   get_type(int ref);
+    IRTag   get_type(int ref) const;
     size_t  size() const;
-    Explist get_explist(int);
+    Explist get_explist(int) const;
     int     keep_explist(Explist&&);
     int     new_temp();
 

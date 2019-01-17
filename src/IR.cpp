@@ -12,6 +12,11 @@ namespace IR
     {                                                                \
         check_id(kind[ref], static_cast<int>(ID));                   \
         return name[pos[ref]];                                       \
+    }                                                                \
+    ret const& Tree::get##name(int ref) const                        \
+    {                                                                \
+        check_id(kind[ref], static_cast<int>(ID));                   \
+        return name[pos[ref]];                                       \
     }
 
 IR_GETTER(_const, IRTag::CONST, Const)
@@ -33,12 +38,12 @@ Tree::Tree() : tmp(0), lbl(0) {}
 
 size_t Tree::size() const { return pos.size(); }
 
-IRTag Tree::get_type(int ref)
+IRTag Tree::get_type(int ref) const
 {
     return static_cast<IRTag>(kind[ref]);
 }
 
-Explist Tree::get_explist(int ref) { return _explist[ref]; }
+Explist Tree::get_explist(int ref) const { return _explist[ref]; }
 
 int Tree::keep_explist(Explist&& els)
 {
