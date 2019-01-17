@@ -327,9 +327,11 @@ int Translator::operator()(AST::ClassDeclInheritance const& cls)
         if (data[current_class][mtd] == helper::kind_t::method_inh)
             for (int b = data[current_class].base; b != -1;
                  b     = data[b].base) {
-                if (data[b][mtd] == helper::kind_t::method_def)
+                if (data[b][mtd] == helper::kind_t::method_def) {
                     t.aliases[helper::mangle(data[b].name, mtd)]
                         .insert(helper::mangle(cls.name, mtd));
+                    break;
+                }
             }
     return 0;
 }
