@@ -2,6 +2,7 @@
 #define BCC_IR
 
 #include "util.h"
+#include <algorithm>
 #include <cassert>
 #include <functional>
 #include <iostream>
@@ -203,6 +204,8 @@ class Tree
 
     label_handle new_label();
     int          place_label(label_handle&&);
+
+    void prune_temps();
 
     std::vector<int>                             stm_seq;
     std::map<std::string, fragment>              methods;

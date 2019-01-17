@@ -18,7 +18,10 @@ int main(int argc, char** argv)
     TranslationUnit tu(std::string{argv[1]});
     IR::Tree        tree;
     translate(tree, tu.syntax_tree);
-    Util::write(std::cout, tree);
+    tree.prune_temps();
+    Util::write(std::cerr, tree);
+    /*
     Util::write(std::cout, "\n\n\tGENERATED ASSEMBLY\n");
     GEN::codegen(&std::cout, tree);
+    */
 }

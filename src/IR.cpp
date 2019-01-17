@@ -79,6 +79,34 @@ int Tree::place_label(label_handle&& lbl)
     return lbl.ref;
 }
 
+void Tree::prune_temps()
+{
+    std::vector<int> v;
+    for (auto const& mtd : methods) v.push_back(mtd.second.stack.sp);
+    v.push_back(pos.size());
+    std::sort(begin(v), end(v));
+    for (int i = 0; i < static_cast<int>(pos.size()); i++)
+        if (kind[i] == static_cast<int>(IRTag::TEMP)) {
+            int j = *std::prev(upper_bound(begin(v), end(v), i));
+            if (i == j) continue;
+
+            int cte = pos.size();
+            kind.push_back(static_cast<int>(IRTag::CONST));
+            pos.push_back(_const.size());
+            _const.push_back(
+                Const{8 * (get_temp(i).id - (get_temp(j).id + 1))});
+
+            int binop = pos.size();
+            kind.push_back(static_cast<int>(IRTag::BINOP));
+            pos.push_back(_binop.size());
+            _binop.push_back(Binop{BinopId::PLUS, j, cte});
+
+            kind[i] = static_cast<int>(IRTag::MEM);
+            pos[i]  = _mem.size();
+            _mem.push_back(Mem{binop});
+        }
+}
+
 size_t fragment::size() const { return stms.size(); }
 
 template <typename C> struct Inners {
@@ -171,14 +199,14 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
         int sp = f.second.stack.sp, tp = f.second.stack.tp;
         Util::write(out, "\t", "sp", ":=", "[", sp, "]",
                     TYPES[static_cast<int>(t.get_type(sp))], "\t",
-                    t.get_temp(sp).id);
+                    F(sp));
         Util::write(out, "\t", "tp", ":=", "[", tp, "]",
                     TYPES[static_cast<int>(t.get_type(tp))], "\t",
-                    t.get_temp(tp).id);
+                    F(tp));
         for (auto const& a : f.second.stack.arguments)
             Util::write(out, "\t", a.first, ":=", "[", a.second, "]",
                         TYPES[static_cast<int>(t.get_type(a.second))],
-                        "\t", t.get_temp(a.second).id);
+                        "\t", F(a.second));
         Util::write(out, "The code is:");
         for (auto const& s : f.second.stms)
             Util::write(out, "\t", s, ":\t",
