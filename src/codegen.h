@@ -2,6 +2,7 @@
 #define BCC_CODEGEN
 
 #include "IR.h"
+#include "IRBuilder.h"
 #include "helper.h"
 #include <algorithm>
 #include <ostream>
@@ -46,13 +47,16 @@ class codegen
     IR::Tree&                          tree;
     IR::Catamorphism<SethiUllman, int> need;
 
-    int su_codegen(int);
-    int __flat(int);
+    void su_codegen(int, int);
+    void __flat(int, int);
+    void emit(int);
+
+    int rg;
 
   public:
     codegen(std::ostream*, IR::Tree&);
     void generate_fragment(fragment_t);
-    void flatten();
+    void flatten(int k);
 };
 
 // clang-format off
