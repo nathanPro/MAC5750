@@ -133,7 +133,14 @@ void codegen::__flat(int ref, int k)
     }
 }
 
-void codegen::emit(int) {}
+void codegen::emit(int inst)
+{
+    if (IR::is_exp(tree.get_type(inst))) {
+        IRBuilder exp(tree);
+        exp << inst;
+        exp.build();
+    }
+}
 
 void codegen::generate_fragment(fragment_t mtd)
 {

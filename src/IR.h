@@ -53,6 +53,8 @@ enum class IRTag {
     POP
 };
 
+int is_exp(IRTag tag);
+
 struct Const {
     int value;
 };

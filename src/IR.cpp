@@ -151,6 +151,11 @@ void Tree::fix_registers(int k)
 
 int Tree::get_register(int i) { return base_register + i; }
 
+int is_exp(IRTag tag)
+{
+    return static_cast<int>(tag) < static_cast<int>(IRTag::MOVE);
+}
+
 size_t fragment::size() const { return stms.size(); }
 
 std::ostream& operator<<(std::ostream& out, Tree& t)
