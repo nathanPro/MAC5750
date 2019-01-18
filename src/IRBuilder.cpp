@@ -41,9 +41,9 @@ int IRBuilder::build()
         base.pos.push_back(base._const.size());
         base._const.push_back(IR::Const{data[0]});
         break;
-    case IR::IRTag::NAME:
-        base.pos.push_back(base._name.size());
-        base._name.push_back(IR::Name{data[0]});
+    case IR::IRTag::REG:
+        base.pos.push_back(base._reg.size());
+        base._reg.push_back(IR::Reg{data[0]});
         break;
     case IR::IRTag::TEMP:
         base.pos.push_back(base._temp.size());

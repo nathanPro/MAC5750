@@ -20,7 +20,7 @@ namespace IR
     }
 
 IR_GETTER(_const, IRTag::CONST, Const)
-IR_GETTER(_name, IRTag::NAME, Name)
+IR_GETTER(_reg, IRTag::REG, Reg)
 IR_GETTER(_temp, IRTag::TEMP, Temp)
 IR_GETTER(_binop, IRTag::BINOP, Binop)
 IR_GETTER(_mem, IRTag::MEM, Mem)
@@ -79,7 +79,7 @@ int Tree::place_label(label_handle&& lbl)
     return lbl.ref;
 }
 
-void Tree::prune_temps()
+void Tree::spill()
 {
     std::vector<int> v;
     for (auto const& mtd : methods) v.push_back(mtd.second.stack.sp);
@@ -115,9 +115,9 @@ template <typename C> struct Inners {
     {
         return std::to_string(c.value);
     }
-    std::string operator()(Name const& n)
+    std::string operator()(Reg const& r)
     {
-        return std::to_string(n.id);
+        return std::to_string(r.id);
     }
     std::string operator()(Temp const& t)
     {
@@ -174,7 +174,7 @@ template <typename C> struct Inners {
 std::ostream& operator<<(std::ostream& out, Tree& t)
 {
     std::vector<std::string> TYPES = {
-        "CONST", "NAME", "TEMP", "BINOP", "MEM",   "CALL",
+        "CONST", "REG",  "TEMP", "BINOP", "MEM",   "CALL",
         "CMP",   "MOVE", "EXP",  "JMP",   "LABEL", "CJMP"};
 
     IR::Catamorphism<Inners, std::string> F(t);

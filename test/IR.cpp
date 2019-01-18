@@ -29,9 +29,9 @@ TEST_F(IRBuilderTest, constBuiltWithBuilder)
 TEST_F(IRBuilderTest, nameBuiltWithBuilder)
 {
     IRBuilder builder(tree);
-    builder << IR::IRTag::NAME << 13;
+    builder << IR::IRTag::REG << 13;
     auto ref = builder.build();
-    EXPECT_EQ(tree.get_name(ref).id, 13);
+    EXPECT_EQ(tree.get_reg(ref).id, 13);
 }
 
 TEST_F(IRBuilderTest, tempBuiltWithBuilder)
@@ -154,12 +154,12 @@ TEST_F(IRBuilderTest, treeKeepsType)
     }
     {
         IRBuilder builder(tree);
-        builder << IR::IRTag::NAME << 13;
+        builder << IR::IRTag::REG << 13;
         n = builder.build();
     }
     EXPECT_EQ(tree.get_type(c), IR::IRTag::CONST);
-    EXPECT_EQ(tree.get_type(n), IR::IRTag::NAME);
-    EXPECT_NE(tree.get_type(c), IR::IRTag::NAME);
+    EXPECT_EQ(tree.get_type(n), IR::IRTag::REG);
+    EXPECT_NE(tree.get_type(c), IR::IRTag::REG);
     EXPECT_NE(tree.get_type(n), IR::IRTag::CONST);
 }
 
@@ -168,7 +168,7 @@ TEST_F(IRBuilderTest, wrongGetNameThrows)
     IRBuilder builder(tree);
     builder << IR::IRTag::CONST << 42;
     auto c = builder.build();
-    EXPECT_THROW(tree.get_name(c), IR::BadAccess);
+    EXPECT_THROW(tree.get_reg(c), IR::BadAccess);
 }
 
 TEST_F(IRBuilderTest, stmAccessedAsExpThrows)

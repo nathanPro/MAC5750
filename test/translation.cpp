@@ -259,7 +259,7 @@ TEST(translatorTest, IRPostOrdering)
             for (auto j : tree.get_explist(tree.get_call(i).explist))
                 st.push_back(j);
             break;
-        case IR::IRTag::NAME:
+        case IR::IRTag::REG:
         case IR::IRTag::TEMP:
         case IR::IRTag::LABEL:
         case IR::IRTag::CONST:

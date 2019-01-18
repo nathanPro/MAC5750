@@ -38,7 +38,7 @@ enum BinopId {
 
 enum class IRTag {
     CONST,
-    NAME,
+    REG,
     TEMP,
     BINOP,
     MEM,
@@ -55,7 +55,7 @@ struct Const {
     int value;
 };
 
-struct Name {
+struct Reg {
     int id;
 };
 
@@ -148,7 +148,7 @@ class Tree
 
     // Exp types
     std::vector<Const> _const;
-    std::vector<Name>  _name;
+    std::vector<Reg>   _reg;
     std::vector<Temp>  _temp;
     std::vector<Binop> _binop;
     std::vector<Mem>   _mem;
@@ -164,35 +164,32 @@ class Tree
 
   public:
     Tree();
-    // Exp types
     Const& get_const(int ref);
-    Name&  get_name(int ref);
+    Reg&   get_reg(int ref);
     Temp&  get_temp(int ref);
     Binop& get_binop(int ref);
     Mem&   get_mem(int ref);
     Call&  get_call(int ref);
+    Cmp&   get_cmp(int ref);
 
-    // Stm types
     Move&  get_move(int ref);
     Exp&   get_exp(int ref);
     Jmp&   get_jmp(int ref);
     Label& get_label(int ref);
-    Cmp&   get_cmp(int ref);
     Cjmp&  get_cjmp(int ref);
 
     Const const& get_const(int ref) const;
-    Name const&  get_name(int ref) const;
+    Reg const&   get_reg(int ref) const;
     Temp const&  get_temp(int ref) const;
     Binop const& get_binop(int ref) const;
     Mem const&   get_mem(int ref) const;
     Call const&  get_call(int ref) const;
+    Cmp const&   get_cmp(int ref) const;
 
-    // Stm types
     Move const&  get_move(int ref) const;
     Exp const&   get_exp(int ref) const;
     Jmp const&   get_jmp(int ref) const;
     Label const& get_label(int ref) const;
-    Cmp const&   get_cmp(int ref) const;
     Cjmp const&  get_cjmp(int ref) const;
 
     // generic functinality
@@ -205,7 +202,7 @@ class Tree
     label_handle new_label();
     int          place_label(label_handle&&);
 
-    void prune_temps();
+    void spill();
 
     std::vector<int>                             stm_seq;
     std::map<std::string, fragment>              methods;
@@ -237,8 +234,8 @@ struct Catamorphism {
         switch (static_cast<IRTag>(tree.get_type(ref))) {
         case IRTag::CONST:
             return f(tree.get_const(ref));
-        case IRTag::NAME:
-            return f(tree.get_name(ref));
+        case IRTag::REG:
+            return f(tree.get_reg(ref));
         case IRTag::TEMP:
             return f(tree.get_temp(ref));
         case IRTag::BINOP:
