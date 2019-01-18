@@ -109,81 +109,76 @@ void Tree::spill()
 
 size_t fragment::size() const { return stms.size(); }
 
-template <typename C> struct Inners {
+template <typename C> struct Format {
 
     std::string operator()(Const const& c)
     {
-        return std::to_string(c.value);
+        return std::string("CONST ") + std::to_string(c.value);
     }
     std::string operator()(Reg const& r)
     {
-        return std::to_string(r.id);
+        return std::string("REG ") + std::to_string(r.id);
     }
     std::string operator()(Temp const& t)
     {
-        return std::to_string(t.id);
+        return std::string("TEMP ") + std::to_string(t.id);
     }
     std::string operator()(Binop const& b)
     {
         static std::vector<std::string> names = {
             "+", "-", "*", "/", "&", "|", "<<", ">>", "ARSHIFT", "^"};
-        return names[b.op] + std::string(": ") +
-               std::to_string(b.lhs) + std::string(" ") +
-               std::to_string(b.rhs);
+        return std::string("BINOP ") + names[b.op] +
+               std::string(": ") + std::to_string(b.lhs) +
+               std::string(" ") + std::to_string(b.rhs);
     }
     std::string operator()(Mem const& m)
     {
-        return std::to_string(m.exp);
+        return std::string("MEM ") + std::to_string(m.exp);
     }
     std::string operator()(Call const& c)
     {
-        return c.fn + std::string(" ") + std::to_string(c.explist);
+        return std::string("CALL") + c.fn + std::string(" ") +
+               std::to_string(c.explist);
     }
     std::string operator()(Cmp const& c)
     {
-        return std::to_string(c.lhs) + std::string(" ") +
-               std::to_string(c.rhs);
+        return std::string("CMP ") + std::to_string(c.lhs) +
+               std::string(" ") + std::to_string(c.rhs);
     }
     std::string operator()(Move const& m)
     {
-        return std::to_string(m.dst) + std::string(" ") +
-               std::to_string(m.src);
+        return std::string("MOVE ") + std::to_string(m.dst) +
+               std::string(" ") + std::to_string(m.src);
     }
     std::string operator()(Exp const& e)
     {
-        return std::to_string(e.exp);
+        return std::string("EXP ") + std::to_string(e.exp);
     }
     std::string operator()(Jmp const& j)
     {
-        return std::to_string(j.target);
+        return std::string("JMP ") + std::to_string(j.target);
     }
     std::string operator()(Cjmp const& c)
     {
-        return std::to_string(c.temp) + std::string(" ") +
-               std::to_string(c.target);
+        return std::string("CJMP ") + std::to_string(c.temp) +
+               std::string(" ") + std::to_string(c.target);
     }
     std::string operator()(Label const& l)
     {
-        return std::to_string(l.id);
+        return std::string("LABEL ") + std::to_string(l.id);
     }
 
-    Inners(C&& __fmap) : fmap(__fmap) {}
+    Format(C&& __fmap) : fmap(__fmap) {}
     C fmap;
 };
 
 std::ostream& operator<<(std::ostream& out, Tree& t)
 {
-    std::vector<std::string> TYPES = {
-        "CONST", "REG",  "TEMP", "BINOP", "MEM",   "CALL",
-        "CMP",   "MOVE", "EXP",  "JMP",   "LABEL", "CJMP"};
-
-    IR::Catamorphism<Inners, std::string> F(t);
+    IR::Catamorphism<Format, std::string> F(t);
 
     Util::write(out, "Tree has", t.pos.size(), "nodes");
     for (int i = 0; i < static_cast<int>(t.kind.size()); i++)
-        Util::write(out, "\t", i, ":\t",
-                    TYPES[static_cast<int>(t.get_type(i))], "\t",
-                    F(i));
+        Util::write(out, "\t", i, ":\t", F(i));
 
     Util::write(out, "\nIt has", t.methods.size(),
                 "function fragments");
@@ -197,21 +192,14 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
 
         Util::write(out, "The arguments are:");
         int sp = f.second.stack.sp, tp = f.second.stack.tp;
-        Util::write(out, "\t", "sp", ":=", "[", sp, "]",
-                    TYPES[static_cast<int>(t.get_type(sp))], "\t",
-                    F(sp));
-        Util::write(out, "\t", "tp", ":=", "[", tp, "]",
-                    TYPES[static_cast<int>(t.get_type(tp))], "\t",
-                    F(tp));
+        Util::write(out, "\t", "sp", ":=", "[", sp, "]\t", F(sp));
+        Util::write(out, "\t", "tp", ":=", "[", tp, "]\t", F(tp));
         for (auto const& a : f.second.stack.arguments)
             Util::write(out, "\t", a.first, ":=", "[", a.second, "]",
-                        TYPES[static_cast<int>(t.get_type(a.second))],
                         "\t", F(a.second));
         Util::write(out, "The code is:");
         for (auto const& s : f.second.stms)
-            Util::write(out, "\t", s, ":\t",
-                        TYPES[static_cast<int>(t.get_type(s))], "\t",
-                        F(s));
+            Util::write(out, "\t", s, ":\t", F(s));
     }
 
     Util::write(out, "\nIt has", t._explist.size(), "Explists");
