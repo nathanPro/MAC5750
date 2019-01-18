@@ -25,10 +25,6 @@ void codegen::su_codegen(int ref, int k)
     case IR::IRTag::JMP:
     case IR::IRTag::LABEL:
     case IR::IRTag::CJMP:
-        Util::write(std::cerr, "wut", ref,
-                    static_cast<int>(tree.get_type(ref)));
-        Util::write(std::cerr, tree);
-        throw;
         break;
 
     case IR::IRTag::REG:
@@ -160,7 +156,7 @@ void codegen::__flat(int ref, int k)
     }
 }
 
-void codegen::emit(int inst) { tree.stm_seq.push_back(inst); }
+void codegen::emit(int) {}
 
 void codegen::generate_fragment(fragment_t mtd)
 {
