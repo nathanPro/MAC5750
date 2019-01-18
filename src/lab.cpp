@@ -18,7 +18,7 @@ int main(int argc, char** argv)
     TranslationUnit tu(std::string{argv[1]});
     IR::Tree        tree;
     translate(tree, tu.syntax_tree);
-    tree.spill();
+    tree.simplify();
     Util::write(std::cerr, tree);
     /*
     Util::write(std::cout, "\n\n\tGENERATED ASSEMBLY\n");

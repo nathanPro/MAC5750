@@ -79,6 +79,22 @@ int Tree::place_label(label_handle&& lbl)
     return lbl.ref;
 }
 
+void Tree::simplify()
+{
+    spill();
+    mark_sp();
+}
+
+void Tree::mark_sp()
+{
+    for (auto const& mtd : methods) {
+        int sp   = mtd.second.stack.sp;
+        kind[sp] = static_cast<int>(IRTag::REG);
+        pos[sp]  = _reg.size();
+        _reg.push_back(Reg{0});
+    }
+}
+
 void Tree::spill()
 {
     std::vector<int> v;

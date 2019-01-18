@@ -162,6 +162,9 @@ class Tree
     std::vector<Label> _label;
     std::vector<Cjmp>  _cjmp;
 
+    void spill();
+    void mark_sp();
+
   public:
     Tree();
     Const& get_const(int ref);
@@ -202,7 +205,7 @@ class Tree
     label_handle new_label();
     int          place_label(label_handle&&);
 
-    void spill();
+    void simplify();
 
     std::vector<int>                             stm_seq;
     std::map<std::string, fragment>              methods;
