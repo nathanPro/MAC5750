@@ -175,6 +175,8 @@ class Tree
     std::vector<Push>  _push;
     std::vector<Pop>   _pop;
 
+    int base_register;
+
     void spill();
     void mark_sp();
 
@@ -223,6 +225,8 @@ class Tree
     int          place_label(label_handle&&);
 
     void simplify();
+    void fix_registers(int);
+    int  get_register(int);
 
     std::vector<int>                             stm_seq;
     std::map<std::string, fragment>              methods;

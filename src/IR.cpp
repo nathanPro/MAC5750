@@ -139,6 +139,18 @@ void Tree::spill()
     }
 }
 
+void Tree::fix_registers(int k)
+{
+    base_register = pos.size();
+    for (int i = 0; i < k; i++) {
+        kind.push_back(static_cast<int>(IRTag::REG));
+        pos.push_back(_reg.size());
+        _reg.push_back(Reg{i});
+    }
+}
+
+int Tree::get_register(int i) { return base_register + i; }
+
 size_t fragment::size() const { return stms.size(); }
 
 std::ostream& operator<<(std::ostream& out, Tree& t)

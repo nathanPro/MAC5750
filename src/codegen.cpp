@@ -5,7 +5,7 @@ namespace GEN
 codegen::codegen(std::ostream* _out, IR::Tree& _tree)
     : out(_out), tree(_tree), need(tree), rg(1)
 {
-    flatten(0);
+    flatten(3);
 
     *out << prelude;
     for (auto const& mtd : tree.methods) generate_fragment(mtd);
@@ -37,30 +37,21 @@ void codegen::su_codegen(int ref, int k)
         break;
 
     case IR::IRTag::MEM: {
+        su_codegen(tree.get_mem(ref).exp, k);
         emit([&] {
             IRBuilder pop(tree);
-            IRBuilder reg(tree);
-            reg << IR::IRTag::REG << 1;
-            pop << IR::IRTag::POP << reg.build();
+            pop << IR::IRTag::POP << tree.get_register(1);
             return pop.build();
         }());
-        tree.get_mem(ref).exp = [&] {
-            IRBuilder reg(tree);
-            reg << IR::IRTag::REG << 1;
-            return reg.build();
-        }();
+        tree.get_mem(ref).exp = tree.get_register(1);
         emit([&] {
             IRBuilder move(tree);
-            IRBuilder reg(tree);
-            reg << IR::IRTag::REG << 2;
-            move << IR::IRTag::MOVE << reg.build() << ref;
+            move << IR::IRTag::MOVE << tree.get_register(2) << ref;
             return move.build();
         }());
         emit([&] {
             IRBuilder push(tree);
-            IRBuilder reg(tree);
-            reg << IR::IRTag::REG << 2;
-            push << IR::IRTag::PUSH << reg.build();
+            push << IR::IRTag::PUSH << tree.get_register(2);
             return push.build();
         }());
     } break;
@@ -78,28 +69,16 @@ void codegen::su_codegen(int ref, int k)
         su_codegen(rhs, k);
         emit([&] {
             IRBuilder pop(tree);
-            IRBuilder reg(tree);
-            reg << IR::IRTag::REG << 2;
-            pop << IR::IRTag::POP << reg.build();
+            pop << IR::IRTag::POP << tree.get_register(2);
             return pop.build();
         }());
         emit([&] {
             IRBuilder pop(tree);
-            IRBuilder reg(tree);
-            reg << IR::IRTag::REG << 1;
-            pop << IR::IRTag::POP << reg.build();
+            pop << IR::IRTag::POP << tree.get_register(1);
             return pop.build();
         }());
-        lhs = [&] {
-            IRBuilder reg(tree);
-            reg << IR::IRTag::REG << 1;
-            return reg.build();
-        }();
-        rhs = [&] {
-            IRBuilder reg(tree);
-            reg << IR::IRTag::REG << 2;
-            return reg.build();
-        }();
+        lhs = tree.get_register(1);
+        rhs = tree.get_register(2);
 
         if (tree.get_type(ref) == IR::IRTag::MOVE)
             tree.get_move(ref) = IR::Move{lhs, rhs};
@@ -112,9 +91,7 @@ void codegen::su_codegen(int ref, int k)
         if (tree.get_type(ref) == IR::IRTag::BINOP)
             emit([&] {
                 IRBuilder push(tree);
-                IRBuilder reg(tree);
-                reg << IR::IRTag::REG << 1;
-                push << IR::IRTag::PUSH << reg.build();
+                push << IR::IRTag::PUSH << tree.get_register(1);
                 return push.build();
             }());
         break;
@@ -173,6 +150,7 @@ void codegen::generate_fragment(fragment_t mtd)
 
 void codegen::flatten(int k)
 {
+    tree.fix_registers(k);
     for (auto& mtd : tree.methods) {
         tree.stm_seq = {};
         for (int s : mtd.second.stms) __flat(s, k);
