@@ -103,9 +103,15 @@ void Tree::spill()
     for (auto const& mtd : methods) v.push_back(mtd.second.stack.sp);
     v.push_back(pos.size());
     std::sort(begin(v), end(v));
+
+    std::vector<int> max_id(v.size());
     for (int i = 0; i < static_cast<int>(pos.size()); i++)
         if (kind[i] == static_cast<int>(IRTag::TEMP)) {
-            int j = *std::prev(upper_bound(begin(v), end(v), i));
+            auto it     = std::prev(upper_bound(begin(v), end(v), i));
+            int  j      = *it;
+            int  _id    = std::distance(begin(v), it);
+            max_id[_id] = std::max(max_id[_id], get_temp(i).id);
+
             if (i == j) continue;
 
             int cte = pos.size();
@@ -123,80 +129,17 @@ void Tree::spill()
             pos[i]  = _mem.size();
             _mem.push_back(Mem{binop});
         }
+
+    for (auto& mtd : methods) {
+        int sp = mtd.second.stack.sp;
+        int i  = std::distance(begin(v),
+                              lower_bound(begin(v), end(v), sp));
+        mtd.second.stack.spill_size =
+            8 * (max_id[i] - get_temp(sp).id);
+    }
 }
 
 size_t fragment::size() const { return stms.size(); }
-
-template <typename C> struct Format {
-
-    std::string operator()(Const const& c)
-    {
-        return std::string("CONST ") + std::to_string(c.value);
-    }
-    std::string operator()(Reg const& r)
-    {
-        return std::string("REG ") + std::to_string(r.id);
-    }
-    std::string operator()(Temp const& t)
-    {
-        return std::string("TEMP ") + std::to_string(t.id);
-    }
-    std::string operator()(Binop const& b)
-    {
-        static std::vector<std::string> names = {
-            "+", "-", "*", "/", "&", "|", "<<", ">>", "ARSHIFT", "^"};
-        return std::string("BINOP ") + names[b.op] +
-               std::string(": ") + std::to_string(b.lhs) +
-               std::string(" ") + std::to_string(b.rhs);
-    }
-    std::string operator()(Mem const& m)
-    {
-        return std::string("MEM ") + std::to_string(m.exp);
-    }
-    std::string operator()(Call const& c)
-    {
-        return std::string("CALL") + c.fn + std::string(" ") +
-               std::to_string(c.explist);
-    }
-    std::string operator()(Cmp const& c)
-    {
-        return std::string("CMP ") + std::to_string(c.lhs) +
-               std::string(" ") + std::to_string(c.rhs);
-    }
-    std::string operator()(Move const& m)
-    {
-        return std::string("MOVE ") + std::to_string(m.dst) +
-               std::string(" ") + std::to_string(m.src);
-    }
-    std::string operator()(Exp const& e)
-    {
-        return std::string("EXP ") + std::to_string(e.exp);
-    }
-    std::string operator()(Jmp const& j)
-    {
-        return std::string("JMP ") + std::to_string(j.target);
-    }
-    std::string operator()(Cjmp const& c)
-    {
-        return std::string("CJMP ") + std::to_string(c.temp) +
-               std::string(" ") + std::to_string(c.target);
-    }
-    std::string operator()(Label const& l)
-    {
-        return std::string("LABEL ") + std::to_string(l.id);
-    }
-    std::string operator()(Push const& p)
-    {
-        return std::string("PUSH ") + std::to_string(p.ref);
-    }
-    std::string operator()(Pop const& p)
-    {
-        return std::string("POP ") + std::to_string(p.ref);
-    }
-
-    Format(C&& __fmap) : fmap(__fmap) {}
-    C fmap;
-};
 
 std::ostream& operator<<(std::ostream& out, Tree& t)
 {
@@ -220,6 +163,8 @@ std::ostream& operator<<(std::ostream& out, Tree& t)
         int sp = f.second.stack.sp, tp = f.second.stack.tp;
         Util::write(out, "\t", "sp", ":=", "[", sp, "]\t", F(sp));
         Util::write(out, "\t", "tp", ":=", "[", tp, "]\t", F(tp));
+        Util::write(out, "The spill size is",
+                    f.second.stack.spill_size);
         for (auto const& a : f.second.stack.arguments)
             Util::write(out, "\t", a.first, ":=", "[", a.second, "]",
                         "\t", F(a.second));

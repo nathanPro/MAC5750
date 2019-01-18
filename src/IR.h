@@ -123,6 +123,7 @@ struct activation_record {
     std::map<std::string, int> arguments;
     int                        sp;
     int                        tp;
+    int                        spill_size;
 };
 
 struct fragment {
@@ -282,6 +283,77 @@ struct Catamorphism {
         }
         __builtin_unreachable();
     }
+};
+
+template <typename C> struct Format {
+
+    std::string operator()(Const const& c)
+    {
+        return std::string("CONST ") + std::to_string(c.value);
+    }
+    std::string operator()(Reg const& r)
+    {
+        return std::string("REG ") + std::to_string(r.id);
+    }
+    std::string operator()(Temp const& t)
+    {
+        return std::string("TEMP ") + std::to_string(t.id);
+    }
+    std::string operator()(Binop const& b)
+    {
+        static std::vector<std::string> names = {
+            "+", "-", "*", "/", "&", "|", "<<", ">>", "ARSHIFT", "^"};
+        return std::string("BINOP ") + names[b.op] +
+               std::string(": ") + std::to_string(b.lhs) +
+               std::string(" ") + std::to_string(b.rhs);
+    }
+    std::string operator()(Mem const& m)
+    {
+        return std::string("MEM ") + std::to_string(m.exp);
+    }
+    std::string operator()(Call const& c)
+    {
+        return std::string("CALL") + c.fn + std::string(" ") +
+               std::to_string(c.explist);
+    }
+    std::string operator()(Cmp const& c)
+    {
+        return std::string("CMP ") + std::to_string(c.lhs) +
+               std::string(" ") + std::to_string(c.rhs);
+    }
+    std::string operator()(Move const& m)
+    {
+        return std::string("MOVE ") + std::to_string(m.dst) +
+               std::string(" ") + std::to_string(m.src);
+    }
+    std::string operator()(Exp const& e)
+    {
+        return std::string("EXP ") + std::to_string(e.exp);
+    }
+    std::string operator()(Jmp const& j)
+    {
+        return std::string("JMP ") + std::to_string(j.target);
+    }
+    std::string operator()(Cjmp const& c)
+    {
+        return std::string("CJMP ") + std::to_string(c.temp) +
+               std::string(" ") + std::to_string(c.target);
+    }
+    std::string operator()(Label const& l)
+    {
+        return std::string("LABEL ") + std::to_string(l.id);
+    }
+    std::string operator()(Push const& p)
+    {
+        return std::string("PUSH ") + std::to_string(p.ref);
+    }
+    std::string operator()(Pop const& p)
+    {
+        return std::string("POP ") + std::to_string(p.ref);
+    }
+
+    Format(C&& __fmap) : fmap(__fmap) {}
+    C fmap;
 };
 } // namespace IR
 

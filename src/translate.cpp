@@ -292,7 +292,7 @@ fragmentGuard::~fragmentGuard()
 int Translator::operator()(AST::MethodDeclRule const& mdr)
 {
 
-    frame = {{}, t.new_temp(), t.new_temp()};
+    frame = {{}, t.new_temp(), t.new_temp(), 0};
 
     auto flr = Grammar::get<AST::FormalListRule>(mdr.arguments);
     for (auto const& d : flr.decls)
@@ -338,7 +338,7 @@ int Translator::operator()(AST::ClassDeclInheritance const& cls)
 int Translator::operator()(AST::MainClassRule const& mc)
 {
     fragmentGuard guard(t, std::string("main"),
-                        {{}, t.new_temp(), t.new_temp()});
+                        {{}, t.new_temp(), t.new_temp(), 0});
 
     Grammar::visit(*this, mc.body);
 
