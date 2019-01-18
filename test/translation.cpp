@@ -265,6 +265,8 @@ TEST(translatorTest, IRPostOrdering)
         case IR::IRTag::CONST:
         case IR::IRTag::CMP:
         case IR::IRTag::CJMP:
+        case IR::IRTag::PUSH:
+        case IR::IRTag::POP:
             break;
         }
         if (lhs != -1) {

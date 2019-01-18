@@ -48,7 +48,9 @@ enum class IRTag {
     EXP,
     JMP,
     LABEL,
-    CJMP
+    CJMP,
+    PUSH,
+    POP
 };
 
 struct Const {
@@ -103,6 +105,14 @@ struct Label {
 struct Cmp {
     int lhs;
     int rhs;
+};
+
+struct Push {
+    int ref;
+};
+
+struct Pop {
+    int ref;
 };
 
 using Explist = std::vector<int>;
@@ -161,6 +171,8 @@ class Tree
     std::vector<Jmp>   _jmp;
     std::vector<Label> _label;
     std::vector<Cjmp>  _cjmp;
+    std::vector<Push>  _push;
+    std::vector<Pop>   _pop;
 
     void spill();
     void mark_sp();
@@ -180,6 +192,8 @@ class Tree
     Jmp&   get_jmp(int ref);
     Label& get_label(int ref);
     Cjmp&  get_cjmp(int ref);
+    Push&  get_push(int ref);
+    Pop&   get_pop(int ref);
 
     Const const& get_const(int ref) const;
     Reg const&   get_reg(int ref) const;
@@ -194,6 +208,8 @@ class Tree
     Jmp const&   get_jmp(int ref) const;
     Label const& get_label(int ref) const;
     Cjmp const&  get_cjmp(int ref) const;
+    Push const&  get_push(int ref) const;
+    Pop const&   get_pop(int ref) const;
 
     // generic functinality
     IRTag   get_type(int ref) const;
@@ -259,6 +275,10 @@ struct Catamorphism {
             return f(tree.get_cmp(ref));
         case IRTag::CJMP:
             return f(tree.get_cjmp(ref));
+        case IRTag::PUSH:
+            return f(tree.get_push(ref));
+        case IRTag::POP:
+            return f(tree.get_pop(ref));
         }
         __builtin_unreachable();
     }

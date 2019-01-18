@@ -31,6 +31,8 @@ IR_GETTER(_jmp, IRTag::JMP, Jmp)
 IR_GETTER(_label, IRTag::LABEL, Label)
 IR_GETTER(_cmp, IRTag::CMP, Cmp)
 IR_GETTER(_cjmp, IRTag::CJMP, Cjmp)
+IR_GETTER(_push, IRTag::PUSH, Push)
+IR_GETTER(_pop, IRTag::POP, Pop)
 
 #undef IR_GETTER
 
@@ -182,6 +184,14 @@ template <typename C> struct Format {
     std::string operator()(Label const& l)
     {
         return std::string("LABEL ") + std::to_string(l.id);
+    }
+    std::string operator()(Push const& p)
+    {
+        return std::string("PUSH ") + std::to_string(p.ref);
+    }
+    std::string operator()(Pop const& p)
+    {
+        return std::string("POP ") + std::to_string(p.ref);
     }
 
     Format(C&& __fmap) : fmap(__fmap) {}
