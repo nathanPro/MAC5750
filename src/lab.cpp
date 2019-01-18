@@ -19,9 +19,9 @@ int main(int argc, char** argv)
     IR::Tree        tree;
     translate(tree, tu.syntax_tree);
     tree.simplify();
+    GEN::codegen(&std::cout, tree);
     Util::write(std::cout, tree);
     /*
     Util::write(std::cout, "\n\n\tGENERATED ASSEMBLY\n");
-    GEN::codegen(&std::cout, tree);
     */
 }

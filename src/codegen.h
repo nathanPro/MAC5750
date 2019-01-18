@@ -42,12 +42,17 @@ class codegen
 {
     using fragment_t =
         typename std::map<std::string, IR::fragment>::value_type;
-    std::ostream*   out;
-    IR::Tree const& tree;
+    std::ostream*                      out;
+    IR::Tree&                          tree;
+    IR::Catamorphism<SethiUllman, int> need;
+
+    int su_codegen(int);
+    int __flat(int);
 
   public:
-    codegen(std::ostream*, IR::Tree const&);
+    codegen(std::ostream*, IR::Tree&);
     void generate_fragment(fragment_t);
+    void flatten();
 };
 
 // clang-format off
