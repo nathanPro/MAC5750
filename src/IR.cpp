@@ -160,43 +160,14 @@ size_t fragment::size() const { return stms.size(); }
 
 std::ostream& operator<<(std::ostream& out, Tree& t)
 {
-    IR::Catamorphism<Format, std::string> F(t);
-
-    Util::write(out, "Tree has", t.pos.size(), "nodes");
-    for (int i = 0; i < static_cast<int>(t.kind.size()); i++)
-        Util::write(out, "\t", i, ":\t", F(i));
-
-    Util::write(out, "\nIt has", t.methods.size(),
-                "function fragments");
-    for (auto const& f : t.methods) {
-        Util::write(out, f.first);
-        if (t.aliases[f.first].empty())
-            Util::write(out, f.first, "has no aliases");
-        else
-            for (auto const& a : t.aliases[f.first])
-                Util::write(out, a, "is an alias of it");
-
-        Util::write(out, "The arguments are:");
-        int sp = f.second.stack.sp, tp = f.second.stack.tp;
-        Util::write(out, "\t", "sp", ":=", "[", sp, "]\t", F(sp));
-        Util::write(out, "\t", "tp", ":=", "[", tp, "]\t", F(tp));
-        Util::write(out, "The spill size is",
-                    f.second.stack.spill_size);
-        for (auto const& a : f.second.stack.arguments)
-            Util::write(out, "\t", a.first, ":=", "[", a.second, "]",
-                        "\t", F(a.second));
-        Util::write(out, "The code is:");
-        for (auto const& s : f.second.stms)
-            Util::write(out, "\t", s, ":\t", F(s));
-    }
-
-    Util::write(out, "\nIt has", t._explist.size(), "Explists");
-    for (int i = 0; i < static_cast<int>(t._explist.size()); i++) {
-        out << std::string("\t")
-            << std::to_string(i) + std::string(":\t");
-        for (int j : t.get_explist(i)) out << j << " ";
-        out << "\n";
-    }
+    Catamorphism<ShallowFormat, std::string> F(t);
+    tree_dump(out, t, F);
     return out;
+}
+
+void Tree::dump(std::ostream& out) const
+{
+    Catamorphism<DeepFormat, std::string> F(*this);
+    tree_dump(out, *this, F);
 }
 } // namespace IR

@@ -150,6 +150,8 @@ class Tree
     friend class ::IRBuilder;
     friend struct fragmentGuard;
     friend std::ostream& operator<<(std::ostream&, Tree&);
+    template <typename FT>
+    friend void tree_dump(std::ostream&, Tree const&, FT);
 
     int tmp;
     int lbl;
@@ -230,6 +232,8 @@ class Tree
     void fix_registers(int);
     int  get_register(int);
 
+    void dump(std::ostream&) const;
+
     std::vector<int>                             stm_seq;
     std::map<std::string, fragment>              methods;
     std::map<std::string, std::set<std::string>> aliases;
@@ -291,7 +295,48 @@ struct Catamorphism {
     }
 };
 
-template <typename C> struct Format {
+template <typename FT>
+void tree_dump(std::ostream& out, Tree const& tree, FT F)
+{
+    Util::write(out, "Tree has", tree.size(), "nodes");
+    for (int i = 0; i < static_cast<int>(tree.size()); i++)
+        Util::write(out, "\t", i, ":\t", F(i));
+
+    Util::write(out, "\nIt has", tree.methods.size(),
+                "function fragments");
+    for (auto const& f : tree.methods) {
+        Util::write(out, f.first);
+        if (!tree.aliases.count(f.first) ||
+            tree.aliases.at(f.first).empty())
+            Util::write(out, f.first, "has no aliases");
+        else
+            for (auto const& a : tree.aliases.at(f.first))
+                Util::write(out, a, "is an alias of it");
+
+        Util::write(out, "The arguments are:");
+        int sp = f.second.stack.sp, tp = f.second.stack.tp;
+        Util::write(out, "\t", "sp", ":=", "[", sp, "]\t", F(sp));
+        Util::write(out, "\t", "tp", ":=", "[", tp, "]\t", F(tp));
+        Util::write(out, "The spill size is",
+                    f.second.stack.spill_size);
+        for (auto const& a : f.second.stack.arguments)
+            Util::write(out, "\t", a.first, ":=", "[", a.second, "]",
+                        "\t", F(a.second));
+        Util::write(out, "The code is:");
+        for (auto const& s : f.second.stms)
+            Util::write(out, "\t", s, ":\t", F(s));
+    }
+
+    Util::write(out, "\nIt has", tree._explist.size(), "Explists");
+    for (int i = 0; i < static_cast<int>(tree._explist.size()); i++) {
+        out << std::string("\t")
+            << std::to_string(i) + std::string(":\t");
+        for (int j : tree.get_explist(i)) out << j << " ";
+        out << "\n";
+    }
+}
+
+template <typename C> struct ShallowFormat {
 
     std::string operator()(Const const& c)
     {
@@ -358,7 +403,83 @@ template <typename C> struct Format {
         return std::string("POP ") + std::to_string(p.ref);
     }
 
-    Format(C&& __fmap) : fmap(__fmap) {}
+    ShallowFormat(C&& __fmap) : fmap(__fmap) {}
+    C fmap;
+};
+
+template <typename C> struct DeepFormat {
+
+    std::string operator()(Const const& c)
+    {
+        return std::string("CONST{") + std::to_string(c.value) +
+               std::string("}");
+    }
+    std::string operator()(Reg const& r)
+    {
+        return std::string("REG{") + std::to_string(r.id) +
+               std::string("}");
+    }
+    std::string operator()(Temp const& t)
+    {
+        return std::string("TEMP{") + std::to_string(t.id) +
+               std::string("}");
+    }
+    std::string operator()(Binop const& b)
+    {
+        static std::vector<std::string> names = {
+            "+", "-", "*", "/", "&", "|", "<<", ">>", "ARSHIFT", "^"};
+        return std::string("BINOP{") + names[b.op] +
+               std::string(", ") + fmap(b.lhs) + std::string(", ") +
+               fmap(b.rhs) + std::string("}");
+    }
+    std::string operator()(Mem const& m)
+    {
+        return std::string("MEM{") + fmap(m.exp) + std::string("}");
+    }
+    std::string operator()(Call const& c)
+    {
+        return std::string("CALL{") + c.fn + std::string(", ") +
+               std::to_string(c.explist) + std::string("}");
+    }
+    std::string operator()(Cmp const& c)
+    {
+        return std::string("CMP{") + fmap(c.lhs) + std::string(", ") +
+               fmap(c.rhs) + std::string("}");
+    }
+    std::string operator()(Move const& m)
+    {
+        return std::string("MOVE{") + fmap(m.dst) +
+               std::string(", ") + fmap(m.src) + std::string("}");
+    }
+    std::string operator()(Exp const& e)
+    {
+        return std::string("EXP{") + fmap(e.exp) + std::string("}");
+    }
+    std::string operator()(Jmp const& j)
+    {
+        return std::string("JMP{") + std::to_string(j.target) +
+               std::string("}");
+    }
+    std::string operator()(Cjmp const& c)
+    {
+        return std::string("CJMP{") + fmap(c.temp) +
+               std::string(", ") + fmap(c.target) + std::string("}");
+    }
+    std::string operator()(Label const& l)
+    {
+        return std::string("LABEL{") + std::to_string(l.id) +
+               std::string("}");
+    }
+    std::string operator()(Push const& p)
+    {
+        return std::string("PUSH{") + fmap(p.ref) + std::string("}");
+    }
+    std::string operator()(Pop const& p)
+    {
+        return std::string("POP{") + fmap(p.ref) + std::string("}");
+    }
+
+    DeepFormat(C&& __fmap) : fmap(__fmap) {}
     C fmap;
 };
 } // namespace IR

@@ -9,6 +9,7 @@ codegen::codegen(std::ostream* _out, IR::Tree& _tree)
 
     *out << prelude;
     for (auto const& mtd : tree.methods) generate_fragment(mtd);
+    tree.dump(*out);
 }
 
 void codegen::su_codegen(int ref, int k)
