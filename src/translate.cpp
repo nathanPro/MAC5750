@@ -142,7 +142,7 @@ int Translator::operator()(AST::methodCallExp const& exp)
         return t.keep_explist(std::move(args));
     }();
 
-    return call.build();
+    return store_in_temp(t, call.build());
 }
 
 int Translator::operator()(AST::ExpListRule const&) { return -1; }
