@@ -5,11 +5,12 @@ namespace GEN
 codegen::codegen(std::ostream* _out, IR::Tree& _tree)
     : out(_out), tree(_tree), need(tree), rg(1)
 {
+    tree.simplify();
     flatten(3);
-
-    *out << prelude;
-    for (auto const& mtd : tree.methods) generate_fragment(mtd);
     tree.dump(*out);
+
+    // *out << prelude;
+    // for (auto const& mtd : tree.methods) generate_fragment(mtd);
 }
 
 void codegen::su_codegen(int ref, int k)
@@ -60,8 +61,8 @@ void codegen::su_codegen(int ref, int k)
     case IR::IRTag::MOVE:
     case IR::IRTag::BINOP: {
         if (tree.get_type(ref) == IR::IRTag::MOVE)
-            lhs = tree.get_move(ref).src,
-            rhs = tree.get_move(ref).dst;
+            lhs = tree.get_move(ref).dst,
+            rhs = tree.get_move(ref).src;
         else
             lhs = tree.get_binop(ref).lhs,
             rhs = tree.get_binop(ref).rhs;
@@ -142,15 +143,15 @@ void codegen::emit(int inst)
 
 void codegen::generate_fragment(fragment_t mtd)
 {
-    auto const& [name, frag] = mtd;
-    if (tree.aliases.count(name))
-        for (auto const& alias : tree.aliases.at(name))
-            *out << alias << ":\n";
+    // auto const& [name, frag] = mtd;
+    // if (tree.aliases.count(name))
+    //     for (auto const& alias : tree.aliases.at(name))
+    //         *out << alias << ":\n";
 
-    *out << name << ":\n";
-    IR::Catamorphism<SethiUllman, int> G(tree);
-    for (int i : frag.stms) *out << i << " " << G(i) << "\n";
-    *out << "\n; C'EST FINI\n";
+    // *out << name << ":\n";
+    // IR::Catamorphism<SethiUllman, int> G(tree);
+    // for (int i : frag.stms) *out << i << " " << G(i) << "\n";
+    // *out << "\n; C'EST FINI\n";
 }
 
 void codegen::flatten(int k)
