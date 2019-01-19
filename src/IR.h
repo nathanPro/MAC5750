@@ -235,6 +235,7 @@ class Tree
     int  get_register(int);
 
     void dump(std::ostream&) const;
+    void emit(int);
 
     std::vector<int>                             stm_seq;
     std::map<std::string, fragment>              methods;

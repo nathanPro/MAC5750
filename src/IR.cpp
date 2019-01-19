@@ -170,4 +170,10 @@ void Tree::dump(std::ostream& out) const
     Catamorphism<DeepFormat, std::string> F(*this);
     tree_dump(out, *this, F);
 }
+
+void Tree::emit(int inst)
+{
+    if (stm_seq.size() && stm_seq.back() != inst)
+        stm_seq.push_back(inst);
+}
 } // namespace IR

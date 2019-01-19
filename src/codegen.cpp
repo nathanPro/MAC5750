@@ -31,7 +31,7 @@ void codegen::su_codegen(int ref, int k)
 
     case IR::IRTag::REG:
     case IR::IRTag::CONST:
-        emit([&] {
+        tree.emit([&] {
             IRBuilder push(tree);
             push << IR::IRTag::PUSH << ref;
             return push.build();
@@ -40,18 +40,18 @@ void codegen::su_codegen(int ref, int k)
 
     case IR::IRTag::MEM: {
         su_codegen(tree.get_mem(ref).exp, k);
-        emit([&] {
+        tree.emit([&] {
             IRBuilder pop(tree);
             pop << IR::IRTag::POP << tree.get_register(1);
             return pop.build();
         }());
         tree.get_mem(ref).exp = tree.get_register(1);
-        emit([&] {
+        tree.emit([&] {
             IRBuilder move(tree);
             move << IR::IRTag::MOVE << tree.get_register(2) << ref;
             return move.build();
         }());
-        emit([&] {
+        tree.emit([&] {
             IRBuilder push(tree);
             push << IR::IRTag::PUSH << tree.get_register(2);
             return push.build();
@@ -69,12 +69,12 @@ void codegen::su_codegen(int ref, int k)
 
         su_codegen(lhs, k);
         su_codegen(rhs, k);
-        emit([&] {
+        tree.emit([&] {
             IRBuilder pop(tree);
             pop << IR::IRTag::POP << tree.get_register(2);
             return pop.build();
         }());
-        emit([&] {
+        tree.emit([&] {
             IRBuilder pop(tree);
             pop << IR::IRTag::POP << tree.get_register(1);
             return pop.build();
@@ -88,10 +88,10 @@ void codegen::su_codegen(int ref, int k)
             tree.get_binop(ref) =
                 IR::Binop{tree.get_binop(ref).op, lhs, rhs};
 
-        emit(ref);
+        tree.emit(ref);
 
         if (tree.get_type(ref) == IR::IRTag::BINOP)
-            emit([&] {
+            tree.emit([&] {
                 IRBuilder push(tree);
                 push << IR::IRTag::PUSH << tree.get_register(1);
                 return push.build();
@@ -109,7 +109,7 @@ void codegen::__flat(int ref, int k)
         IR::Move mv = tree.get_move(ref);
         if (tree.get_type(mv.src) == IR::IRTag::CALL ||
             tree.get_type(mv.src) == IR::IRTag::CMP)
-            emit(ref);
+            tree.emit(ref);
         else
             su_codegen(ref, k);
     } break;
@@ -118,7 +118,7 @@ void codegen::__flat(int ref, int k)
     case IR::IRTag::JMP:
     case IR::IRTag::LABEL:
     case IR::IRTag::CJMP:
-        emit(ref);
+        tree.emit(ref);
         break;
 
     case IR::IRTag::CONST:
@@ -130,15 +130,9 @@ void codegen::__flat(int ref, int k)
     case IR::IRTag::CMP:
     case IR::IRTag::PUSH:
     case IR::IRTag::POP:
-        emit(-1);
+        tree.emit(-1);
         break;
     }
-}
-
-void codegen::emit(int inst)
-{
-    if (tree.stm_seq.size() && tree.stm_seq.back() != inst)
-        tree.stm_seq.push_back(inst);
 }
 
 void codegen::generate_fragment(fragment_t mtd)
