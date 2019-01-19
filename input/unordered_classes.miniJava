@@ -8,7 +8,7 @@ class Fac {
     public int Compute(int num) {
         int tmp;
         tmp = input.set(num);
-        return this.ComputeFac(1);
+        return this.ComputeFac(input.get());
     }
     public int ComputeFac(int num) {
         int num_aux;

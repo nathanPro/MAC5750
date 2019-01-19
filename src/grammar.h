@@ -12,7 +12,7 @@ template <typename variant> struct Nonterminal {
 
     template <typename T>
     Nonterminal(T&& in)
-        : _self(std::make_unique<variant_t>(std::move(in)))
+        : _self(std::make_unique<variant_t>(std::forward<T>(in)))
     {
     }
     template <class Visitor, class Nonterminal>
