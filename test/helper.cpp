@@ -140,6 +140,13 @@ TEST_F(HelperTest, MetaDataStoresReturnType)
 {
     EXPECT_TRUE(Grammar::holds<AST::integerType>(
         data["Fac"].method("ComputeFac").return_type));
+    TranslationUnit sample4("../input/sample4.miniJava");
+    EXPECT_TRUE(sample4.check());
+    data = helper::meta_data(sample4.syntax_tree);
+    EXPECT_EQ(Grammar::get<AST::classType>(
+                  data["Fac"].method("increase").return_type)
+                  .value,
+              std::string("Fac"));
 }
 
 TEST_F(HelperTest, HelperMangles)
