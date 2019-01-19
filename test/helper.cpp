@@ -147,6 +147,10 @@ TEST_F(HelperTest, MetaDataStoresReturnType)
                   data["Fac"].method("increase").return_type)
                   .value,
               std::string("Fac"));
+    EXPECT_EQ(Grammar::get<AST::classType>(
+                  data["Fac"].method("ComputeFac").return_type)
+                  .value,
+              std::string("Fac"));
 }
 
 TEST_F(HelperTest, HelperMangles)
