@@ -99,6 +99,13 @@ void codegen::su_codegen(int ref, int k)
             return pop.build();
         }());
         lhs = tree.get_register(1);
+        if (tree.get_type(ref) == IR::IRTag::MOVE) {
+            lhs = [&] {
+                IRBuilder mem(tree);
+                mem << IR::IRTag::MEM << lhs;
+                return mem.build();
+            }();
+        }
         rhs = tree.get_register(2);
 
         if (tree.get_type(ref) == IR::IRTag::BINOP)
