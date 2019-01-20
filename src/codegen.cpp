@@ -6,7 +6,7 @@ codegen::codegen(std::ostream* _out, IR::Tree& _tree)
     : out(_out), tree(_tree), need(tree), rg(1)
 {
     tree.simplify();
-    flatten(7);
+    flatten(8);
     prepare_x86_call();
 
     // *out << prelude;
@@ -250,6 +250,16 @@ void codegen::prepare_x86_call()
                 tree.emit(s);
             else
                 __x86_call(s);
+        }
+        if (mtd.first != std::string("main")) {
+            auto ret = tree.get_exp(tree.stm_seq.back()).exp;
+            tree.stm_seq.pop_back();
+            tree.emit([&] {
+                IRBuilder move(tree);
+                move << IR::IRTag::MOVE << tree.get_register(7)
+                     << ret;
+                return move.build();
+            }());
         }
         mtd.second.stms = std::move(tree.stm_seq);
     }
