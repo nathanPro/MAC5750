@@ -376,11 +376,11 @@ void tree_dump(std::ostream& out, Tree const& tree, FT& F)
         int sp = f.second.stack.sp, tp = f.second.stack.tp;
         Util::write(out, "\t", "sp", ":=", "[", sp, "]\t", F(sp));
         Util::write(out, "\t", "tp", ":=", "[", tp, "]\t", F(tp));
-        Util::write(out, "The spill size is",
-                    f.second.stack.spill_size);
         for (auto const& a : f.second.stack.arguments)
             Util::write(out, "\t", a.first, ":=", "[", a.second, "]",
                         "\t", F(a.second));
+        Util::write(out, "The spill size is",
+                    f.second.stack.spill_size);
         Util::write(out, "The code is:");
         for (auto const& s : f.second.stms)
             Util::write(out, "\t", s, ":\t", F(s));
