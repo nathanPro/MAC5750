@@ -173,7 +173,7 @@ void Tree::dump(std::ostream& out) const
 
 void Tree::emit(int inst)
 {
-    if (stm_seq.size() && stm_seq.back() != inst)
+    if (!stm_seq.size() || stm_seq.back() != inst)
         stm_seq.push_back(inst);
 }
 } // namespace IR
