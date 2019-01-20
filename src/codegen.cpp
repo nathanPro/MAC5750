@@ -78,7 +78,7 @@ void codegen::su_codegen(int ref, int k)
     case IR::IRTag::BINOP:
     case IR::IRTag::CMP: {
         if (tree.get_type(ref) == IR::IRTag::MOVE)
-            lhs = tree.get_move(ref).dst,
+            lhs = tree.get_mem(tree.get_move(ref).dst).exp,
             rhs = tree.get_move(ref).src;
         else if (tree.get_type(ref) == IR::IRTag::BINOP)
             lhs = tree.get_binop(ref).lhs,
