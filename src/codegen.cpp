@@ -19,13 +19,26 @@ void codegen::su_codegen(int ref, int k)
     switch (tree.get_type(ref)) {
     case IR::IRTag::TEMP:
     case IR::IRTag::CALL:
-    case IR::IRTag::CMP:
     case IR::IRTag::PUSH:
     case IR::IRTag::POP:
     case IR::IRTag::EXP:
     case IR::IRTag::JMP:
     case IR::IRTag::LABEL:
+        break;
+
     case IR::IRTag::CJMP:
+        su_codegen(tree.get_cjmp(ref).temp, k);
+        tree.emit([&] {
+            IRBuilder pop(tree);
+            pop << IR::IRTag::POP << tree.get_register(1);
+            return pop.build();
+        }());
+        tree.emit([&] {
+            IRBuilder cjmp(tree);
+            cjmp << IR::IRTag::CJMP << tree.get_register(1)
+                 << tree.get_cjmp(ref).target;
+            return cjmp.build();
+        }());
         break;
 
     case IR::IRTag::REG:
@@ -62,13 +75,16 @@ void codegen::su_codegen(int ref, int k)
     } break;
 
     case IR::IRTag::MOVE:
-    case IR::IRTag::BINOP: {
+    case IR::IRTag::BINOP:
+    case IR::IRTag::CMP: {
         if (tree.get_type(ref) == IR::IRTag::MOVE)
             lhs = tree.get_move(ref).dst,
             rhs = tree.get_move(ref).src;
-        else
+        else if (tree.get_type(ref) == IR::IRTag::BINOP)
             lhs = tree.get_binop(ref).lhs,
             rhs = tree.get_binop(ref).rhs;
+        else
+            lhs = tree.get_cmp(ref).lhs, rhs = tree.get_cmp(ref).rhs;
 
         su_codegen(lhs, k);
         su_codegen(rhs, k);
@@ -85,21 +101,21 @@ void codegen::su_codegen(int ref, int k)
         lhs = tree.get_register(1);
         rhs = tree.get_register(2);
 
-        if (tree.get_type(ref) == IR::IRTag::MOVE)
-            tree.emit([&] {
-                IRBuilder move(tree);
-                move << IR::IRTag::MOVE << lhs << rhs;
-                return move.build();
-            }());
-        else
+        if (tree.get_type(ref) == IR::IRTag::BINOP)
             tree.emit([&] {
                 IRBuilder binop(tree);
                 binop << IR::IRTag::BINOP << tree.get_binop(ref).op
                       << lhs << rhs;
                 return binop.build();
             }());
+        else
+            tree.emit([&] {
+                IRBuilder curr(tree);
+                curr << tree.get_type(ref) << lhs << rhs;
+                return curr.build();
+            }());
 
-        if (tree.get_type(ref) == IR::IRTag::BINOP)
+        if (tree.get_type(ref) != IR::IRTag::MOVE)
             tree.emit([&] {
                 IRBuilder push(tree);
                 push << IR::IRTag::PUSH << tree.get_register(1);
@@ -116,17 +132,19 @@ void codegen::__flat(int ref, int k)
 
     case IR::IRTag::MOVE: {
         IR::Move mv = tree.get_move(ref);
-        if (tree.get_type(mv.src) == IR::IRTag::CALL ||
-            tree.get_type(mv.src) == IR::IRTag::CMP)
+        if (tree.get_type(mv.src) == IR::IRTag::CALL)
             tree.emit(ref);
         else
             su_codegen(ref, k);
     } break;
 
-    case IR::IRTag::EXP:
-    case IR::IRTag::JMP:
-    case IR::IRTag::LABEL:
     case IR::IRTag::CJMP:
+        su_codegen(ref, k);
+        break;
+
+    case IR::IRTag::EXP:
+    case IR::IRTag::LABEL:
+    case IR::IRTag::JMP:
         tree.emit(ref);
         break;
 
