@@ -45,7 +45,11 @@ void codegen::su_codegen(int ref, int k)
             pop << IR::IRTag::POP << tree.get_register(1);
             return pop.build();
         }());
-        tree.get_mem(ref).exp = tree.get_register(1);
+        ref = [&] {
+            IRBuilder mem(tree);
+            mem << IR::IRTag::MEM << tree.get_register(1);
+            return mem.build();
+        }();
         tree.emit([&] {
             IRBuilder move(tree);
             move << IR::IRTag::MOVE << tree.get_register(2) << ref;
@@ -83,12 +87,18 @@ void codegen::su_codegen(int ref, int k)
         rhs = tree.get_register(2);
 
         if (tree.get_type(ref) == IR::IRTag::MOVE)
-            tree.get_move(ref) = IR::Move{lhs, rhs};
+            tree.emit([&] {
+                IRBuilder move(tree);
+                move << IR::IRTag::MOVE << lhs << rhs;
+                return move.build();
+            }());
         else
-            tree.get_binop(ref) =
-                IR::Binop{tree.get_binop(ref).op, lhs, rhs};
-
-        tree.emit(ref);
+            tree.emit([&] {
+                IRBuilder binop(tree);
+                binop << IR::IRTag::BINOP << tree.get_binop(ref).op
+                      << lhs << rhs;
+                return binop.build();
+            }());
 
         if (tree.get_type(ref) == IR::IRTag::BINOP)
             tree.emit([&] {
