@@ -220,6 +220,11 @@ void codegen::__x86_call(int ref)
             return pop.build();
         }());
     tree.emit(ref);
+    tree.emit([&] {
+        IRBuilder push(tree);
+        push << IR::IRTag::PUSH << tree.get_register(1);
+        return push.build();
+    }());
     if (6 < es.size()) {
         int cte = [&] {
             IRBuilder cte(tree);
