@@ -21,9 +21,12 @@ void codegen::__flat_rec(int ref)
     case IR::IRTag::TEMP:
     case IR::IRTag::PUSH:
     case IR::IRTag::POP:
-    case IR::IRTag::EXP:
     case IR::IRTag::JMP:
     case IR::IRTag::LABEL:
+        break;
+
+    case IR::IRTag::EXP:
+        __flat_rec(tree.get_exp(ref).exp);
         break;
 
     case IR::IRTag::CALL:
@@ -143,10 +146,10 @@ void codegen::__flat(int ref)
 
     case IR::IRTag::MOVE:
     case IR::IRTag::CJMP:
+    case IR::IRTag::EXP:
         __flat_rec(ref);
         break;
 
-    case IR::IRTag::EXP:
     case IR::IRTag::LABEL:
     case IR::IRTag::JMP:
         tree.emit(ref);
@@ -184,23 +187,6 @@ void codegen::flatten(int k)
     for (auto& mtd : tree.methods) {
         tree.stm_seq = {};
         for (int s : mtd.second.stms) __flat(s);
-        if (mtd.first != std::string("main")) {
-            {
-                auto ret = tree.stm_seq.back();
-                tree.stm_seq.pop_back();
-                __flat_rec(tree.get_exp(ret).exp);
-            }
-            tree.emit([&] {
-                IRBuilder pop(tree);
-                pop << IR::IRTag::POP << tree.get_register(1);
-                return pop.build();
-            }());
-            tree.emit([&] {
-                IRBuilder ret(tree);
-                ret << IR::IRTag::EXP << tree.get_register(1);
-                return ret.build();
-            }());
-        }
         mtd.second.stms = std::move(tree.stm_seq);
     }
 }
@@ -287,13 +273,10 @@ void codegen::prepare_x86_call()
                 __x86_call(s);
         }
         if (mtd.first != std::string("main")) {
-            auto ret = tree.get_exp(tree.stm_seq.back()).exp;
-            tree.stm_seq.pop_back();
             tree.emit([&] {
-                IRBuilder move(tree);
-                move << IR::IRTag::MOVE << tree.get_register(7)
-                     << ret;
-                return move.build();
+                IRBuilder pop(tree);
+                pop << IR::IRTag::POP << tree.get_register(7);
+                return pop.build();
             }());
         }
         mtd.second.stms = std::move(tree.stm_seq);
