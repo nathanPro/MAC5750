@@ -18,12 +18,15 @@ void codegen::su_codegen(int ref, int k)
 
     switch (tree.get_type(ref)) {
     case IR::IRTag::TEMP:
-    case IR::IRTag::CALL:
     case IR::IRTag::PUSH:
     case IR::IRTag::POP:
     case IR::IRTag::EXP:
     case IR::IRTag::JMP:
     case IR::IRTag::LABEL:
+        break;
+
+    case IR::IRTag::CALL:
+        tree.emit(ref);
         break;
 
     case IR::IRTag::CJMP:
@@ -137,14 +140,7 @@ void codegen::__flat(int ref, int k)
 {
     switch (tree.get_type(ref)) {
 
-    case IR::IRTag::MOVE: {
-        IR::Move mv = tree.get_move(ref);
-        if (tree.get_type(mv.src) == IR::IRTag::CALL)
-            tree.emit(ref);
-        else
-            su_codegen(ref, k);
-    } break;
-
+    case IR::IRTag::MOVE:
     case IR::IRTag::CJMP:
         su_codegen(ref, k);
         break;
