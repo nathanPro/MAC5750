@@ -388,9 +388,9 @@ void tree_dump(std::ostream& out, Tree const& tree, FT& F)
 
     Util::write(out, "\nIt has", tree._explist.size(), "Explists");
     for (int i = 0; i < static_cast<int>(tree._explist.size()); i++) {
-        out << std::string("\t")
-            << std::to_string(i) + std::string(":\t");
-        for (int j : tree.get_explist(i)) out << j << " ";
+        Util::write(out, "\t", std::to_string(i), ":\t");
+        for (int j : tree.get_explist(i))
+            Util::write(out, "\t\t", j, F(j));
         out << "\n";
     }
 }
