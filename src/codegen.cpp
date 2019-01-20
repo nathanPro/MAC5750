@@ -6,7 +6,7 @@ codegen::codegen(std::ostream* _out, IR::Tree& _tree)
     : out(_out), tree(_tree), need(tree), rg(1)
 {
     tree.simplify();
-    flatten(8);
+    flatten(9);
     prepare_x86_call();
 
     Util::write(*out, prelude);
@@ -269,6 +269,30 @@ void codegen::prepare_x86_call()
 
         tree.stm_seq = {};
         {
+            tree.emit([&] {
+                IRBuilder push(tree);
+                push << IR::IRTag::PUSH << tree.get_register(8);
+                return push.build();
+            }());
+            tree.emit([&] {
+                IRBuilder move(tree);
+                move << IR::IRTag::MOVE << tree.get_register(8)
+                     << tree.get_register(0);
+                return move.build();
+            }());
+            auto cte = [&] {
+                IRBuilder c(tree);
+                c << IR::IRTag::CONST << frag.stack.spill_size;
+                return c.build();
+            }();
+            tree.emit([&] {
+                IRBuilder binop(tree);
+                binop << IR::IRTag::BINOP << IR::BinopId::MINUS
+                      << tree.get_register(0) << cte;
+                return binop.build();
+            }());
+        }
+        {
             std::vector<int> args;
             args.push_back(frag.stack.tp);
             for (auto& it : frag.stack.arguments)
@@ -287,7 +311,7 @@ void codegen::prepare_x86_call()
                     int binop = [&] {
                         IRBuilder binop(tree);
                         binop << IR::IRTag::BINOP << IR::BinopId::PLUS
-                              << tree.get_register(0) << cte;
+                              << tree.get_register(8) << cte;
                         return binop.build();
                     }();
                     rhs = [&] {
