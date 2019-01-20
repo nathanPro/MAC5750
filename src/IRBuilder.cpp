@@ -69,7 +69,8 @@ int IRBuilder::build()
         base.stm_seq.push_back(ref);
         base.pos.push_back(base._move.size());
         data[0] = [&](IR::IRTag tag) {
-            if (tag == IR::IRTag::TEMP || tag == IR::IRTag::MEM)
+            if (tag == IR::IRTag::TEMP || tag == IR::IRTag::MEM ||
+                tag == IR::IRTag::REG)
                 return data[0];
             else {
                 IRBuilder mem(base);
