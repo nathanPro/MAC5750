@@ -34,5 +34,4 @@ int main(int argc, char** argv)
 
     std::ofstream out(argv[2]);
     GEN::codegen  code(&out, tree);
-    tree.dump(out);
 }

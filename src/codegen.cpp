@@ -9,8 +9,8 @@ codegen::codegen(std::ostream* _out, IR::Tree& _tree)
     flatten(8);
     prepare_x86_call();
 
-    // *out << prelude;
-    // for (auto const& mtd : tree.methods) generate_fragment(mtd);
+    Util::write(*out, prelude);
+    for (auto const& mtd : tree.methods) generate_fragment(mtd);
 }
 
 void codegen::__flat_rec(int ref)
@@ -168,15 +168,14 @@ void codegen::__flat(int ref)
 
 void codegen::generate_fragment(fragment_t mtd)
 {
-    // auto const& [name, frag] = mtd;
-    // if (tree.aliases.count(name))
-    //     for (auto const& alias : tree.aliases.at(name))
-    //         *out << alias << ":\n";
+    auto const& [name, frag] = mtd;
+    if (tree.aliases.count(name))
+        for (auto const& alias : tree.aliases.at(name))
+            Util::write(*out, alias, ":\n");
 
-    // *out << name << ":\n";
-    // IR::Catamorphism<SethiUllman, int> G(tree);
-    // for (int i : frag.stms) *out << i << " " << G(i) << "\n";
-    // *out << "\n; C'EST FINI\n";
+    Util::write(*out, name, ":\n");
+    IR::Catamorphism<IR::DeepFormat, std::string> F(tree);
+    for (int s : frag.stms) Util::write(*out, F(s));
 }
 
 void codegen::flatten(int k)
