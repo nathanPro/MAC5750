@@ -350,6 +350,17 @@ void codegen::prepare_x86_call()
                 return pop.build();
             }());
         }
+        tree.emit([&] {
+            IRBuilder move(tree);
+            move << IR::IRTag::MOVE << tree.get_register(0)
+                 << tree.get_register(8);
+            return move.build();
+        }());
+        tree.emit([&] {
+            IRBuilder pop(tree);
+            pop << IR::IRTag::POP << tree.get_register(8);
+            return pop.build();
+        }());
         frag.stms = std::move(tree.stm_seq);
     }
     __align_x86_call();
