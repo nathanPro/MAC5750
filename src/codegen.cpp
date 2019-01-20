@@ -177,8 +177,12 @@ void codegen::generate_fragment(fragment_t mtd)
             Util::write(*out, alias, ":\n");
 
     Util::write(*out, name, ":\n");
-    IR::Catamorphism<IR::DeepFormat, std::string> F(tree);
-    for (int s : frag.stms) Util::write(*out, F(s));
+    IR::Catamorphism<x86Output, std::string> F(tree);
+    for (int s : frag.stms)
+        if (tree.get_type(s) == IR::IRTag::LABEL)
+            Util::write(*out, F(s), ":");
+        else
+            Util::write(*out, F(s));
 }
 
 void codegen::flatten(int k)

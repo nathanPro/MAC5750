@@ -78,6 +78,81 @@ inline std::string prelude = {"global main" "\n"
                               "    leave" "\n"
                               "    ret" "\n"};
 // clang-format on
+
+template <typename C> struct x86Output {
+
+    std::string operator()(IR::Const const& c)
+    {
+        return std::to_string(c.value);
+    }
+    std::string operator()(IR::Reg const& r)
+    {
+        static std::vector<std::string> regs = {"rsp", "rdi", "rsi",
+                                                "rdx", "rcx", "r8",
+                                                "r9",  "rax", "rbp"};
+        return regs[r.id];
+    }
+    std::string operator()(IR::Temp const& t)
+    {
+        return std::string("TEMP{") + std::to_string(t.id) +
+               std::string("}");
+    }
+    std::string operator()(IR::Binop const& b)
+    {
+        static std::vector<std::string> names = {
+            "add", "sub", "imul", "/",       "and",
+            "or",  "<<",  ">>",   "ARSHIFT", "xor"};
+        return names[b.op] + std::string(" ") + fmap(b.lhs) +
+               std::string(", ") + fmap(b.rhs);
+    }
+    std::string operator()(IR::Mem const& m)
+    {
+        return std::string("[") + fmap(m.exp) + std::string("]");
+    }
+    std::string operator()(IR::Call const& c)
+    {
+        return std::string("call ") + c.fn;
+    }
+    std::string operator()(IR::Cmp const& c)
+    {
+        return std::string("cmp ") + fmap(c.lhs) + std::string(", ") +
+               fmap(c.rhs) + std::string("\npushfq\npop rdi");
+    }
+    std::string operator()(IR::Move const& m)
+    {
+        return std::string("mov ") + fmap(m.dst) + std::string(", ") +
+               fmap(m.src);
+    }
+    std::string operator()(IR::Exp const& e)
+    {
+        return std::string("EXP{") + fmap(e.exp) + std::string("}");
+    }
+    std::string operator()(IR::Jmp const& j)
+    {
+        return std::string("jmp ") + std::to_string(j.target);
+    }
+    std::string operator()(IR::Cjmp const& c)
+    {
+        return std::string("test ") + fmap(c.temp) +
+               std::string(", ") + fmap(c.temp) +
+               std::string("\njne ") + fmap(c.target);
+    }
+    std::string operator()(IR::Label const& l)
+    {
+        return std::string("L") + std::to_string(l.id);
+    }
+    std::string operator()(IR::Push const& p)
+    {
+        return std::string("push ") + fmap(p.ref);
+    }
+    std::string operator()(IR::Pop const& p)
+    {
+        return std::string("pop ") + fmap(p.ref);
+    }
+
+    x86Output(C&& __fmap) : fmap(__fmap) {}
+    C fmap;
+};
 } // namespace GEN
 
 #endif

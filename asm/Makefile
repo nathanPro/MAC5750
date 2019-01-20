@@ -21,3 +21,8 @@ alias.o: alias.asm
 	nasm $(DEBUG) -f elf64 alias.asm
 alias: alias.o
 	ld -o alias -dynamic-linker $(LINKER) $(OLIB)/crt1.o $(OLIB)/crti.o -lc alias.o $(OLIB)/crtn.o
+
+final.o: final.asm
+	nasm $(DEBUG) -f elf64 final.asm
+final: final.o
+	ld -o final -dynamic-linker $(LINKER) $(OLIB)/crt1.o $(OLIB)/crti.o -lc final.o $(OLIB)/crtn.o
