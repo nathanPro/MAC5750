@@ -12,7 +12,7 @@ codegen::codegen(std::ostream* _out, IR::Tree& _tree)
     // for (auto const& mtd : tree.methods) generate_fragment(mtd);
 }
 
-void codegen::su_codegen(int ref, int k)
+void codegen::__flat_rec(int ref)
 {
     int lhs, rhs;
 
@@ -30,7 +30,7 @@ void codegen::su_codegen(int ref, int k)
         break;
 
     case IR::IRTag::CJMP:
-        su_codegen(tree.get_cjmp(ref).temp, k);
+        __flat_rec(tree.get_cjmp(ref).temp);
         tree.emit([&] {
             IRBuilder pop(tree);
             pop << IR::IRTag::POP << tree.get_register(1);
@@ -54,7 +54,7 @@ void codegen::su_codegen(int ref, int k)
         break;
 
     case IR::IRTag::MEM: {
-        su_codegen(tree.get_mem(ref).exp, k);
+        __flat_rec(tree.get_mem(ref).exp);
         tree.emit([&] {
             IRBuilder pop(tree);
             pop << IR::IRTag::POP << tree.get_register(1);
@@ -89,8 +89,8 @@ void codegen::su_codegen(int ref, int k)
         else
             lhs = tree.get_cmp(ref).lhs, rhs = tree.get_cmp(ref).rhs;
 
-        su_codegen(lhs, k);
-        su_codegen(rhs, k);
+        __flat_rec(lhs);
+        __flat_rec(rhs);
         tree.emit([&] {
             IRBuilder pop(tree);
             pop << IR::IRTag::POP << tree.get_register(2);
@@ -136,13 +136,13 @@ void codegen::su_codegen(int ref, int k)
     }
 }
 
-void codegen::__flat(int ref, int k)
+void codegen::__flat(int ref)
 {
     switch (tree.get_type(ref)) {
 
     case IR::IRTag::MOVE:
     case IR::IRTag::CJMP:
-        su_codegen(ref, k);
+        __flat_rec(ref);
         break;
 
     case IR::IRTag::EXP:
@@ -183,12 +183,12 @@ void codegen::flatten(int k)
     tree.fix_registers(k);
     for (auto& mtd : tree.methods) {
         tree.stm_seq = {};
-        for (int s : mtd.second.stms) __flat(s, k);
+        for (int s : mtd.second.stms) __flat(s);
         if (mtd.first != std::string("main")) {
             {
                 auto ret = tree.stm_seq.back();
                 tree.stm_seq.pop_back();
-                su_codegen(tree.get_exp(ret).exp, k);
+                __flat_rec(tree.get_exp(ret).exp);
             }
             tree.emit([&] {
                 IRBuilder pop(tree);

@@ -47,8 +47,8 @@ class codegen
     IR::Tree&                          tree;
     IR::Catamorphism<SethiUllman, int> need;
 
-    void su_codegen(int, int);
-    void __flat(int, int);
+    void __flat_rec(int);
+    void __flat(int);
     void emit(int);
 
     int rg;
