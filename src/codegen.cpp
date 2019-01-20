@@ -265,21 +265,64 @@ void codegen::__align_x86_call()
 void codegen::prepare_x86_call()
 {
     for (auto& mtd : tree.methods) {
+        auto& [name, frag] = mtd;
+
         tree.stm_seq = {};
-        for (int s : mtd.second.stms) {
+        {
+            std::vector<int> args;
+            args.push_back(frag.stack.tp);
+            for (auto& it : frag.stack.arguments)
+                args.push_back(it.second);
+            std::sort(begin(args), end(args));
+            int rhs = tree.get_register(1) - 1;
+            for (int arg : args) {
+                if (rhs < tree.get_register(6))
+                    rhs++;
+                else if (rhs == tree.get_register(6)) {
+                    int cte = [&] {
+                        IRBuilder c(tree);
+                        c << IR::IRTag::CONST << 16;
+                        return c.build();
+                    }();
+                    int binop = [&] {
+                        IRBuilder binop(tree);
+                        binop << IR::IRTag::BINOP << IR::BinopId::PLUS
+                              << tree.get_register(0) << cte;
+                        return binop.build();
+                    }();
+                    rhs = [&] {
+                        IRBuilder mem(tree);
+                        mem << IR::IRTag::MEM << binop;
+                        return mem.build();
+                    }();
+                } else
+                    tree.get_const(
+                            tree.get_binop(tree.get_mem(rhs).exp).rhs)
+                        .value += 8;
+                int aux = [&] {
+                    IRBuilder move(tree);
+                    move << IR::IRTag::MOVE << arg << rhs;
+                    return move.build();
+                }();
+                tree.stm_seq.pop_back();
+                __flat(aux);
+            }
+        }
+        for (int s : frag.stms) {
             if (tree.get_type(s) != IR::IRTag::CALL)
                 tree.emit(s);
             else
                 __x86_call(s);
         }
-        if (mtd.first != std::string("main")) {
+
+        if (name != std::string("main")) {
             tree.emit([&] {
                 IRBuilder pop(tree);
                 pop << IR::IRTag::POP << tree.get_register(7);
                 return pop.build();
             }());
         }
-        mtd.second.stms = std::move(tree.stm_seq);
+        frag.stms = std::move(tree.stm_seq);
     }
     __align_x86_call();
 }
