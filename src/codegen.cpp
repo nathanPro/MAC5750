@@ -6,7 +6,8 @@ codegen::codegen(std::ostream* _out, IR::Tree& _tree)
     : out(_out), tree(_tree), need(tree), rg(1)
 {
     tree.simplify();
-    flatten(3);
+    flatten(7);
+    prepare_x86_call();
 
     // *out << prelude;
     // for (auto const& mtd : tree.methods) generate_fragment(mtd);
@@ -200,6 +201,50 @@ void codegen::flatten(int k)
                 ret << IR::IRTag::EXP << tree.get_register(1);
                 return ret.build();
             }());
+        }
+        mtd.second.stms = std::move(tree.stm_seq);
+    }
+}
+
+void codegen::__x86_call(int ref)
+{
+    auto const& [fn, _es] = tree.get_call(ref);
+    auto es               = tree.get_explist(_es);
+
+    std::reverse(begin(es), end(es));
+    for (int e : es) __flat_rec(e);
+    for (int i = 0; i < std::min<int>(6, es.size()); i++)
+        tree.emit([&] {
+            IRBuilder pop(tree);
+            pop << IR::IRTag::POP << tree.get_register(1 + i);
+            return pop.build();
+        }());
+    tree.emit(ref);
+    if (6 < es.size()) {
+        int cte = [&] {
+            IRBuilder cte(tree);
+            cte << IR::IRTag::CONST
+                << 8 * (static_cast<int>(es.size()) - 6);
+            return cte.build();
+        }();
+        tree.emit([&] {
+            IRBuilder binop(tree);
+            binop << IR::IRTag::BINOP << IR::BinopId::PLUS
+                  << tree.get_register(0) << cte;
+            return binop.build();
+        }());
+    }
+}
+
+void codegen::prepare_x86_call()
+{
+    for (auto& mtd : tree.methods) {
+        tree.stm_seq = {};
+        for (int s : mtd.second.stms) {
+            if (tree.get_type(s) != IR::IRTag::CALL)
+                tree.emit(s);
+            else
+                __x86_call(s);
         }
         mtd.second.stms = std::move(tree.stm_seq);
     }
