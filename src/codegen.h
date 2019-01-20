@@ -48,6 +48,7 @@ class codegen
     IR::Catamorphism<SethiUllman, int> need;
 
     void __x86_call(int);
+    void __align_x86_call();
     void __flat_rec(int);
     void __flat(int);
     void emit(int);

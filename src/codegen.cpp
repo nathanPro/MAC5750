@@ -222,7 +222,7 @@ void codegen::__x86_call(int ref)
     tree.emit(ref);
     tree.emit([&] {
         IRBuilder push(tree);
-        push << IR::IRTag::PUSH << tree.get_register(1);
+        push << IR::IRTag::PUSH << tree.get_register(7);
         return push.build();
     }());
     if (6 < es.size()) {
@@ -238,6 +238,42 @@ void codegen::__x86_call(int ref)
                   << tree.get_register(0) << cte;
             return binop.build();
         }());
+    }
+}
+
+void codegen::__align_x86_call()
+{
+    for (auto& mtd : tree.methods) {
+        tree.stm_seq = {};
+        int parity   = 0;
+        for (int s : mtd.second.stms) {
+            if (tree.get_type(s) == IR::IRTag::CALL && parity) {
+                int cte = [&] {
+                    IRBuilder c(tree);
+                    c << IR::IRTag::CONST << 8;
+                    return c.build();
+                }();
+                tree.emit([&] {
+                    IRBuilder binop(tree);
+                    binop << IR::IRTag::BINOP << IR::BinopId::PLUS
+                          << tree.get_register(0) << cte;
+                    return binop.build();
+                }());
+                tree.emit(s);
+                tree.emit([&] {
+                    IRBuilder binop(tree);
+                    binop << IR::IRTag::BINOP << IR::BinopId::MINUS
+                          << tree.get_register(0) << cte;
+                    return binop.build();
+                }());
+            } else {
+                tree.emit(s);
+                if (tree.get_type(s) == IR::IRTag::PUSH ||
+                    tree.get_type(s) == IR::IRTag::POP)
+                    parity ^= 1;
+            }
+        }
+        mtd.second.stms = std::move(tree.stm_seq);
     }
 }
 
@@ -263,5 +299,6 @@ void codegen::prepare_x86_call()
         }
         mtd.second.stms = std::move(tree.stm_seq);
     }
+    __align_x86_call();
 }
 } // namespace GEN
