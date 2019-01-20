@@ -163,6 +163,23 @@ void codegen::flatten(int k)
     for (auto& mtd : tree.methods) {
         tree.stm_seq = {};
         for (int s : mtd.second.stms) __flat(s, k);
+        if (mtd.first != std::string("main")) {
+            {
+                auto ret = tree.stm_seq.back();
+                tree.stm_seq.pop_back();
+                su_codegen(tree.get_exp(ret).exp, k);
+            }
+            tree.emit([&] {
+                IRBuilder pop(tree);
+                pop << IR::IRTag::POP << tree.get_register(1);
+                return pop.build();
+            }());
+            tree.emit([&] {
+                IRBuilder ret(tree);
+                ret << IR::IRTag::EXP << tree.get_register(1);
+                return ret.build();
+            }());
+        }
         mtd.second.stms = std::move(tree.stm_seq);
     }
 }
