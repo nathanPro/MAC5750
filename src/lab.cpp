@@ -19,4 +19,5 @@ int main(int argc, char** argv)
     IR::Tree        tree;
     translate(tree, tu.syntax_tree);
     GEN::codegen code(&std::cout, tree);
+    tree.dump(std::cout);
 }

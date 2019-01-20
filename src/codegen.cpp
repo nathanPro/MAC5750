@@ -7,7 +7,6 @@ codegen::codegen(std::ostream* _out, IR::Tree& _tree)
 {
     tree.simplify();
     flatten(3);
-    tree.dump(*out);
 
     // *out << prelude;
     // for (auto const& mtd : tree.methods) generate_fragment(mtd);
