@@ -247,79 +247,23 @@ std::ostream& operator<<(std::ostream& out, Tree const&);
 template <template <typename C> typename F, typename R>
 struct Catamorphism {
     using rec_t = std::function<R(int)>;
-    Tree const&      tree;
-    std::vector<R>   x;
-    std::vector<int> cache;
-    F<rec_t>         f;
+    Tree const&    tree;
+    std::vector<R> x;
+    F<rec_t>       f;
 
     template <typename... Args>
     Catamorphism(IR::Tree const& _t, Args... args)
-        : tree(_t), x(tree.size()), cache(tree.size()),
+        : tree(_t), x(tree.size()),
           f([&](int i) { return x[i]; }, args...)
     {
+        for (size_t i = 0; i < tree.size(); i++) x[i] = calculate(i);
     }
 
-    R operator()(int ref)
-    {
-        if (cache[ref]) return x[ref];
-        cache[ref] = 1;
-        x[ref]     = calculate(ref);
-        return x[ref];
-    }
+    R operator()(int ref) { return x[ref]; }
 
   private:
-    void ensure_children(int ref)
-    {
-        switch (static_cast<IRTag>(tree.get_type(ref))) {
-        case IRTag::CONST:
-        case IRTag::REG:
-        case IRTag::TEMP:
-        case IRTag::LABEL:
-        case IRTag::JMP:
-            break;
-
-        case IRTag::BINOP: {
-            auto [op, lhs, rhs] = tree.get_binop(ref);
-            (*this)(lhs);
-            (*this)(rhs);
-        } break;
-        case IRTag::MEM: {
-            (*this)(tree.get_mem(ref).exp);
-        } break;
-        case IRTag::CALL: {
-            for (int i : tree._explist[tree.get_call(ref).explist])
-                (*this)(i);
-        } break;
-        case IRTag::MOVE: {
-            auto [dst, src] = tree.get_move(ref);
-            (*this)(dst);
-            (*this)(src);
-        } break;
-        case IRTag::EXP: {
-            (*this)(tree.get_exp(ref).exp);
-        } break;
-        case IRTag::CMP: {
-            auto [lhs, rhs] = tree.get_cmp(ref);
-            (*this)(lhs);
-            (*this)(rhs);
-        } break;
-        case IRTag::CJMP: {
-            auto [temp, target] = tree.get_cjmp(ref);
-            (*this)(temp);
-            (*this)(target);
-        } break;
-        case IRTag::PUSH: {
-            (*this)(tree.get_push(ref).ref);
-        } break;
-        case IRTag::POP: {
-            (*this)(tree.get_pop(ref).ref);
-        } break;
-        }
-    }
-
     R calculate(int ref)
     {
-        ensure_children(ref);
         switch (static_cast<IRTag>(tree.get_type(ref))) {
         case IRTag::CONST:
             return f(tree.get_const(ref));
