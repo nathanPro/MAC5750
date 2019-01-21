@@ -87,9 +87,9 @@ template <typename C> struct x86Output {
     }
     std::string operator()(IR::Reg const& r)
     {
-        static std::vector<std::string> regs = {"rsp", "rdi", "rsi",
+        static std::vector<std::string> regs = {"rbp", "rdi", "rsi",
                                                 "rdx", "rcx", "r8",
-                                                "r9",  "rax", "rbp"};
+                                                "r9",  "rax", "rsp"};
         return regs[r.id];
     }
     std::string operator()(IR::Temp const& t)
