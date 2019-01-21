@@ -516,7 +516,7 @@ template <typename C> struct DeepFormat {
     }
     std::string operator()(Jmp const& j)
     {
-        return std::string("JMP{") + std::to_string(j.target) +
+        return std::string("JMP{") + fmap(j.target) +
                std::string("}");
     }
     std::string operator()(Cjmp const& c)

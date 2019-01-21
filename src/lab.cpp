@@ -40,8 +40,9 @@ int main(int argc, char** argv)
     GEN::codegen  code(&out, tree);
 
     if (final_ir) {
-        IR::Tree cp = tree;
-        Util::write(std::cerr, "Simplified Tree");
-        cp.dump(std::cerr);
+        Util::write(std::cerr, "Final Tree");
+        tree.dump(std::cerr);
     }
+
+    code.output();
 }

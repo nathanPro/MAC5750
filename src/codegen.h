@@ -60,6 +60,7 @@ class codegen
     void generate_fragment(fragment_t);
     void flatten(int k);
     void prepare_x86_call();
+    void output();
 };
 
 // clang-format off
@@ -129,13 +130,12 @@ template <typename C> struct x86Output {
     }
     std::string operator()(IR::Jmp const& j)
     {
-        return std::string("jmp ") + std::to_string(j.target);
+        return std::string("jmp ") + fmap(j.target);
     }
     std::string operator()(IR::Cjmp const& c)
     {
-        return std::string("test ") + fmap(c.temp) +
-               std::string(", ") + fmap(c.temp) +
-               std::string("\njne ") + fmap(c.target);
+        return std::string("cmp ") + fmap(c.temp) +
+               std::string(", 0\njne ") + fmap(c.target);
     }
     std::string operator()(IR::Label const& l)
     {

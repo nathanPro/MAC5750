@@ -8,7 +8,10 @@ codegen::codegen(std::ostream* _out, IR::Tree& _tree)
     tree.simplify();
     flatten(9);
     prepare_x86_call();
+}
 
+void codegen::output()
+{
     Util::write(*out, prelude);
     for (auto const& mtd : tree.methods) generate_fragment(mtd);
 }
@@ -180,9 +183,9 @@ void codegen::generate_fragment(fragment_t mtd)
     IR::Catamorphism<x86Output, std::string> F(tree);
     for (int s : frag.stms)
         if (tree.get_type(s) == IR::IRTag::LABEL)
-            Util::write(*out, F(s), ":");
+            Util::write(*out, F(s), ":\t\t;", s);
         else
-            Util::write(*out, F(s));
+            Util::write(*out, F(s), "\t\t;", s);
     Util::write(*out, "ret");
 }
 
@@ -400,5 +403,5 @@ void codegen::prepare_x86_call()
         frag.stms = std::move(tree.stm_seq);
     }
     __align_x86_call();
-} // namespace GEN
+}
 } // namespace GEN
