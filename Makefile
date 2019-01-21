@@ -4,8 +4,8 @@ SHELL = /bin/bash
 
 PYTHON_VENV = source .venv/bin/activate &&
 
-test: dev-build 
-	$(PYTHON_VENV) ninja -j 4 -C dev-build test
+test: build 
+	$(PYTHON_VENV) ninja -j 4 -C build test
 dev-build:
 	$(PYTHON_VENV) meson --buildtype=debug --warnlevel=3 dev-build
 build:
