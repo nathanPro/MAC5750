@@ -306,32 +306,40 @@ void codegen::prepare_x86_call()
             args.push_back(frag.stack.tp);
             for (auto& it : frag.stack.arguments)
                 args.push_back(it.second);
+            tree.emit([&] {
+                IRBuilder push(tree);
+                push << IR::IRTag::PUSH << tree.get_register(2);
+                return push.build();
+            }());
+            tree.emit([&] {
+                IRBuilder push(tree);
+                push << IR::IRTag::PUSH << tree.get_register(1);
+                return push.build();
+            }());
+
             std::sort(begin(args), end(args));
-            int rhs = tree.get_register(1) - 1;
+
+            int rhs, dummy;
+            {
+                int cte = [&] {
+                    IRBuilder c(tree);
+                    c << IR::IRTag::CONST << 16;
+                    return c.build();
+                }();
+                int binop = [&] {
+                    IRBuilder binop(tree);
+                    binop << IR::IRTag::BINOP << IR::BinopId::MINUS
+                          << tree.get_register(0) << cte;
+                    return binop.build();
+                }();
+                rhs = dummy = [&] {
+                    IRBuilder mem(tree);
+                    mem << IR::IRTag::MEM << binop;
+                    return mem.build();
+                }();
+            }
+            int cnt = 0;
             for (int arg : args) {
-                if (rhs < tree.get_register(6))
-                    rhs++;
-                else if (rhs == tree.get_register(6)) {
-                    int cte = [&] {
-                        IRBuilder c(tree);
-                        c << IR::IRTag::CONST << (_disp + 16);
-                        return c.build();
-                    }();
-                    int binop = [&] {
-                        IRBuilder binop(tree);
-                        binop << IR::IRTag::BINOP << IR::BinopId::PLUS
-                              << tree.get_register(0) << cte;
-                        return binop.build();
-                    }();
-                    rhs = [&] {
-                        IRBuilder mem(tree);
-                        mem << IR::IRTag::MEM << binop;
-                        return mem.build();
-                    }();
-                } else
-                    tree.get_const(
-                            tree.get_binop(tree.get_mem(rhs).exp).rhs)
-                        .value += 8;
                 int aux = [&] {
                     IRBuilder move(tree);
                     move << IR::IRTag::MOVE << arg << rhs;
@@ -339,6 +347,23 @@ void codegen::prepare_x86_call()
                 }();
                 tree.stm_seq.pop_back();
                 __flat(aux);
+                if (++cnt == 1)
+                    tree.get_const(
+                            tree.get_binop(tree.get_mem(rhs).exp).rhs)
+                        .value -= 8;
+                else if (cnt < 6)
+                    rhs = tree.get_register(1 + cnt);
+                else if (cnt == 6) {
+                    rhs = dummy;
+                    tree.get_binop(tree.get_mem(rhs).exp).op =
+                        IR::BinopId::PLUS;
+                    tree.get_const(
+                            tree.get_binop(tree.get_mem(rhs).exp).rhs)
+                        .value = _disp + 16;
+                } else
+                    tree.get_const(
+                            tree.get_binop(tree.get_mem(rhs).exp).rhs)
+                        .value += 8;
             }
         }
         for (int s : frag.stms) {
@@ -375,5 +400,5 @@ void codegen::prepare_x86_call()
         frag.stms = std::move(tree.stm_seq);
     }
     __align_x86_call();
-}
+} // namespace GEN
 } // namespace GEN
