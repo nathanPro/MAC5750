@@ -100,9 +100,17 @@ void Tree::mark_sp()
 void Tree::spill()
 {
     std::vector<int> v;
+    std::vector<int> fs(methods.size());
     for (auto const& mtd : methods) v.push_back(mtd.second.stack.sp);
     v.push_back(pos.size());
     std::sort(begin(v), end(v));
+
+    for (auto& mtd : methods) {
+        int sp = mtd.second.stack.sp;
+        int i  = std::distance(begin(v),
+                              lower_bound(begin(v), end(v), sp));
+        fs[i]  = mtd.second.stack.spill_size;
+    }
 
     std::vector<int> max_id(v.size());
     for (int i = 0; i < static_cast<int>(pos.size()); i++)
@@ -117,8 +125,8 @@ void Tree::spill()
             int cte = pos.size();
             kind.push_back(static_cast<int>(IRTag::CONST));
             pos.push_back(_const.size());
-            _const.push_back(
-                Const{8 * (get_temp(i).id - (get_temp(j).id + 1))});
+            _const.push_back(Const{
+                fs[j] + 8 * (get_temp(i).id - (get_temp(j).id + 1))});
 
             int binop = pos.size();
             kind.push_back(static_cast<int>(IRTag::BINOP));
@@ -134,7 +142,7 @@ void Tree::spill()
         int sp = mtd.second.stack.sp;
         int i  = std::distance(begin(v),
                               lower_bound(begin(v), end(v), sp));
-        mtd.second.stack.spill_size =
+        mtd.second.stack.spill_size +=
             8 * (max_id[i] - get_temp(sp).id);
     }
 }

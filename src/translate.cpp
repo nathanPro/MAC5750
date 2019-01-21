@@ -291,16 +291,20 @@ fragmentGuard::~fragmentGuard()
 
 int Translator::operator()(AST::MethodDeclRule const& mdr)
 {
+    current_method = mdr.name;
 
-    frame = {{}, t.new_temp(), t.new_temp(), 0};
+    frame = {
+        {},
+        t.new_temp(),
+        t.new_temp(),
+        8 * (data[current_class].method(current_method).layout.size)};
 
     auto flr = Grammar::get<AST::FormalListRule>(mdr.arguments);
     for (auto const& d : flr.decls)
         frame.arguments.insert({d.name, t.new_temp()});
 
     fragmentGuard guard(
-        t, helper::mangle(current_class, current_method = mdr.name),
-        frame);
+        t, helper::mangle(current_class, current_method), frame);
 
     for (auto const& stm : mdr.body) Grammar::visit(*this, stm);
 
