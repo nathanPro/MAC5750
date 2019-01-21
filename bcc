@@ -1,0 +1,10 @@
+#!/bin/bash
+
+LINKER="/lib/ld-linux-x86-64.so.2"
+OLIB="/usr/lib"
+
+./dev-build/bcc $1 $1.s
+nasm -f elf64 $1.s
+ld -o a.out -dynamic-linker $LINKER $OLIB/crt1.o $OLIB/crti.o -lc $1.o $OLIB/crtn.o
+rm $1.o
+rm $1.s

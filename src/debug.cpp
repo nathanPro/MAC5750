@@ -15,22 +15,15 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    bool debug = false;
-    for (int i = 3; i < argc; i++)
-        if (argv[i][0] == 'd') debug = true;
-
-    bool final_ir = false;
-    for (int i = 3; i < argc; i++)
-        if (argv[i][0] == 'f') final_ir = true;
-
     TranslationUnit tu(std::string{argv[1]});
     IR::Tree        tree;
     translate(tree, tu.syntax_tree);
 
-    if (debug) {
+    {
         IR::Tree cp = tree;
         Util::write(std::cerr, "Base Tree");
         cp.dump(std::cerr);
+
         cp.simplify();
         Util::write(std::cerr, "Simplified Tree");
         cp.dump(std::cerr);
@@ -39,7 +32,7 @@ int main(int argc, char** argv)
     std::ofstream out(argv[2]);
     GEN::codegen  code(&out, tree);
 
-    if (final_ir) {
+    {
         Util::write(std::cerr, "Final Tree");
         tree.dump(std::cerr);
     }

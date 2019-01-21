@@ -27,7 +27,7 @@ testing_deps = declare_dependency(
                   include_directories('src')
                 ])
 
-executable('lab', 'src/lab.cpp', 
+executable('debug', 'src/debug.cpp', 
            dependencies : [front_deps, helper_deps, ir_deps, end_deps])
 executable('bcc', 'src/main.cpp',
            dependencies : [front_deps, helper_deps, ir_deps, end_deps])
